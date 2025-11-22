@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'">
+  <title>MDWriter - Module Descriptor Editor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <header class="toolbar">
+      <div class="toolbar-section">
+        <button id="new-doc" class="toolbar-btn">New</button>
+        <button id="open-doc" class="toolbar-btn">Open</button>
+        <button id="save-doc" class="toolbar-btn">Save</button>
+        <button id="save-as-doc" class="toolbar-btn">Save As</button>
+      </div>
+      <div class="toolbar-section">
+        <button id="export-json" class="toolbar-btn">Export JSON</button>
+      </div>
+      <div class="toolbar-section">
+        <span id="document-type">Document Type: Module Descriptor</span>
+      </div>
+    </header>
+
+    <div class="main-container">
+      <aside class="sidebar">
+        <h3>Document Structure</h3>
+        <div id="document-outline" class="outline">
+          <p class="placeholder">No document loaded</p>
+        </div>
+        <div class="section-controls">
+          <button id="add-section" class="btn-primary">+ Add Section</button>
+        </div>
+      </aside>
+
+      <main class="editor-container">
+        <div id="editor" class="editor">
+          <div class="welcome-screen">
+            <h1>Welcome to MDWriter</h1>
+            <p>A structured writing application for Module Descriptors</p>
+            <div class="welcome-actions">
+              <button id="create-new" class="btn-large">Create New Document</button>
+              <button id="open-existing" class="btn-large">Open Existing Document</button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <aside class="properties-panel">
+        <h3>Properties</h3>
+        <div id="properties" class="properties">
+          <p class="placeholder">Select an element to view properties</p>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="statusbar">
+      <span id="status-text">Ready</span>
+      <span id="collaboration-status"></span>
+    </footer>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
