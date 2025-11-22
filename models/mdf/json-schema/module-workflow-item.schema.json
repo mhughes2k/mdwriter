@@ -1,0 +1,24 @@
+{
+    "$schema": "https://strath.ac.uk/draft/2025-11/module-descriptor",
+    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/modules-workflow-item",
+    "title": "Workflow Item",
+    "description": "",
+    "type":"object",
+    "properties":{ 
+        "status":{
+            "description":"Status of the workflow item",
+            "type":"string",
+            "enum":["Draft","Submitted","Reviewed", "Approved","Published","Archived"]
+        },
+        "date":{
+            "description":"Date of the workflow item",
+            "type":"string",
+            "format":"date"
+        },
+        "changedby":{
+            "description":"Person who made the change",
+            "type":"string"
+        }
+    },
+    "required": ["status", "date", "changedby"]
+}

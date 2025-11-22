@@ -1,0 +1,17 @@
+{
+    "$schema": "https://strath.ac.uk/draft/2025-11/schema",
+    "$id": "https://strath.ac.uk/draft/2025-11/schema/universityweek",
+    "title": "University Week Identifier",
+    "description": "",
+    "type":"object",
+    "properties": {
+        "semester": {
+            "description": "Submission Semester",
+            "type": "integer"
+        },
+        "week": {
+            "description": "Submission Week",
+            "type": "integer"
+        }
+    }
+}

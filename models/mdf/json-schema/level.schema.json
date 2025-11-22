@@ -1,0 +1,25 @@
+{
+    "$schema": "https://strath.ac.uk/draft/2025-11/module-descriptor",
+    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/module-levels",
+    "title": "Module Level",
+    "description": "",
+    "type":"object",
+    "properties": {
+        "scqflevel": {
+            "description": "SCQF Level",
+            "type": "integer"
+        },
+        "sqaqualification": {   
+            "description": "SQA Qualification Level",
+            "type": "string"
+        },
+        "qheiqualification": {
+            "description": "QHEI Qualification Level",
+            "type": "string"
+        },
+        "apprenticeshipsvqlevel": {
+            "description": "Apprenticeships and SVQ Level",
+            "type": "string"
+        }
+    }
+}

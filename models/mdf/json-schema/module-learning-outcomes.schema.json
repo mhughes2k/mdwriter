@@ -1,0 +1,20 @@
+{
+    "$schema": "https://strath.ac.uk/draft/2025-11/schema",
+    "$id": "https://strath.ac.uk/draft/2025-11/schema/module-learning-outcome",
+    "title": "Learning Outcome",
+    "description": "Learning Outcome",
+    "type":"object",
+    "properties": {
+        "description": {
+            "description": "Description of the learning outcome",
+            "type": "string"
+        },
+        "assessmentcriteria":{
+            "description":"Assessment Criteria for the learning outcome",
+            "type":"array",
+            "items":{
+                "type":"string"
+            }
+        }
+    }
+}

@@ -1,0 +1,106 @@
+{
+    "$schema": "https://strath.ac.uk/draft/2025-11/module-descriptor",
+    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/modules",
+    "title": "Module Descriptor",
+    "description": "A module",
+    "type":"object",
+    "properties": {
+        "id": {
+            "description": "Unique Identifier for the Module",
+            "type": "string"
+        },
+        "title": {
+            "description": "Title of the proposed module",
+            "type": "string"
+        },
+        "department": {
+            "description": "Lead Department",
+            "type": "string"
+        },
+        "description": {
+            "description": "A description of the module",
+            "type": "string"
+        },
+        "syllabus": {
+            "description": "The syllabus for the module",
+            "type": "string"
+        },
+        "credits": {
+            "description": "The number of credits for the module",
+            "type": "number",
+            "minimum": 0
+        },
+        "level": {
+            "description": "The level of the module",
+            "$ref": "level"
+        },
+        "workflow": {
+            "description": "The workflow history for the module",
+            "type": "array",
+            "items": {
+                "$ref": "module-workflow-item"
+            }
+        },
+        "staff": {
+            "description": "The staff category for the module",
+            "type": "array",
+            "items": {
+                "$ref": "staff"
+            }
+        },
+        "format": {
+            "description": "Format of the module components",
+            "type": "array",
+            "items": {
+                "$ref": "module-format"
+            }
+        },
+        "aim": {
+            "description": "The aim of the module",
+            "type": "string"
+        },
+        "learningoutcomes": {
+            "description": "The learning outcomes of the module",
+            "type": "array",
+            "items": {
+                "$ref": "module-learning-outcomes"
+            }
+        },
+        "assessmentprinciples":{
+            "description":"The assessment principles of the module",
+            "type":"string"
+        },
+        "assessmentmethods":{
+            "description":"The assessment methods for the module",
+            "type":"array",
+            "items":{
+                "$ref": "module-assessment-method"
+            }
+        }, 
+        "assessmentstandard": {
+            "description": "Human readable description of the standard / achievements to pass the module",
+            "type": "string"
+        },
+        "resitprocedures": {
+            "description": "The resit procedures for the module",
+            "type": "string"
+        },
+        "resitmethods":{
+            "description":"The resit methods for the module",
+            "type":"array",
+            "items":{
+                "$ref": "module-assessment-method"
+            }
+        },
+        "readinglist":{
+            "description":"The reading list for the module",
+            "type":"array",
+            "items":{
+                "$ref": "module-reading-list-item"
+            }
+        }
+    },
+    "required": ["id", "title"],
+    "dependentRequired": {
+    }
+}

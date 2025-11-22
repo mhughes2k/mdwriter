@@ -1,0 +1,17 @@
+{
+    "$schema": "https://strath.ac.uk/draft/2025-11/module-descriptor",
+    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/format",
+    "title": "Module Component Format",
+
+    "properties":{
+        "name":{
+            "description":"Name of the component",
+            "type":"string"
+        },
+        "hours":{
+            "description":"Number of hours for the component",
+            "type":"number",
+            "minimum":0
+        }
+    }
+}

@@ -1,0 +1,44 @@
+{
+    "$schema": "https://strath.ac.uk/draft/2025-11/module-descriptor",
+    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/modules-reading-list-item",
+    "title": "Reading List Item",
+    "description": "",
+    "type":"object",
+    "properties":{ 
+        "title":{
+            "description":"Title of the reading list item",
+            "type":"string"
+        },
+        "authors":{
+            "description":"Authors of the reading list item",
+            "type":"string"
+        },
+        "edition":{
+            "description":"Edition of the reading list item",
+            "type":"string"
+        },
+        "year":{
+            "description":"Year of publication of the reading list item",
+            "type":"string"
+        },
+        "publisher":{
+            "description":"Publisher of the reading list item",
+            "type":"string"
+        },
+        "isbn":{
+            "description":"ISBN of the reading list item",
+            "type":"string"
+        },
+        "link": {
+            "description":"Link to the reading list item",
+            "type":"string",
+            "format":"uri"
+        },
+        "recommendation": {
+            "description":"Recommendation status of the reading list item",
+            "type":"string",
+            "enum":["Purchase Recommended","Highly Recommended","For Reference"]
+        }
+    },
+    "required": ["title", "recommendation"]
+}

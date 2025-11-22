@@ -1,0 +1,10 @@
+{
+    "$schema": "https://strath.ac.uk/draft/2025-11/module-descriptor",
+    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/module-levels",
+    "title": "Module Level Collections",
+    "description": "",
+    "type":"array",
+    "items": {
+        "@ref": "level"
+    }
+}

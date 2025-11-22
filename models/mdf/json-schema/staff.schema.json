@@ -1,0 +1,17 @@
+{
+    "$schema": "https://strath.ac.uk/draft/2025-11/module-descriptor",
+    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/staff",
+    "title": "Staff",
+    "type": "object",
+    "properties":{
+        "name":{
+            "description":"Name",
+            "type":"string"
+        },
+        "role":{
+            "description":"Role",
+            "type":"string",
+            "enum":["Organiser","Lecturer","Tutor","Lab Assistant","Module Coordinator"]
+        }
+    }
+}

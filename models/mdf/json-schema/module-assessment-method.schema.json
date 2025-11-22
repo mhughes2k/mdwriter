@@ -1,0 +1,37 @@
+{
+    "$schema": "https://strath.ac.uk/draft/2025-11/module-descriptor",
+    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/assessment-method",
+    "title": "Assessment Method",
+    "description": "Assessment Method",
+    "type":"object",
+    "properties": {
+        "description": {
+            "description": "Description of the Assessment Method",
+            "type": "string"
+        },
+        "type": {
+            "description": "Type of Assessment Method",
+            "type": "string",
+            "enum": ["Examination", "Coursework"]
+        },
+        "occurence": {
+            "description": "When the assessment method occurs",
+            "type": "string"
+        },
+        "duration": {
+            "description": "Duration of the assessment method in minutes",
+            "type": "integer",
+            "minimum": 0
+        },
+        "weighting": {
+            "description": "Weighting of the assessment method as a percentage",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+        },
+        "submission": {
+            "description": "Submission Deadline",
+            "$ref": "universityweek"
+        }
+    }
+}
