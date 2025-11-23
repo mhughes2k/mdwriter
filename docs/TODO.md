@@ -31,6 +31,14 @@
 - [x] Cancel dialog spinner fix (loading indicator now properly hidden on cancel)
 - [] A "close" document option is required. This should close the current document (including checking for any persistence) and re-establish the window as if it was opening for the first time.
 
+## File Format & Persistence
+- [x] Basic .mdf file format with document data and metadata
+- [x] Edit history tracking in metadata
+- [] Comments support in file format
+- [] Shared with users information in file format
+- [x] Export to clean JSON (schema-only, no metadata)
+- [] Clear documentation of .mdf format vs export JSON format
+
 ## Deployment
 - [] Build installers for Windows, macOS, Linux
 - [] Create portable format builds
@@ -41,12 +49,15 @@
 ## Configuration & User Space
 - [x] User configuration storage in cross-platform location
 - [] Userspace models support (custom document types in user-specified directory)
+  - [] User-specifiable directory location for userspace models
 - [x] Userspace templates directory (customizable location)
 - [] Auto-load custom document types from userspace into "New document" UI
 - [x] Configuration file for user preferences and settings
+- [x] Markdown editor view mode preference (edit/preview/split)
 
 ## Templates & Output
 - [x] Markdown preview with customizable rendering order
+- [x] Document preview fullscreen mode
 - [x] Template system for document rendering
   - [x] Support templates in `models/<type>/templates` directory
   - [x] Support user template directory (user-specifiable location)
@@ -56,6 +67,14 @@
   - [x] Custom form field rendering in templates
 - [x] Template selection UI
 - [x] Export using selected template
+- [] Active template persistence
+  - [] Store active template in document metadata (not user config)
+  - [] Template fallback when unavailable with transient notification
+- [] Export formats
+  - [x] HTML export
+  - [] WCAG compliant/accessible HTML output
+  - [] Word (docx) export (using generated HTML as basis)
+  - [] PDF export (using generated HTML as basis)
 
 ## Collaboration (Advanced Features)
 - [x] Basic multi-editor support with real-time sync
@@ -78,3 +97,4 @@
 - [x] Schema-driven UI generation
 - [] Alternative file extensions support (from metadata)
 - [] Userspace document models integration
+- [] Section placeholder UI (visual indicators for where sections can be added)
