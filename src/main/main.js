@@ -34,21 +34,16 @@ function createWindow() {
 
   // Prevent closing if there are unsaved changes
   mainWindow.on('close', (e) => {
-    console.log('[Main] Close event triggered');
     e.preventDefault(); // Always prevent default, we'll destroy manually if needed
     
     // Ask renderer if there are unsaved changes
     mainWindow.webContents.executeJavaScript('window.isModified || false')
       .then(hasUnsavedChanges => {
-        console.log('[Main] Has unsaved changes:', hasUnsavedChanges);
-        
         if (!hasUnsavedChanges) {
-          console.log('[Main] No unsaved changes, destroying window');
           mainWindow.destroy();
           return;
         }
         
-        console.log('[Main] Showing save dialog');
         const choice = dialog.showMessageBoxSync(mainWindow, {
           type: 'question',
           buttons: ['Save', 'Don\'t Save', 'Cancel'],
@@ -59,20 +54,16 @@ function createWindow() {
           detail: 'Your changes will be lost if you don\'t save them.'
         });
         
-        console.log('[Main] User choice:', choice);
-        
         if (choice === 0) {
           // Save
           mainWindow.webContents.executeJavaScript('window.saveDocument()')
             .then(saved => {
-              console.log('[Main] Save result:', saved);
               if (saved) {
                 mainWindow.destroy();
               }
             });
         } else if (choice === 1) {
           // Don't save
-          console.log('[Main] User chose not to save, destroying window');
           mainWindow.destroy();
         }
         // If Cancel (choice === 2), do nothing - window stays open

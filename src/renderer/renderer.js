@@ -493,7 +493,6 @@ async function handleFieldChange(input, isCustomForm = false) {
     if (result.success) {
       currentDocument = result.document;
       isModified = true;
-      console.log('[Renderer] Field changed, isModified set to:', isModified);
       renderOutline();
       
       // Validate after change (debounced)
@@ -601,15 +600,10 @@ document.querySelectorAll('.panel-tab').forEach(tab => {
   });
 });
 
-// Expose functions for main process to call
+// Expose functions and state for main process to call
 window.saveDocument = saveDocument;
-
-// Debug: expose isModified for checking
 Object.defineProperty(window, 'isModified', {
-  get: () => {
-    console.log('[Renderer] isModified checked, current value:', isModified);
-    return isModified;
-  }
+  get: () => isModified
 });
 
 // Initialize
