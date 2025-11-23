@@ -44,6 +44,7 @@ class DocumentManager {
         author: '',
         renderOrder: null, // null means use default fieldOrder
         hiddenFields: [], // Fields to hide from preview
+        activeTemplate: null, // Currently selected template for this document
         comments: [],
         sharedWith: [],
         editHistory: []

@@ -27,6 +27,14 @@ async function initialize() {
   
   // Load all document types from models directory
   await schemaLoader.loadDocumentTypes();
+  
+  // Set userspace models directory in schema loader
+  const userspaceModelsDir = configManager.getUserspaceModelsDirectory();
+  schemaLoader.setUserspaceModelsDirectory(userspaceModelsDir);
+  
+  // Reload to include userspace models
+  await schemaLoader.loadDocumentTypes();
+  
   documentManager = new DocumentManager(schemaLoader);
   
   // Initialize collaboration services
@@ -492,6 +500,26 @@ ipcMain.handle('config-get-recent-files', async (event) => {
   try {
     const files = configManager.getRecentFiles();
     return { success: true, files };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('config-get-userspace-models-dir', async (event) => {
+  try {
+    const path = configManager.getUserspaceModelsDirectory();
+    return { success: true, path };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('config-set-userspace-models-dir', async (event, dirPath) => {
+  try {
+    await configManager.setUserspaceModelsDirectory(dirPath);
+    // Reload document types after changing directory
+    await schemaLoader.loadDocumentTypes();
+    return { success: true };
   } catch (err) {
     return { success: false, error: err.message };
   }

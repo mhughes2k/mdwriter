@@ -38,6 +38,9 @@
 - [] Shared with users information in file format
 - [x] Export to clean JSON (schema-only, no metadata)
 - [] Clear documentation of .mdf format vs export JSON format
+- [] Import of clean JSON into:
+    - [] New Document
+    - [] Existing document
 
 ## Deployment
 - [] Build installers for Windows, macOS, Linux
@@ -48,10 +51,10 @@
 
 ## Configuration & User Space
 - [x] User configuration storage in cross-platform location
-- [] Userspace models support (custom document types in user-specified directory)
-  - [] User-specifiable directory location for userspace models
+- [x] Userspace models support (custom document types in user-specified directory)
+  - [x] User-specifiable directory location for userspace models
 - [x] Userspace templates directory (customizable location)
-- [] Auto-load custom document types from userspace into "New document" UI
+- [x] Auto-load custom document types from userspace into "New document" UI
 - [x] Configuration file for user preferences and settings
 - [x] Markdown editor view mode preference (edit/preview/split)
 
@@ -67,9 +70,9 @@
   - [x] Custom form field rendering in templates
 - [x] Template selection UI
 - [x] Export using selected template
-- [] Active template persistence
-  - [] Store active template in document metadata (not user config)
-  - [] Template fallback when unavailable with transient notification
+- [x] Active template persistence
+  - [x] Store active template in document metadata (not user config)
+  - [x] Template fallback when unavailable with transient notification
 - [] Export formats
   - [x] HTML export
   - [] WCAG compliant/accessible HTML output

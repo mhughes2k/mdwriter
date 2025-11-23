@@ -49,6 +49,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   configSetPreference: (key, value) => ipcRenderer.invoke('config-set-preference', key, value),
   configAddRecentFile: (filePath) => ipcRenderer.invoke('config-add-recent-file', filePath),
   configGetRecentFiles: () => ipcRenderer.invoke('config-get-recent-files'),
+  configGetUserspaceModelsDir: () => ipcRenderer.invoke('config-get-userspace-models-dir'),
+  configSetUserspaceModelsDir: (dirPath) => ipcRenderer.invoke('config-set-userspace-models-dir', dirPath),
   
   // Template operations
   templatesLoad: (documentType) => ipcRenderer.invoke('templates-load', documentType),

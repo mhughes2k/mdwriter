@@ -1,6 +1,6 @@
 {
   "id": "MH101",
-  "title": "MH101",
+  "title": "Introduction to Michael Hughes",
   "department": "Department of Michael Hughes",
   "description": "An introduction to Michael Hughes",
   "credits": 20,
@@ -36,5 +36,30 @@
         "Spell his name"
       ]
     }
-  ]
+  ],
+  "resitmethods": [
+    {
+      "description": "",
+      "type": "Examination",
+      "occurence": "",
+      "duration": 0,
+      "weighting": 100
+    }
+  ],
+  "readinglist": [
+    {
+      "title": "The Life of Michael",
+      "authors": "Michael Hughes",
+      "edition": "1st",
+      "year": "",
+      "publisher": "",
+      "isbn": "",
+      "link": "https://www.phnx.org.uk/",
+      "recommendation": "Purchase Recommended"
+    }
+  ],
+  "aim": "To teach about Michael",
+  "assessmentprinciples": "Good social constructivist attitudes.",
+  "assessmentstandard": "Just create a great class.",
+  "resitprocedures": "None"
 }

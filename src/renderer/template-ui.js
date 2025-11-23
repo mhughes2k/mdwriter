@@ -42,18 +42,54 @@ class TemplateUI {
         this.currentTemplates = result.templates;
         this.updateTemplateSelector();
         
-        // Load active template from config
-        const activeResult = await window.electronAPI.templatesGetActive();
-        if (activeResult.success && activeResult.templateId) {
-          this.activeTemplateId = activeResult.templateId;
-          this.elements.templateSelect.value = activeResult.templateId;
-          await this.handleTemplateChange(activeResult.templateId);
+        // Load active template from document metadata (if document is loaded)
+        if (typeof currentDocument !== 'undefined' && currentDocument?.metadata?.activeTemplate) {
+          const requestedTemplateId = currentDocument.metadata.activeTemplate;
+          
+          // Check if the template still exists
+          const templateExists = this.currentTemplates.some(t => t.id === requestedTemplateId);
+          
+          if (templateExists) {
+            this.activeTemplateId = requestedTemplateId;
+            this.elements.templateSelect.value = this.activeTemplateId;
+            await this.handleTemplateChange(this.activeTemplateId, false); // Don't save back to metadata
+          } else {
+            // Template no longer available - fall back to default rendering
+            console.warn('[TemplateUI] Template not found:', requestedTemplateId);
+            this.showTemplateNotFoundNotification(requestedTemplateId);
+            
+            // Clear the template selection
+            this.activeTemplateId = null;
+            this.elements.templateSelect.value = '';
+            currentDocument.metadata.activeTemplate = null;
+            
+            // Show render order controls
+            if (this.elements.renderOrderSection) {
+              this.elements.renderOrderSection.style.display = 'block';
+            }
+          }
         }
         
         console.log(`[TemplateUI] Loaded ${this.currentTemplates.length} templates`);
       }
     } catch (err) {
       console.error('[TemplateUI] Error loading templates:', err);
+    }
+  }
+  
+  /**
+   * Show notification that a template was not found
+   */
+  showTemplateNotFoundNotification(templateId) {
+    if (typeof updateStatus === 'function') {
+      updateStatus(`Template "${templateId}" is no longer available. Using default preview.`);
+      
+      // Clear status after 5 seconds
+      setTimeout(() => {
+        if (typeof updateStatus === 'function') {
+          updateStatus('Ready');
+        }
+      }, 5000);
     }
   }
   
@@ -109,12 +145,24 @@ class TemplateUI {
   
   /**
    * Handle template selection change
+   * @param {string} templateId - Template ID or empty string
+   * @param {boolean} saveToMetadata - Whether to save to document metadata (default true)
    */
-  async handleTemplateChange(templateId) {
+  async handleTemplateChange(templateId, saveToMetadata = true) {
     this.activeTemplateId = templateId;
     
-    // Save active template to config
-    await window.electronAPI.templatesSetActive(templateId || null);
+    // Save active template to document metadata
+    if (saveToMetadata && typeof currentDocument !== 'undefined' && currentDocument) {
+      currentDocument.metadata.activeTemplate = templateId || null;
+      currentDocument.metadata.modified = new Date().toISOString();
+      
+      // Mark document as modified
+      if (typeof isModified !== 'undefined') {
+        isModified = true;
+      }
+      
+      console.log('[TemplateUI] Saved active template to document metadata:', templateId || 'none');
+    }
     
     // Show/hide render order controls based on template selection
     if (this.elements.renderOrderSection) {

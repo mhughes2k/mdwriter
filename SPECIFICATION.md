@@ -11,6 +11,8 @@ The application MUST:
 6. The document should be persisted to disk in a suitable "file format" (presumbably a JSON based one, this may require a further JSON-schema to be defined, but this should not be held in the `models` directory as it will be specific to the application, not the types of documents supported), that supports the holding of the "document contents" (which meet the JSON-schema for the document type) as well as any ancillary information needed for the application (e.g. such as comments, editing meta information, shared with users).
 7. The application MUST allow the document to be saved in the JSON format, as defined by the document JSON-schema, without any of the other information that would be held in the "file format".
 8. The application's code should not have any dependency on "magic" strings or behaviour that is "hard-coded" to particular values or names of sections in a document model. Anything that is dependent on this should be delegated to the model.
+9. The application must be able to export the "clean" document (without an application metadata) that is compliant with the defined json-schema.
+10. The application should offer the user to import a JSON file with *just* the model data into either an existing, currently open "document" of the matching type, or to create a "new" document of that type based on the provided data.
 
 ## Deployment
 

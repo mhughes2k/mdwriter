@@ -53,6 +53,15 @@ class SchemaLoader {
     this.validatorCache = new Map();
     this.documentTypes = new Map();
     this.modelsPath = path.join(__dirname, '../../models');
+    this.userModelsPath = null;
+  }
+  
+  /**
+   * Set userspace models directory
+   */
+  setUserspaceModelsDirectory(dirPath) {
+    this.userModelsPath = dirPath;
+    console.log('[SchemaLoader] Userspace models directory set to:', dirPath);
   }
 
   /**
@@ -60,31 +69,15 @@ class SchemaLoader {
    */
   async loadDocumentTypes() {
     try {
-      const entries = await fs.readdir(this.modelsPath, { withFileTypes: true });
+      // Load bundled document types
+      await this.loadDocumentTypesFromDirectory(this.modelsPath, 'bundled');
       
-      for (const entry of entries) {
-        if (entry.isDirectory()) {
-          const typeName = entry.name;
-          const metadataPath = path.join(this.modelsPath, typeName, `${typeName}.json`);
-          
-          try {
-            const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
-            this.documentTypes.set(typeName, {
-              name: typeName,
-              description: metadata.description,
-              extensions: metadata.extensions || [typeName],
-              entrypoint: metadata.entrypoint,
-              fieldOrder: metadata.fieldOrder || [],
-              uiHints: metadata.uiHints || {},
-              customForms: metadata.customForms || {},
-              path: path.join(this.modelsPath, typeName, 'json-schema'),
-              modelPath: path.join(this.modelsPath, typeName)
-            });
-            
-            console.log(`Loaded document type: ${typeName}`);
-          } catch (err) {
-            console.warn(`Could not load metadata for ${typeName}:`, err.message);
-          }
+      // Load userspace document types if configured
+      if (this.userModelsPath) {
+        try {
+          await this.loadDocumentTypesFromDirectory(this.userModelsPath, 'userspace');
+        } catch (err) {
+          console.warn('[SchemaLoader] Could not load userspace models:', err.message);
         }
       }
       
@@ -92,6 +85,51 @@ class SchemaLoader {
     } catch (err) {
       console.error('Error loading document types:', err);
       return [];
+    }
+  }
+  
+  /**
+   * Load document types from a specific directory
+   */
+  async loadDocumentTypesFromDirectory(dirPath, source) {
+    try {
+      const entries = await fs.readdir(dirPath, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          const typeName = entry.name;
+          const metadataPath = path.join(dirPath, typeName, `${typeName}.json`);
+          
+          try {
+            const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+            
+            // Use composite key if userspace to avoid conflicts
+            const typeKey = source === 'userspace' ? `userspace:${typeName}` : typeName;
+            
+            this.documentTypes.set(typeKey, {
+              name: typeName,
+              displayName: source === 'userspace' ? `${metadata.description} (Custom)` : metadata.description,
+              description: metadata.description,
+              source: source,
+              category: metadata.category || 'Other',
+              icon: metadata.icon || '📄',
+              extensions: metadata.extensions || [typeName],
+              entrypoint: metadata.entrypoint,
+              fieldOrder: metadata.fieldOrder || [],
+              uiHints: metadata.uiHints || {},
+              customForms: metadata.customForms || {},
+              path: path.join(dirPath, typeName, 'json-schema'),
+              modelPath: path.join(dirPath, typeName)
+            });
+            
+            console.log(`[SchemaLoader] Loaded ${source} document type: ${typeName}`);
+          } catch (err) {
+            console.warn(`[SchemaLoader] Could not load metadata for ${typeName}:`, err.message);
+          }
+        }
+      }
+    } catch (err) {
+      console.error(`[SchemaLoader] Error loading document types from ${dirPath}:`, err);
     }
   }
 
