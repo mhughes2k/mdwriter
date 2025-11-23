@@ -43,12 +43,21 @@ models/
 - Schema validation runs on save/load operations
 - UI dynamically adapts to schema structure
 
+### Schema-Driven Architecture (CRITICAL)
+**NO MAGIC STRINGS**: Application code must NEVER hard-code field names or document-specific logic.
+- ❌ BAD: `if (fieldName === 'description' || fieldName === 'syllabus')`
+- ✅ GOOD: `if (property.format === 'textarea')`
+- All UI behavior delegated to schema properties (`format`, `type`, `x-display-type`, etc.)
+- Form generator works generically for ANY document type
+- See `docs/SCHEMA-DRIVEN-ARCHITECTURE.md` for detailed guidelines
+
 ### Collaboration (Future)
 - IPC events already defined: `document-update`, `user-joined`, `user-left`
 - Multi-editor mode with role-based access (readonly, reviewer, editor)
 - Locking mechanism to prevent concurrent edits of same section
 
 ## Development Workflow
+- You should ensure that you use resources like Google web searches to ensure that you have a feasible approach before suggesting code.
 
 ### Running the Application
 ```powershell

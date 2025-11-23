@@ -1,7 +1,18 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
+const schemaLoader = require('./schema-loader');
+const DocumentManager = require('./document-manager');
 
 let mainWindow;
+let documentManager;
+let currentDocument = null;
+
+async function initialize() {
+  // Load all document types from models directory
+  await schemaLoader.loadDocumentTypes();
+  documentManager = new DocumentManager(schemaLoader);
+  console.log('Application initialized');
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -19,16 +30,15 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
 
   // Open DevTools in development
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.webContents.openDevTools();
-  }
+  mainWindow.webContents.openDevTools();
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  await initialize();
   createWindow();
 
   app.on('activate', () => {
@@ -45,17 +55,203 @@ app.on('window-all-closed', () => {
 });
 
 // IPC handlers for document operations
+
+ipcMain.handle('get-document-types', async () => {
+  return Array.from(schemaLoader.documentTypes.values());
+});
+
+ipcMain.handle('get-schema-structure', async (event, documentType) => {
+  try {
+    console.log('[Main] Getting schema structure for:', documentType);
+    const result = await schemaLoader.getSchemaStructure(documentType);
+    console.log('[Main] Schema structure loaded, properties:', result?.length || 0);
+    return result;
+  } catch (err) {
+    console.error('[Main] Error getting schema structure:', err);
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('get-custom-form-data', async (event, documentType, formName) => {
+  try {
+    const docType = schemaLoader.getDocumentType(documentType);
+    if (!docType) {
+      return { error: 'Unknown document type' };
+    }
+
+    const customForm = docType.customForms[formName];
+    if (!customForm) {
+      return { error: 'Custom form not found' };
+    }
+
+    let data = null;
+    
+    // Load data source if it exists
+    if (customForm.dataSource) {
+      const dataPath = path.join(docType.modelPath, customForm.dataSource);
+      data = JSON.parse(await require('fs').promises.readFile(dataPath, 'utf8'));
+    }
+    
+    // Load custom form implementation if it exists
+    let formImplementation = null;
+    if (customForm.implementation) {
+      const implPath = path.join(docType.modelPath, customForm.implementation);
+      try {
+        formImplementation = await require('fs').promises.readFile(implPath, 'utf8');
+      } catch (err) {
+        console.warn('Custom form implementation not found:', implPath);
+      }
+    }
+    
+    return { 
+      success: true, 
+      data, 
+      formType: customForm.type,
+      implementation: formImplementation
+    };
+  } catch (err) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('create-new-document', async (event, documentType) => {
+  try {
+    currentDocument = await documentManager.createNew(documentType);
+    return { success: true, document: currentDocument };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('open-document-dialog', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile'],
+    filters: [
+      { name: 'Module Descriptors', extensions: ['mdf', 'module'] },
+      { name: 'JSON Files', extensions: ['json'] },
+      { name: 'All Files', extensions: ['*'] }
+    ]
+  });
+
+  if (!result.canceled && result.filePaths.length > 0) {
+    return { success: true, filePath: result.filePaths[0] };
+  }
+  
+  return { success: false };
+});
+
 ipcMain.handle('load-document', async (event, filePath) => {
-  // TODO: Implement document loading
-  return { success: true, data: null };
+  try {
+    console.log('[Main] Loading document:', filePath);
+    currentDocument = await documentManager.load(filePath);
+    console.log('[Main] Document loaded successfully');
+    
+    // Validate after loading
+    console.log('[Main] Validating document...');
+    const validation = await documentManager.validate(currentDocument);
+    console.log('[Main] Validation complete:', validation.valid ? 'valid' : `${validation.errors.length} errors`);
+    
+    return { 
+      success: true, 
+      document: currentDocument,
+      validation 
+    };
+  } catch (err) {
+    console.error('[Main] Error loading document:', err);
+    return { success: false, error: err.message };
+  }
 });
 
-ipcMain.handle('save-document', async (event, filePath, data) => {
-  // TODO: Implement document saving
-  return { success: true };
+ipcMain.handle('save-document-dialog', async (event, isExport, defaultPath) => {
+  const filters = isExport 
+    ? [
+        { name: 'JSON Files', extensions: ['json'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    : [
+        { name: 'Module Descriptors', extensions: ['mdf', 'module'] },
+        { name: 'All Files', extensions: ['*'] }
+      ];
+
+  const dialogOptions = {
+    properties: ['createDirectory', 'showOverwriteConfirmation'],
+    filters
+  };
+  
+  // Set default path if provided
+  if (defaultPath) {
+    dialogOptions.defaultPath = defaultPath;
+  }
+
+  const result = await dialog.showSaveDialog(mainWindow, dialogOptions);
+
+  if (!result.canceled && result.filePath) {
+    return { success: true, filePath: result.filePath };
+  }
+  
+  return { success: false };
 });
 
-ipcMain.handle('validate-document', async (event, documentType, data) => {
-  // TODO: Implement schema validation
-  return { valid: true, errors: [] };
+ipcMain.handle('save-document', async (event, filePath, document) => {
+  try {
+    currentDocument = document;
+    const result = await documentManager.save(filePath, document);
+    return result;
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('export-document', async (event, filePath, document) => {
+  try {
+    const result = await documentManager.exportClean(filePath, document);
+    return result;
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('validate-document', async (event, document) => {
+  try {
+    const validation = await documentManager.validate(document);
+    return validation;
+  } catch (err) {
+    return { valid: false, errors: [{ message: err.message }] };
+  }
+});
+
+ipcMain.handle('update-field', async (event, document, fieldPath, value) => {
+  try {
+    currentDocument = documentManager.updateField(document, fieldPath, value);
+    return { success: true, document: currentDocument };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('add-array-item', async (event, document, arrayPath, item) => {
+  try {
+    currentDocument = documentManager.addArrayItem(document, arrayPath, item);
+    return { success: true, document: currentDocument };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('remove-array-item', async (event, document, arrayPath, index) => {
+  try {
+    currentDocument = documentManager.removeArrayItem(document, arrayPath, index);
+    return { success: true, document: currentDocument };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('add-comment', async (event, document, comment, sectionPath) => {
+  try {
+    currentDocument = documentManager.addComment(document, comment, sectionPath);
+    return { success: true, document: currentDocument };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 });

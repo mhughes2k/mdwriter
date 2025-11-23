@@ -1,6 +1,6 @@
 {
-    "$schema": "https://strath.ac.uk/draft/2025-11/schema",
-    "$id": "https://strath.ac.uk/draft/2025-11/schema/module-learning-outcome",
+    "$schema": "https://strath.ac.uk/draft/2025-11/module-descriptor",
+    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/module-learning-outcome",
     "title": "Learning Outcome",
     "description": "Learning Outcome",
     "type":"object",

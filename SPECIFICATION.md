@@ -10,6 +10,7 @@ The application MUST:
 5. Sections of a document, as defined by the schema, should be added and removed via a clear UI action (e.g. a placeholder shoud appear where a valid section may be added.)
 6. The document should be persisted to disk in a suitable "file format" (presumbably a JSON based one, this may require a further JSON-schema to be defined, but this should not be held in the `models` directory as it will be specific to the application, not the types of documents supported), that supports the holding of the "document contents" (which meet the JSON-schema for the document type) as well as any ancillary information needed for the application (e.g. such as comments, editing meta information, shared with users).
 7. The application MUST allow the document to be saved in the JSON format, as defined by the document JSON-schema, without any of the other information that would be held in the "file format".
+8. The application's code should not have any dependency on "magic" strings or behaviour that is "hard-coded" to particular values or names of sections in a document model. Anything that is dependent on this should be delegated to the model.
 
 ## Deployment
 
@@ -21,6 +22,7 @@ The application MUST:
 ## User Interface guidance
 
 1. Should take cues from common word processor applications, such as Word.
+2. A specific model for a document should be able to provide extra / custom form implementations to allow the editor to get user input for complex models.
 
 ## Collaboration
 

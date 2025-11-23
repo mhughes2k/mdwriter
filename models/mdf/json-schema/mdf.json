@@ -1,8 +1,0 @@
-{
-    "description": "Module Descriptor Schema",
-    "extensions": [
-        "mdf",
-        "module"
-    ],
-    "entrypoint": "module-descriptor-full.schema.json"
-}

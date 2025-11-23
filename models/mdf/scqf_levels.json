@@ -1,0 +1,78 @@
+{
+    "schema": "json-schema/levels.schema.json",
+    "description": "Scottish Credit and Qualifications Framework (SCQF) levels and equivalencies",
+    "levels": [
+        {
+            "scqflevel": 1,
+            "sqaqualification": "National 1",
+            "qheiqualification": "",
+            "apprenticeshipsvqlevel": ""
+        },
+    {
+        "scqflevel": 2,
+        "sqaqualification": "National 2, Access 2",
+        "qheiqualification": "",
+        "apprenticeshipsvqlevel": ""
+    },
+    {
+        "scqflevel": 3,
+        "sqaqualification": "National 3, Access 3",
+        "qheiqualification": "",
+        "apprenticeshipsvqlevel": ""
+    },
+    {
+        "scqflevel": 4,
+        "sqaqualification": "National 4, Intermediate 1, General Standard Grade",
+        "qheiqualification": "",
+        "apprenticeshipsvqlevel": "SVQ"
+    },
+    {
+        "scqflevel": 5,
+        "sqaqualification": "National 5, Intermediate 2, Credit Standard Grade",
+        "qheiqualification": "",
+        "apprenticeshipsvqlevel": "SVQ"
+    },
+    {
+        "scqflevel": 6,
+        "sqaqualification": "Higher, National Certificate",
+        "qheiqualification": "",
+        "apprenticeshipsvqlevel": "Modern Apprenticeship, SVQ"
+    },
+    {
+        "scqflevel": 7,
+        "sqaqualification": "Advanced Higher, Scottish Baccalaureate, Advanced Certificate, Higher National Certificate, Professional Development Award",
+        "qheiqualification": "Certificate of Higher Education",
+        "apprenticeshipsvqlevel": "Modern Apprenticeship, SVQ"
+    },
+    {
+        "scqflevel": 8,
+        "sqaqualification": "Advanced Diploma, Higher National Diploma, Professional Development Award",
+        "qheiqualification": "Diploma of Higher Education",
+        "apprenticeshipsvqlevel": "Higher Apprenticeship, SVQ, Technical Apprenticeship"
+    },
+    {
+        "scqflevel": 9,
+        "sqaqualification": "Professional Development Award",
+        "qheiqualification": "Bachelors/Ordinary Degree, Graduate Certificate, Graduate Diploma",
+        "apprenticeshipsvqlevel": "Graduate Apprenticeship, SVQ, Technical Apprenticeship"
+    },
+    {
+        "scqflevel": 10,
+        "sqaqualification": "Professional Development Award",
+        "qheiqualification": "Honours Degree, Graduate Certificate, Graduate Diploma",
+        "apprenticeshipsvqlevel": "Graduate Apprenticeship, Professional Apprenticeship, SVQ"
+    },
+    {
+        "scqflevel": 11,
+        "sqaqualification": "Professional Development Award",
+        "qheiqualification": "Integrated Masters Degree, Masters Degree, Post Graduate Certificate, Post Graduate Diploma",
+        "apprenticeshipsvqlevel": "Graduate Apprenticeship, Professional Apprenticeship, SVQ"
+    },
+    {
+        "scqflevel": 12,
+        "sqaqualification": "Professional Development Award",
+        "qheiqualification": "Doctoral Degree",
+        "apprenticeshipsvqlevel": "Professional Apprenticeship"
+    }
+    ]
+}

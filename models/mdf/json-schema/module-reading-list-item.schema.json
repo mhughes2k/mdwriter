@@ -7,7 +7,9 @@
     "properties":{ 
         "title":{
             "description":"Title of the reading list item",
-            "type":"string"
+            "type":"string",
+            "minLength": 1,
+            "errorMessage": "Title must not be empty"
         },
         "authors":{
             "description":"Authors of the reading list item",

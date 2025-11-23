@@ -1,0 +1,95 @@
+{
+    "description": "Module Descriptor Schema",
+    "extensions": [
+        "mdf",
+        "module"
+    ],
+    "entrypoint": "module-descriptor.schema.json",
+    "fieldOrder": [
+        "id",
+        "title",
+        "department",
+        "description",
+        "level"
+    ],
+    "uiHints": {
+        "description": {
+            "displayAs": "Description",
+            "displayType": "textarea"
+        },
+        "syllabus": {
+            "displayAs": "Syllabus",
+            "displayType": "textarea"
+        },
+        "aim": {
+            "displayAs": "Module Aims",
+            "displayType": "textarea"
+        },
+        "assessmentprinciples": {
+            "displayAs": "Assessment Principles",
+            "displayType": "textarea"
+        },
+        "assessmentstandard": {
+            "displayAs": "Assessment Standard",
+            "displayType": "textarea"
+        },
+        "resitprocedures": {
+            "displayAs": "Resit Procedures",
+            "displayType": "textarea"
+        },
+        "level": {
+            "customForm": "level-selector"
+        },
+        "learningoutcomes": {
+            "displayAs": "Learning Outcomes",
+            "customForm": "learning-outcomes-editor"
+        },
+        "staff": {
+            "displayAs": "Staff",
+            "customForm": "staff-editor"
+        },
+        "format": {
+            "displayAs": "Module Format",
+            "customForm": "format-editor"
+        },
+        "assessmentmethods": {
+            "displayAs": "Assessment Methods",
+            "customForm": "assessment-methods-editor"
+        },
+        "resitmethods": {
+            "displayAs": "Resit Methods",
+            "customForm": "assessment-methods-editor"
+        },
+        "readinglist": {
+            "displayAs": "Reading List",
+            "customForm": "reading-list-editor"
+        }
+    },
+    "customForms": {
+        "level-selector": {
+            "type": "level-selector",
+            "dataSource": "scqf_levels.json",
+            "implementation": "forms/level-selector.js"
+        },
+        "learning-outcomes-editor": {
+            "type": "learning-outcomes-editor",
+            "implementation": "forms/learning-outcomes-editor.js"
+        },
+        "staff-editor": {
+            "type": "staff-editor",
+            "implementation": "forms/staff-editor.js"
+        },
+        "format-editor": {
+            "type": "format-editor",
+            "implementation": "forms/format-editor.js"
+        },
+        "assessment-methods-editor": {
+            "type": "assessment-methods-editor",
+            "implementation": "forms/assessment-methods-editor.js"
+        },
+        "reading-list-editor": {
+            "type": "reading-list-editor",
+            "implementation": "forms/reading-list-editor.js"
+        }
+    }
+}

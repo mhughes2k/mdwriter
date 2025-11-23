@@ -49,9 +49,45 @@
       </main>
 
       <aside class="properties-panel">
-        <h3>Properties</h3>
-        <div id="properties" class="properties">
-          <p class="placeholder">Select an element to view properties</p>
+        <div class="panel-tabs">
+          <button class="panel-tab active" data-tab="validation">Validation</button>
+          <button class="panel-tab" data-tab="metadata">Document Info</button>
+        </div>
+        
+        <div class="panel-content">
+          <div id="validation-panel" class="tab-panel active">
+            <div class="validation-summary" style="display: none;">
+              <div class="validation-status valid">
+                <span class="status-icon">✓</span>
+                <span class="status-text">Document is valid</span>
+              </div>
+            </div>
+            <div id="validation-errors" class="validation-errors">
+              <!-- Errors will be populated here -->
+            </div>
+          </div>
+          
+          <div id="metadata-panel" class="tab-panel">
+            <div class="metadata-section">
+              <h4>Document</h4>
+              <div class="metadata-item">
+                <label>Type:</label>
+                <span id="meta-type">-</span>
+              </div>
+              <div class="metadata-item">
+                <label>Created:</label>
+                <span id="meta-created">-</span>
+              </div>
+              <div class="metadata-item">
+                <label>Modified:</label>
+                <span id="meta-modified">-</span>
+              </div>
+              <div class="metadata-item">
+                <label>Version:</label>
+                <span id="meta-version">-</span>
+              </div>
+            </div>
+          </div>
         </div>
       </aside>
     </div>
@@ -62,6 +98,7 @@
     </footer>
   </div>
 
+  <script src="form-generator.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>
