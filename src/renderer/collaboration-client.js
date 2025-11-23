@@ -1,5 +1,3 @@
-const { io } = require('socket.io-client');
-
 /**
  * Collaboration Client
  * 
@@ -36,6 +34,21 @@ class CollaborationClient {
   connect(host, port, sessionId, user) {
     return new Promise((resolve, reject) => {
       try {
+        // Check if socket.io client is available
+        if (typeof io === 'undefined') {
+          reject(new Error('Socket.IO client library not loaded. Please ensure socket.io-client is included.'));
+          return;
+        }
+
+        // Set connection timeout
+        const connectionTimeout = setTimeout(() => {
+          console.error('[CollabClient] Connection timeout');
+          if (this.socket) {
+            this.socket.close();
+          }
+          reject(new Error('Connection timeout - could not connect to server'));
+        }, 10000); // 10 second timeout
+
         // Create socket connection
         this.socket = io(`http://${host}:${port}`, {
           transports: ['websocket', 'polling'],
@@ -58,6 +71,7 @@ class CollaborationClient {
         // Session joined successfully
         this.socket.on('session-joined', ({ document, version, users, metadata }) => {
           console.log('[CollabClient] Joined session:', sessionId);
+          clearTimeout(connectionTimeout);
           this.version = version;
           this.users = users;
           this.userId = this.socket.id;
@@ -71,10 +85,11 @@ class CollaborationClient {
 
         // Document updated by another user
         this.socket.on('document-updated', ({ operation, version, userId }) => {
-          console.log('[CollabClient] Document updated:', operation);
+          console.log('[CollabClient] Document updated:', operation, 'by userId:', userId, 'new version:', version);
           this.version = version;
           
-          if (this.onDocumentUpdated) {
+          // Only trigger the callback if it's not our own update
+          if (userId !== this.socket.id && this.onDocumentUpdated) {
             this.onDocumentUpdated({ operation, version, userId });
           }
         });
@@ -101,6 +116,7 @@ class CollaborationClient {
 
         // Cursor updated
         this.socket.on('cursor-updated', ({ userId, cursor }) => {
+          console.log('[CollabClient] Cursor updated:', { userId, cursor });
           if (this.onCursorUpdated) {
             this.onCursorUpdated({ userId, cursor });
           }
@@ -139,7 +155,14 @@ class CollaborationClient {
         // Connection error
         this.socket.on('connect_error', (error) => {
           console.error('[CollabClient] Connection error:', error);
-          reject(error);
+          console.error('[CollabClient] Error details:', {
+            message: error.message,
+            description: error.description,
+            context: error.context,
+            type: error.type
+          });
+          clearTimeout(connectionTimeout);
+          reject(new Error(`WebSocket error: ${error.message || 'Connection failed'}`));
         });
 
       } catch (err) {
@@ -177,6 +200,7 @@ class CollaborationClient {
       return false;
     }
 
+    console.log('[CollabClient] Sending cursor update:', cursor);
     this.socket.emit('cursor-update', {
       sessionId: this.sessionId,
       cursor

@@ -536,6 +536,10 @@ body {
   margin: 2px 0;
   border-radius: 3px;
   cursor: default;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .outline-section {
@@ -545,6 +549,27 @@ body {
 
 .outline-section:hover {
   background: #e8e8e8;
+}
+
+.outline-empty {
+  color: #999;
+  font-style: italic;
+}
+
+/* Outline presence indicators */
+.outline-presence {
+  position: relative;
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 8px;
+  top: 0;
+  right: 0;
+}
+
+.outline-presence .user-badge {
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
 }
 
 .highlight {
@@ -1032,5 +1057,50 @@ body {
 
 .btn-danger:hover {
   background: #c82333;
+}
+
+/* User Presence Indicators */
+.user-presence-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+}
+
+.user-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  cursor: help;
+}
+
+.form-field {
+  position: relative;
+}
+
+/* Highlight fields being edited by others */
+input[data-active-user],
+textarea[data-active-user],
+select[data-active-user] {
+  animation: pulse-border 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  50% {
+    box-shadow: 0 0 0 3px currentColor;
+  }
 }
 

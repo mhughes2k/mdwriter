@@ -48,10 +48,10 @@ class CollaborationServer {
           this.handleConnection(socket);
         });
 
-        // Start listening
-        this.httpServer.listen(port, () => {
+        // Start listening on all interfaces (0.0.0.0)
+        this.httpServer.listen(port, '0.0.0.0', () => {
           this.port = this.httpServer.address().port;
-          console.log(`[Collab] Server started on port ${this.port}`);
+          console.log(`[Collab] Server started on 0.0.0.0:${this.port}`);
           resolve(this.port);
         });
 

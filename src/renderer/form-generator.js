@@ -154,7 +154,10 @@ class FormGenerator {
           console.log(`[FormGen] Calling factory for: ${factoryKey}`);
           const element = factory(property, value, fieldPath, result.data);
           console.log(`[FormGen] Factory returned:`, element);
-          return element;
+          
+          // Wrap custom form to provide standard interface
+          const wrapper = this.wrapCustomForm(element, fieldPath, property);
+          return wrapper;
         } catch (err) {
           console.error('Error executing custom form implementation:', err);
           return this.createPlaceholder(`Error executing ${formType}: ${err.message}`);
@@ -186,6 +189,26 @@ class FormGenerator {
     input.value = value || '';
     input.dataset.fieldPath = fieldPath;
     input.placeholder = property.placeholder || property.description || '';
+    
+    // Add change listener for collaboration
+    input.addEventListener('input', (e) => {
+      this.handleFieldChange(fieldPath, e.target.value);
+    });
+    
+    // Send cursor update on focus
+    input.addEventListener('focus', () => {
+      if (typeof window.sendCursorUpdate === 'function') {
+        window.sendCursorUpdate(fieldPath);
+      }
+    });
+    
+    // Clear cursor update on blur
+    input.addEventListener('blur', () => {
+      if (typeof window.sendCursorUpdate === 'function') {
+        window.sendCursorUpdate(null);
+      }
+    });
+    
     return input;
   }
 
@@ -196,6 +219,26 @@ class FormGenerator {
     textarea.dataset.fieldPath = fieldPath;
     textarea.placeholder = property.placeholder || property.description || '';
     textarea.rows = 6;
+    
+    // Add change listener for collaboration
+    textarea.addEventListener('input', (e) => {
+      this.handleFieldChange(fieldPath, e.target.value);
+    });
+    
+    // Send cursor update on focus
+    textarea.addEventListener('focus', () => {
+      if (typeof window.sendCursorUpdate === 'function') {
+        window.sendCursorUpdate(fieldPath);
+      }
+    });
+    
+    // Clear cursor update on blur
+    textarea.addEventListener('blur', () => {
+      if (typeof window.sendCursorUpdate === 'function') {
+        window.sendCursorUpdate(null);
+      }
+    });
+    
     return textarea;
   }
 
@@ -205,6 +248,26 @@ class FormGenerator {
     input.className = 'field-input';
     input.value = value !== undefined ? value : '';
     input.dataset.fieldPath = fieldPath;
+    
+    // Add change listener for collaboration
+    input.addEventListener('input', (e) => {
+      const numValue = e.target.value === '' ? null : Number(e.target.value);
+      this.handleFieldChange(fieldPath, numValue);
+    });
+    
+    // Send cursor update on focus
+    input.addEventListener('focus', () => {
+      if (typeof window.sendCursorUpdate === 'function') {
+        window.sendCursorUpdate(fieldPath);
+      }
+    });
+    
+    // Clear cursor update on blur
+    input.addEventListener('blur', () => {
+      if (typeof window.sendCursorUpdate === 'function') {
+        window.sendCursorUpdate(null);
+      }
+    });
     
     if (property.minimum !== undefined) {
       input.min = property.minimum;
@@ -225,6 +288,11 @@ class FormGenerator {
     input.className = 'field-checkbox';
     input.checked = value || false;
     input.dataset.fieldPath = fieldPath;
+    
+    // Add change listener for collaboration
+    input.addEventListener('change', (e) => {
+      this.handleFieldChange(fieldPath, e.target.checked);
+    });
     
     wrapper.appendChild(input);
     return wrapper;
@@ -327,6 +395,161 @@ class FormGenerator {
     if (item.name) return item.name;
     if (item.description) return item.description.substring(0, 50);
     return 'Item';
+  }
+
+  /**
+   * Wrap custom form to provide standard interface
+   */
+  wrapCustomForm(element, fieldPath, property) {
+    // Store reference to the custom form element
+    if (!this.customFormInstances) {
+      this.customFormInstances = new Map();
+    }
+    
+    // Add cursor tracking to all interactive elements in custom form
+    const interactiveElements = element.querySelectorAll('input, select, textarea');
+    interactiveElements.forEach(input => {
+      // Send cursor update on focus
+      input.addEventListener('focus', () => {
+        console.log('[FormGen] Custom form element focused:', fieldPath);
+        if (typeof window.sendCursorUpdate === 'function') {
+          window.sendCursorUpdate(fieldPath);
+        }
+      });
+      
+      // Clear cursor update on blur
+      input.addEventListener('blur', () => {
+        console.log('[FormGen] Custom form element blurred:', fieldPath);
+        if (typeof window.sendCursorUpdate === 'function') {
+          window.sendCursorUpdate(null);
+        }
+      });
+    });
+    
+    // Create a wrapper that provides getValue and setValue methods
+    const customForm = {
+      element: element,
+      fieldPath: fieldPath,
+      
+      // Get current value from the custom form
+      getValue: function() {
+        // Try to find the primary input/select element
+        const select = element.querySelector('select[data-field-path]');
+        if (select && select.value) {
+          try {
+            return JSON.parse(select.value);
+          } catch (e) {
+            return select.value;
+          }
+        }
+        
+        const input = element.querySelector('input[data-field-path]');
+        if (input) {
+          return input.type === 'checkbox' ? input.checked : input.value;
+        }
+        
+        const textarea = element.querySelector('textarea[data-field-path]');
+        if (textarea) {
+          return textarea.value;
+        }
+        
+        return null;
+      },
+      
+      // Set value in the custom form
+      setValue: function(value) {
+        const select = element.querySelector('select[data-field-path]');
+        if (select) {
+          // Find matching option
+          const options = Array.from(select.options);
+          for (let option of options) {
+            try {
+              const optionValue = option.value ? JSON.parse(option.value) : null;
+              if (JSON.stringify(optionValue) === JSON.stringify(value)) {
+                select.value = option.value;
+                // Trigger change event
+                select.dispatchEvent(new Event('change'));
+                return;
+              }
+            } catch (e) {
+              if (option.value === value) {
+                select.value = option.value;
+                select.dispatchEvent(new Event('change'));
+                return;
+              }
+            }
+          }
+        }
+        
+        const input = element.querySelector('input[data-field-path]');
+        if (input) {
+          if (input.type === 'checkbox') {
+            input.checked = value;
+          } else {
+            input.value = value;
+          }
+          input.dispatchEvent(new Event('input'));
+        }
+        
+        const textarea = element.querySelector('textarea[data-field-path]');
+        if (textarea) {
+          textarea.value = value;
+          textarea.dispatchEvent(new Event('input'));
+        }
+      }
+    };
+    
+    // Store the custom form instance
+    this.customFormInstances.set(fieldPath, customForm);
+    
+    // Listen for custom-form-change events and handle them
+    document.addEventListener('custom-form-change', (e) => {
+      if (e.detail.fieldPath === fieldPath) {
+        this.handleFieldChange(fieldPath, e.detail.value);
+      }
+    });
+    
+    return element;
+  }
+
+  /**
+   * Handle field change - update document and send to collaboration
+   */
+  handleFieldChange(fieldPath, value) {
+    console.log('[FormGenerator] Field changed:', fieldPath, value);
+    
+    // Update the document
+    if (typeof currentDocument !== 'undefined' && currentDocument) {
+      const parts = fieldPath.split('.');
+      let obj = currentDocument.data;
+      
+      // Navigate to the parent object
+      for (let i = 0; i < parts.length - 1; i++) {
+        if (!obj[parts[i]]) {
+          obj[parts[i]] = {};
+        }
+        obj = obj[parts[i]];
+      }
+      
+      // Set the value
+      obj[parts[parts.length - 1]] = value;
+      
+      // Mark as modified (check if variable exists in global scope)
+      if (typeof isModified !== 'undefined') {
+        isModified = true;
+      }
+      
+      // Send collaboration update if connected
+      if (typeof window.collaborationClient !== 'undefined' && window.collaborationClient && window.collaborationClient.isConnected()) {
+        const operation = {
+          type: 'set',
+          path: 'data.' + fieldPath,
+          value: value
+        };
+        console.log('[FormGenerator] Sending collaboration update:', operation);
+        window.collaborationClient.sendUpdate(operation);
+      }
+    }
   }
 
   /**

@@ -445,17 +445,21 @@ function renderOutline() {
   titleItem.textContent = currentDocument.data.title || 'Untitled';
   tree.appendChild(titleItem);
   
-  // Add sections
+  // Add sections - show all properties from schema, not just populated ones
   schemaProperties.forEach(prop => {
-    if (currentDocument.data[prop.name]) {
-      const item = document.createElement('div');
-      item.className = 'outline-item outline-section';
-      // Use displayAs if available, otherwise fall back to title or name
-      item.textContent = prop.displayAs || prop.title || prop.name;
-      item.dataset.field = prop.name;
-      item.onclick = () => scrollToField(prop.name);
-      tree.appendChild(item);
+    const item = document.createElement('div');
+    item.className = 'outline-item outline-section';
+    // Use displayAs if available, otherwise fall back to title or name
+    item.textContent = prop.displayAs || prop.title || prop.name;
+    item.dataset.field = prop.name;
+    item.onclick = () => scrollToField(prop.name);
+    
+    // Add visual indicator if field is empty
+    if (!currentDocument.data[prop.name]) {
+      item.classList.add('outline-empty');
     }
+    
+    tree.appendChild(item);
   });
   
   elements.outline.appendChild(tree);
@@ -467,6 +471,16 @@ function scrollToField(fieldName) {
     field.scrollIntoView({ behavior: 'smooth', block: 'start' });
     field.classList.add('highlight');
     setTimeout(() => field.classList.remove('highlight'), 2000);
+    
+    // Send cursor update when navigating via outline
+    if (typeof window.sendCursorUpdate === 'function') {
+      window.sendCursorUpdate(fieldName);
+    }
+    
+    // Focus the field if it's an input
+    if (field.tagName === 'INPUT' || field.tagName === 'TEXTAREA' || field.tagName === 'SELECT') {
+      field.focus();
+    }
   }
 }
 

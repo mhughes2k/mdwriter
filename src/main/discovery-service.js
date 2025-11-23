@@ -28,14 +28,16 @@ class DiscoveryService {
       this.service.stop();
     }
 
-    const { id, port, metadata } = sessionInfo;
+    // Support both 'id' and 'sessionId' properties
+    const sessionId = sessionInfo.sessionId || sessionInfo.id;
+    const { port, metadata } = sessionInfo;
 
     this.service = this.bonjour.publish({
       name: metadata.title || 'MDWriter Session',
       type: 'mdwriter',
       port: port,
       txt: {
-        sessionId: id,
+        sessionId: sessionId,
         hostName: metadata.hostName || os.hostname(),
         documentType: metadata.documentType || 'mdf',
         createdAt: metadata.createdAt || Date.now().toString(),
@@ -43,7 +45,7 @@ class DiscoveryService {
       }
     });
 
-    console.log(`[Discovery] Advertising session ${id} on port ${port}`);
+    console.log(`[Discovery] Advertising session ${sessionId} on port ${port}`);
   }
 
   /**

@@ -121,6 +121,61 @@ async function startHosting() {
       updateStatus(`Hosting session: ${sessionName}`);
       updateCollabStatus('hosting', `Hosting: ${sessionName}`);
       
+      // Host should also connect as a client to send/receive updates
+      try {
+        // Create collaboration client for the host
+        if (!collaborationClient) {
+          collaborationClient = new CollaborationClient();
+          
+          // Setup event handlers
+          collaborationClient.onConnected = async ({ document, version, users, metadata }) => {
+            console.log('[CollabManager] Host connected to own session');
+            // Update current session with users list
+            if (currentCollabSession) {
+              currentCollabSession.users = users;
+            }
+            updateActiveSessionUI();
+          };
+          
+          collaborationClient.onDocumentUpdated = ({ operation, version, userId }) => {
+            console.log('[CollabManager] Document updated by', userId);
+            applyRemoteOperation(operation);
+          };
+          
+          collaborationClient.onUserJoined = (user) => {
+            console.log('[CollabManager] User joined:', user);
+            // Add user to current session
+            if (currentCollabSession && currentCollabSession.users) {
+              currentCollabSession.users.push(user);
+            }
+            updateActiveSessionUI();
+          };
+          
+          collaborationClient.onUserLeft = ({ userId }) => {
+            console.log('[CollabManager] User left:', userId);
+            removeUserPresenceIndicators(userId);
+            updateActiveSessionUI();
+          };
+          
+          collaborationClient.onCursorUpdated = ({ userId, cursor }) => {
+            updateUserPresence(userId, cursor);
+          };
+          
+          collaborationClient.onDisconnected = ({ reason }) => {
+            console.log('[CollabManager] Disconnected:', reason);
+          };
+        }
+        
+        // Connect to own server on localhost
+        await collaborationClient.connect('localhost', result.session.port, result.session.sessionId, {
+          name: userName
+        });
+        
+        console.log('[CollabManager] Host connected as client');
+      } catch (err) {
+        console.error('[CollabManager] Error connecting host as client:', err);
+      }
+      
       switchCollabTab('active');
       updateActiveSessionUI();
     } else {
@@ -200,6 +255,8 @@ async function joinSession(session) {
     alert('Please enter your name');
     return;
   }
+
+  console.log('[CollabManager] Attempting to join session:', session);
   
   try {
     updateStatus('Joining session...');
@@ -209,11 +266,29 @@ async function joinSession(session) {
       collaborationClient = new CollaborationClient();
       
       // Setup event handlers
-      collaborationClient.onConnected = ({ document, version, users, metadata }) => {
+      collaborationClient.onConnected = async ({ document, version, users, metadata }) => {
         console.log('[CollabManager] Connected to session');
-        currentDocument = document;
+        console.log('[CollabManager] Received document:', document);
+        
+        // Update global state (these variables are defined in renderer.js)
+        window.currentDocument = currentDocument = document;
+        window.documentType = documentType = document.metadata.documentType || 'mdf';
         currentCollabSession = { ...session, metadata, users };
-        renderDocument();
+        
+        // Load schema structure before rendering
+        try {
+          console.log('[CollabManager] Loading schema for documentType:', documentType);
+          const structure = await window.electronAPI.getSchemaStructure(documentType);
+          window.schemaProperties = schemaProperties = structure;
+          console.log('[CollabManager] Schema loaded, properties count:', schemaProperties.length);
+          console.log('[CollabManager] Rendering document...');
+          await renderDocument();
+          console.log('[CollabManager] Document rendered');
+        } catch (err) {
+          console.error('[CollabManager] Error loading schema:', err);
+          updateStatus('Error loading document schema');
+        }
+        
         updateActiveSessionUI();
         updateStatus(`Joined session: ${metadata.title}`);
         updateCollabStatus('online', `Connected: ${metadata.title}`);
@@ -225,13 +300,26 @@ async function joinSession(session) {
       };
       
       collaborationClient.onUserJoined = (user) => {
-        console.log('[CollabManager] User joined:', user.name);
+        console.log('[CollabManager] User joined:', user);
+        // Add user to current session
+        if (currentCollabSession && currentCollabSession.users) {
+          currentCollabSession.users.push(user);
+        }
         updateActiveSessionUI();
       };
       
       collaborationClient.onUserLeft = ({ userId }) => {
         console.log('[CollabManager] User left:', userId);
+        // Remove user from current session
+        if (currentCollabSession && currentCollabSession.users) {
+          currentCollabSession.users = currentCollabSession.users.filter(u => u.id !== userId);
+        }
+        removeUserPresenceIndicators(userId);
         updateActiveSessionUI();
+      };
+      
+      collaborationClient.onCursorUpdated = ({ userId, cursor }) => {
+        updateUserPresence(userId, cursor);
       };
       
       collaborationClient.onDisconnected = ({ reason }) => {
@@ -250,7 +338,12 @@ async function joinSession(session) {
     
   } catch (err) {
     console.error('[CollabManager] Error joining session:', err);
-    updateStatus('Failed to join session');
+    console.error('[CollabManager] Error details:', {
+      message: err.message,
+      stack: err.stack,
+      session: session
+    });
+    updateStatus('Failed to join session: ' + err.message);
     alert('Failed to join session: ' + err.message);
   }
 }
@@ -363,23 +456,74 @@ function applyRemoteOperation(operation) {
   // Apply the operation to currentDocument
   // This will be called when another user makes a change
   try {
+    console.log('[CollabManager] Applying remote operation:', operation);
+    
     switch (operation.type) {
       case 'set':
         setValueAtPath(currentDocument, operation.path, operation.value);
+        // Update the UI field directly instead of re-rendering everything
+        updateFieldInUI(operation.path, operation.value);
         break;
       case 'array-insert':
         insertArrayItem(currentDocument, operation.path, operation.value, operation.index);
+        // For arrays, we need to re-render
+        renderDocument();
         break;
       case 'array-remove':
         removeArrayItem(currentDocument, operation.path, operation.index);
+        // For arrays, we need to re-render
+        renderDocument();
         break;
     }
     
-    // Re-render the document
-    renderDocument();
-    
   } catch (err) {
     console.error('[CollabManager] Error applying remote operation:', err);
+  }
+}
+
+function updateFieldInUI(path, value) {
+  // Remove 'data.' prefix if present
+  const fieldPath = path.startsWith('data.') ? path.substring(5) : path;
+  
+  console.log('[CollabManager] Looking for field with path:', fieldPath);
+  
+  // Check if this is a custom form field
+  if (typeof formGenerator !== 'undefined' && formGenerator && formGenerator.customFormInstances) {
+    const customForm = formGenerator.customFormInstances.get(fieldPath);
+    if (customForm) {
+      console.log('[CollabManager] Updating custom form:', fieldPath);
+      customForm.setValue(value);
+      console.log('[CollabManager] Updated custom form field:', fieldPath, 'to value:', value);
+      return;
+    }
+  }
+  
+  // Find the standard input element with this field path
+  let input = document.querySelector(`input[data-field-path="${fieldPath}"]`);
+  if (!input) {
+    input = document.querySelector(`textarea[data-field-path="${fieldPath}"]`);
+  }
+  if (!input) {
+    input = document.querySelector(`select[data-field-path="${fieldPath}"]`);
+  }
+  
+  console.log('[CollabManager] Found input:', input);
+  
+  if (input) {
+    console.log('[CollabManager] Input type:', input.type, 'tagName:', input.tagName);
+    if (input.type === 'checkbox') {
+      input.checked = value;
+    } else if (input.tagName === 'TEXTAREA' || input.type === 'text' || input.type === 'number') {
+      input.value = value || '';
+    } else {
+      input.value = value;
+    }
+    console.log('[CollabManager] Updated field in UI:', fieldPath, 'to value:', value);
+  } else {
+    console.warn('[CollabManager] Could not find input for path:', fieldPath);
+    // Try to list all inputs with data-field-path
+    const allInputs = document.querySelectorAll('input[data-field-path], textarea[data-field-path]');
+    console.log('[CollabManager] Available field paths:', Array.from(allInputs).map(i => i.dataset.fieldPath));
   }
 }
 
@@ -420,8 +564,157 @@ function removeArrayItem(obj, path, index) {
   }
 }
 
+// Track user presence (fieldPath -> Set of userIds)
+const userPresence = new Map();
+
+/**
+ * Update user presence indicator
+ */
+function updateUserPresence(userId, cursor) {
+  console.log('[CollabManager] updateUserPresence called:', { userId, cursor, session: currentCollabSession });
+  
+  if (!cursor || !cursor.fieldPath) {
+    removeUserPresenceIndicators(userId);
+    return;
+  }
+  
+  const user = currentCollabSession?.users?.find(u => u.id === userId);
+  console.log('[CollabManager] Found user:', user);
+  
+  if (!user) {
+    console.warn('[CollabManager] User not found in session. Available users:', currentCollabSession?.users);
+    return;
+  }
+  
+  // Remove old indicators for this user from ALL fields
+  // (user moved from one field to another)
+  removeUserPresenceIndicators(userId);
+  
+  // Add user to presence map for new field
+  if (!userPresence.has(cursor.fieldPath)) {
+    userPresence.set(cursor.fieldPath, new Set());
+  }
+  userPresence.get(cursor.fieldPath).add(userId);
+  
+  // Add field indicator in the editor
+  const fieldPath = cursor.fieldPath;
+  let input = document.querySelector(`input[data-field-path="${fieldPath}"]`);
+  if (!input) input = document.querySelector(`textarea[data-field-path="${fieldPath}"]`);
+  if (!input) input = document.querySelector(`select[data-field-path="${fieldPath}"]`);
+  
+  if (input) {
+    // Add indicator to the field
+    const container = input.closest('.form-field');
+    if (container) {
+      let indicator = container.querySelector('.user-presence-indicator');
+      if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.className = 'user-presence-indicator';
+        container.appendChild(indicator);
+      }
+      
+      // Check if this user already has a badge here (shouldn't happen but just in case)
+      const existingBadge = indicator.querySelector(`[data-user-id="${userId}"]`);
+      if (existingBadge) {
+        existingBadge.remove();
+      }
+      
+      // Add user badge
+      const badge = document.createElement('span');
+      badge.className = 'user-badge';
+      badge.style.backgroundColor = user.color;
+      badge.textContent = user.name.charAt(0).toUpperCase();
+      badge.title = user.name;
+      badge.dataset.userId = userId;
+      indicator.appendChild(badge);
+      
+      // Highlight the input with the user's color
+      // If multiple users are on same field, show the most recent one's color
+      input.style.borderColor = user.color;
+      input.style.borderWidth = '2px';
+      input.dataset.activeUser = userId;
+    }
+  }
+  
+  // Add indicator to document outline/structure
+  const outlineItem = document.querySelector(`.outline-item[data-field="${fieldPath}"]`);
+  if (outlineItem) {
+    let outlineIndicator = outlineItem.querySelector('.user-presence-indicator');
+    if (!outlineIndicator) {
+      outlineIndicator = document.createElement('span');
+      outlineIndicator.className = 'user-presence-indicator outline-presence';
+      outlineItem.appendChild(outlineIndicator);
+    }
+    
+    // Check if this user already has a badge here
+    const existingOutlineBadge = outlineIndicator.querySelector(`[data-user-id="${userId}"]`);
+    if (existingOutlineBadge) {
+      existingOutlineBadge.remove();
+    }
+    
+    // Add user badge to outline
+    const outlineBadge = document.createElement('span');
+    outlineBadge.className = 'user-badge';
+    outlineBadge.style.backgroundColor = user.color;
+    outlineBadge.textContent = user.name.charAt(0).toUpperCase();
+    outlineBadge.title = user.name;
+    outlineBadge.dataset.userId = userId;
+    outlineIndicator.appendChild(outlineBadge);
+  }
+}
+
+/**
+ * Remove all presence indicators for a user
+ */
+function removeUserPresenceIndicators(userId) {
+  // Remove from presence map
+  for (const [fieldPath, users] of userPresence.entries()) {
+    users.delete(userId);
+    if (users.size === 0) {
+      userPresence.delete(fieldPath);
+    }
+  }
+  
+  // Remove badges
+  document.querySelectorAll(`.user-badge[data-user-id="${userId}"]`).forEach(badge => {
+    badge.remove();
+  });
+  
+  // Remove input highlighting
+  document.querySelectorAll(`[data-active-user="${userId}"]`).forEach(input => {
+    input.style.borderColor = '';
+    input.style.borderWidth = '';
+    delete input.dataset.activeUser;
+  });
+  
+  // Clean up empty indicators
+  document.querySelectorAll('.user-presence-indicator').forEach(indicator => {
+    if (indicator.children.length === 0) {
+      indicator.remove();
+    }
+  });
+}
+
+/**
+ * Send cursor update when user focuses on a field
+ */
+function sendCursorUpdate(fieldPath) {
+  if (collaborationClient && collaborationClient.isConnected()) {
+    collaborationClient.sendCursorUpdate({
+      fieldPath: fieldPath,
+      timestamp: Date.now()
+    });
+  }
+}
+
 // Export for use in renderer.js
 if (typeof window !== 'undefined') {
   window.initCollaboration = initCollaboration;
-  window.collaborationClient = collaborationClient;
+  window.sendCursorUpdate = sendCursorUpdate;
+  
+  // Expose collaborationClient getter
+  Object.defineProperty(window, 'collaborationClient', {
+    get: function() { return collaborationClient; },
+    set: function(value) { collaborationClient = value; }
+  });
 }
