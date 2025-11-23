@@ -42,6 +42,7 @@ class DocumentManager {
         created: new Date().toISOString(),
         modified: new Date().toISOString(),
         author: '',
+        renderOrder: null, // null means use default fieldOrder
         comments: [],
         sharedWith: [],
         editHistory: []
@@ -90,6 +91,7 @@ class DocumentManager {
             created: new Date().toISOString(),
             modified: new Date().toISOString(),
             author: '',
+            renderOrder: null,
             comments: [],
             sharedWith: [],
             editHistory: []

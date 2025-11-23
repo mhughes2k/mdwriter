@@ -5,6 +5,8 @@
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
+    "postinstall": "npm run copy-marked",
+    "copy-marked": "cp node_modules/marked/marked.min.js src/renderer/marked.min.js || echo 'Marked not installed yet'",
     "build": "electron-builder",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
@@ -55,6 +57,7 @@
   "dependencies": {
     "ajv": "^8.17.1",
     "ajv-errors": "^3.0.0",
-    "ajv-formats": "^3.0.1"
+    "ajv-formats": "^3.0.1",
+    "marked": "^12.0.0"
   }
 }

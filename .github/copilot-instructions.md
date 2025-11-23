@@ -16,24 +16,46 @@ MDWriter is an **ElectronJS-based, cross-platform structured writing application
 ```
 src/
   main/main.js          - Main process: window management, IPC handlers, file operations
+  main/schema-loader.js - Dynamic document type loader and schema resolver
+  main/document-manager.js - Document CRUD operations and validation
   preload/preload.js    - Secure IPC bridge via contextBridge (no node APIs exposed)
   renderer/
     index.html          - Main UI structure (toolbar, sidebar, editor, properties panel)
     styles.css          - Word processor-style interface styling
-    renderer.js         - Renderer logic for document editing
+    renderer.js         - Renderer logic for document editing, type selection
+    form-generator.js   - Schema-driven form generation
 models/
-  mdf/                  - Module Descriptor Format document type
+  <type>/               - Each document type in separate directory
+    <type>.json         - Metadata (category, icon, extensions, entrypoint)
     json-schema/        - JSON schemas defining document structure
-    mdf.json            - Metadata (description, extensions, entrypoint schema)
+    forms/              - Optional custom form editors (advanced fields)
+docs/
+  DOCUMENT-TYPES.md     - Guide for adding new document types
+  SCHEMA-DRIVEN-ARCHITECTURE.md - Core architectural principles
 ```
 
 ## Architecture Principles
 
-### Document Type System
-- Each document type lives in `models/<type>/` with metadata file `<type>.json`
-- Metadata includes: `description`, `extensions` array, `entrypoint` (schema filename)
-- JSON schemas in `models/<type>/json-schema/` define the document structure
-- Application reads schemas at runtime to enforce structure and validation
+### Multi-Document Type System
+- **Extensible**: Add new types without code changes - just add `models/<type>/` directory
+- **Searchable UI**: Category-based list with search/filter (scales to 50+ types)
+- **Recently Used**: Tracks last 5 document types in localStorage
+- Each type has: `category`, `icon` (emoji), `description`, `extensions`, `entrypoint` schema
+- Dynamic file dialogs: Build filters from registered document types at runtime
+- See `docs/DOCUMENT-TYPES.md` for complete guide
+
+### Document Type Metadata (`<type>.json`)
+Required fields:
+- `description` - Human-readable name shown in UI
+- `category` - Group name (Academic, Product Management, Technical, etc.)
+- `icon` - Single emoji character for visual identification
+- `extensions` - Array of file extensions for save/open dialogs
+- `entrypoint` - Main JSON schema filename
+
+Optional fields:
+- `fieldOrder` - Custom property display order
+- `uiHints` - Field labels and input types
+- `customForms` - Advanced editors for complex fields
 
 ### File Format vs Export Format
 - **File format**: Custom JSON with document data + app metadata (comments, edit history, sharing info)
@@ -92,16 +114,43 @@ When implementing schema operations:
 
 ### UI State Management
 - `currentDocument` holds active document data
-- `documentType` determines which schema to use (currently hardcoded to 'mdf')
+- `documentType` determined from document metadata or user selection
 - Status bar updates provide user feedback for all operations
+- Recently used types tracked in localStorage for quick access
+
+## Adding New Document Types
+
+**Zero code changes required** - follow this pattern:
+
+1. Create `models/newtype/newtype.json`:
+```json
+{
+  "description": "Display Name",
+  "category": "Category Name",
+  "icon": "📋",
+  "extensions": ["ext"],
+  "entrypoint": "newtype.schema.json"
+}
+```
+
+2. Create `models/newtype/json-schema/newtype.schema.json` (JSON Schema Draft 7)
+
+3. Restart app - type appears automatically in categorized list
+
+4. Users can search/filter by name, category, or extension
+
+**Example document types:** MDF (Module Descriptor), PR/FAQ (Product Planning)
 
 ## Next Implementation Priorities
-1. **File dialogs** - Implement native open/save dialogs for document operations
-2. **Schema validation** - Add JSON schema validator library (e.g., Ajv)
-3. **Dynamic section UI** - Generate form fields from schema properties
-4. **Export functionality** - Strip app metadata for clean JSON export
+1. **Custom form editors** - Build specialized UIs for complex array/object types
+2. **Collaboration features** - Multi-user editing with role-based access
+3. **Export templates** - Custom output formats (PDF, Markdown, etc.)
+4. **Version control** - Track document changes and allow rollback
 
 ## Reference Files
 - `SPECIFICATION.md` - Full requirements and architecture decisions
-- `models/mdf/json-schema/module-descriptor-full.schema.json` - Primary MDF schema
-- `src/main/main.js` - All IPC handler stubs to implement
+- `docs/DOCUMENT-TYPES.md` - Guide for adding new document types
+- `docs/SCHEMA-DRIVEN-ARCHITECTURE.md` - Core architectural principles
+- `models/mdf/json-schema/module-descriptor.schema.json` - Example MDF schema
+- `models/prfaq/json-schema/prfaq.schema.json` - Example PR/FAQ schema
+- `src/main/main.js` - All IPC handler implementations

@@ -815,8 +815,275 @@ document.querySelectorAll('.panel-tab').forEach(tab => {
     // Update active panel
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.getElementById(`${tabName}-panel`).classList.add('active');
+    
+    // If switching to output tab, render preview
+    if (tabName === 'output') {
+      renderDocumentPreview();
+    }
   });
 });
+
+// Output panel controls
+document.getElementById('reset-render-order')?.addEventListener('click', resetRenderOrder);
+document.getElementById('export-preview')?.addEventListener('click', exportPreviewHTML);
+
+function getRenderOrder() {
+  // Get render order from document metadata, or fall back to fieldOrder
+  if (currentDocument?.metadata?.renderOrder && Array.isArray(currentDocument.metadata.renderOrder)) {
+    return currentDocument.metadata.renderOrder;
+  }
+  
+  // Get document type metadata
+  const docTypeMeta = schemaProperties; // Already has ordered properties
+  if (!docTypeMeta) return [];
+  
+  return docTypeMeta.map(p => p.name);
+}
+
+function updateRenderOrderList() {
+  const container = document.getElementById('render-order-list');
+  if (!container || !schemaProperties) return;
+  
+  const renderOrder = getRenderOrder();
+  
+  container.innerHTML = renderOrder.map(fieldName => {
+    const prop = schemaProperties.find(p => p.name === fieldName);
+    const displayName = prop?.displayAs || prop?.title || fieldName;
+    
+    return `
+      <div class="render-order-item" draggable="true" data-field="${fieldName}">
+        <span class="drag-handle">☰</span>
+        <span class="field-name">${displayName}</span>
+        <span class="field-key">${fieldName}</span>
+      </div>
+    `;
+  }).join('');
+  
+  // Setup drag and drop
+  setupRenderOrderDragDrop();
+}
+
+function setupRenderOrderDragDrop() {
+  const container = document.getElementById('render-order-list');
+  if (!container) return;
+  
+  let draggedItem = null;
+  
+  container.querySelectorAll('.render-order-item').forEach(item => {
+    item.addEventListener('dragstart', (e) => {
+      draggedItem = item;
+      item.classList.add('dragging');
+    });
+    
+    item.addEventListener('dragend', (e) => {
+      item.classList.remove('dragging');
+      draggedItem = null;
+    });
+    
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      const afterElement = getDragAfterElement(container, e.clientY);
+      if (afterElement == null) {
+        container.appendChild(draggedItem);
+      } else {
+        container.insertBefore(draggedItem, afterElement);
+      }
+    });
+  });
+  
+  container.addEventListener('drop', (e) => {
+    e.preventDefault();
+    saveRenderOrder();
+  });
+}
+
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.render-order-item:not(.dragging)')];
+  
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function saveRenderOrder() {
+  if (!currentDocument) return;
+  
+  const container = document.getElementById('render-order-list');
+  const items = container.querySelectorAll('.render-order-item');
+  const newOrder = Array.from(items).map(item => item.dataset.field);
+  
+  currentDocument.metadata.renderOrder = newOrder;
+  isModified = true;
+  
+  // Re-render preview with new order
+  renderDocumentPreview();
+}
+
+function resetRenderOrder() {
+  if (!currentDocument) return;
+  
+  currentDocument.metadata.renderOrder = null;
+  isModified = true;
+  
+  updateRenderOrderList();
+  renderDocumentPreview();
+}
+
+function renderDocumentPreview() {
+  const previewContainer = document.getElementById('document-preview');
+  if (!previewContainer || !currentDocument || !schemaProperties) {
+    return;
+  }
+  
+  updateRenderOrderList();
+  
+  const renderOrder = getRenderOrder();
+  const markdown = window.markdownEditor;
+  
+  if (!markdown) {
+    previewContainer.innerHTML = '<p class="error">Markdown renderer not loaded</p>';
+    return;
+  }
+  
+  let html = '';
+  
+  // Render title if exists
+  if (currentDocument.data.title) {
+    html += `<h1 class="doc-title">${escapeHtml(currentDocument.data.title)}</h1>`;
+  }
+  
+  // Render fields in order
+  renderOrder.forEach(fieldName => {
+    const prop = schemaProperties.find(p => p.name === fieldName);
+    const value = currentDocument.data[fieldName];
+    
+    if (!value || !prop) return;
+    
+    const displayName = prop.displayAs || prop.title || fieldName;
+    
+    // Skip title since we already rendered it
+    if (fieldName === 'title') return;
+    
+    // Render section
+    if (prop.type === 'string') {
+      html += `<div class="preview-section">`;
+      html += `<h2 class="section-title">${displayName}</h2>`;
+      html += `<div class="section-content">${markdown.renderMarkdown(value)}</div>`;
+      html += `</div>`;
+    } else if (prop.type === 'array' && Array.isArray(value)) {
+      html += `<div class="preview-section">`;
+      html += `<h2 class="section-title">${displayName}</h2>`;
+      html += `<div class="section-content">`;
+      
+      if (value.length === 0) {
+        html += '<p><em>None</em></p>';
+      } else {
+        value.forEach((item, index) => {
+          if (typeof item === 'string') {
+            html += `<div class="array-item">${markdown.renderMarkdown(item)}</div>`;
+          } else if (typeof item === 'object') {
+            html += `<div class="array-item">`;
+            html += renderObject(item, markdown);
+            html += `</div>`;
+          }
+        });
+      }
+      
+      html += `</div></div>`;
+    } else if (prop.type === 'object' && typeof value === 'object') {
+      html += `<div class="preview-section">`;
+      html += `<h2 class="section-title">${displayName}</h2>`;
+      html += `<div class="section-content">`;
+      html += renderObject(value, markdown);
+      html += `</div></div>`;
+    }
+  });
+  
+  previewContainer.innerHTML = html || '<p class="placeholder">No content to preview</p>';
+}
+
+function renderObject(obj, markdown) {
+  let html = '<div class="object-preview">';
+  
+  Object.keys(obj).forEach(key => {
+    const value = obj[key];
+    html += `<div class="object-field">`;
+    html += `<span class="object-key">${escapeHtml(key)}:</span> `;
+    
+    if (typeof value === 'string') {
+      html += `<span class="object-value">${markdown.renderMarkdown(value)}</span>`;
+    } else if (Array.isArray(value)) {
+      html += `<span class="object-value">${escapeHtml(JSON.stringify(value))}</span>`;
+    } else if (typeof value === 'object') {
+      html += renderObject(value, markdown);
+    } else {
+      html += `<span class="object-value">${escapeHtml(String(value))}</span>`;
+    }
+    
+    html += `</div>`;
+  });
+  
+  html += '</div>';
+  return html;
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+async function exportPreviewHTML() {
+  if (!currentDocument) {
+    alert('No document to export');
+    return;
+  }
+  
+  const previewContainer = document.getElementById('document-preview');
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(currentDocument.data.title || 'Document')}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; line-height: 1.6; }
+    h1 { border-bottom: 2px solid #333; padding-bottom: 10px; }
+    h2 { margin-top: 30px; color: #333; }
+    table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+    th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+    th { background: #f5f5f5; font-weight: 600; }
+    code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+    pre { background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 20px 0; padding-left: 16px; color: #666; }
+  </style>
+</head>
+<body>
+${previewContainer.innerHTML}
+</body>
+</html>
+  `;
+  
+  // Save to file
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${currentDocument.data.title || 'document'}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  
+  updateStatus('Preview exported to HTML');
+}
 
 // Expose functions and state for main process to call
 window.saveDocument = saveDocument;
@@ -826,3 +1093,4 @@ Object.defineProperty(window, 'isModified', {
 
 // Initialize
 updateStatus('Ready');
+

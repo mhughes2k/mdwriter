@@ -52,6 +52,7 @@
         <div class="panel-tabs">
           <button class="panel-tab active" data-tab="validation">Validation</button>
           <button class="panel-tab" data-tab="metadata">Document Info</button>
+          <button class="panel-tab" data-tab="output">Output</button>
         </div>
         
         <div class="panel-content">
@@ -88,6 +89,28 @@
               </div>
             </div>
           </div>
+          
+          <div id="output-panel" class="tab-panel">
+            <div class="output-controls">
+              <h4>Preview Settings</h4>
+              <div class="field-order-list">
+                <p class="hint">Drag to reorder fields in preview</p>
+                <div id="render-order-list" class="sortable-list">
+                  <!-- Populated dynamically -->
+                </div>
+                <button id="reset-render-order" class="btn-secondary btn-small">Reset to Default</button>
+              </div>
+            </div>
+            <div class="output-preview">
+              <div class="output-header">
+                <h4>Document Preview</h4>
+                <button id="export-preview" class="btn-secondary btn-small">Export HTML</button>
+              </div>
+              <div id="document-preview" class="markdown-rendered">
+                <p class="placeholder">No document loaded</p>
+              </div>
+            </div>
+          </div>
         </div>
       </aside>
     </div>
@@ -98,6 +121,8 @@
     </footer>
   </div>
 
+  <script src="marked.min.js"></script>
+  <script src="markdown-editor.js"></script>
   <script src="form-generator.js"></script>
   <script src="renderer.js"></script>
 </body>

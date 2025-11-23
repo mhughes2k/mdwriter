@@ -10,13 +10,20 @@
     "fieldOrder": [
         "title",
         "product",
-        "pressRelease",
-        "faq"
+        "heading",
+        "subtitle",
+        "problem",
+        "solution",
+        "customerQuote",
+        "howItWorks",
+        "closingQuote",
+        "faq",
+        "metadata"
     ],
     "uiHints": {
-        "pressRelease": {
-            "displayAs": "Press Release",
-            "displayType": "textarea"
+        "heading": {
+            "displayAs": "Press Release Heading",
+            "displayType": "text"
         },
         "subtitle": {
             "displayAs": "Subtitle/Tagline",
