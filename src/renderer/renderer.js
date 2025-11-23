@@ -149,7 +149,7 @@ async function openDocument() {
 async function saveDocument() {
   if (!currentDocument) {
     updateStatus('No document to save');
-    return;
+    return false;
   }
 
   if (!currentFilePath) {
@@ -168,7 +168,7 @@ async function saveDocument() {
       const proceed = confirm(`Document has ${validation.errors.length} validation errors. Save anyway?`);
       if (!proceed) {
         updateStatus('Save cancelled');
-        return;
+        return false;
       }
       showLoadingIndicator('Saving document...');
     }
@@ -180,12 +180,15 @@ async function saveDocument() {
     if (result.success) {
       isModified = false;
       updateStatus('Document saved successfully');
+      return true;
     } else {
       updateStatus('Error saving: ' + result.error);
+      return false;
     }
   } catch (err) {
     hideLoadingIndicator();
     updateStatus('Error saving document: ' + err.message);
+    return false;
   }
 }
 
@@ -490,6 +493,7 @@ async function handleFieldChange(input, isCustomForm = false) {
     if (result.success) {
       currentDocument = result.document;
       isModified = true;
+      console.log('[Renderer] Field changed, isModified set to:', isModified);
       renderOutline();
       
       // Validate after change (debounced)
@@ -595,6 +599,17 @@ document.querySelectorAll('.panel-tab').forEach(tab => {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.getElementById(`${tabName}-panel`).classList.add('active');
   });
+});
+
+// Expose functions for main process to call
+window.saveDocument = saveDocument;
+
+// Debug: expose isModified for checking
+Object.defineProperty(window, 'isModified', {
+  get: () => {
+    console.log('[Renderer] isModified checked, current value:', isModified);
+    return isModified;
+  }
 });
 
 // Initialize
