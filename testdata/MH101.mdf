@@ -1,0 +1,103 @@
+{
+  "filePath": "E:\\dev\\mdwriter\\testdata\\MH101.mdf",
+  "metadata": {
+    "version": "1.0",
+    "documentType": "mdf",
+    "created": "2025-11-22T22:33:35.521Z",
+    "modified": "2025-11-23T01:02:50.317Z",
+    "author": "",
+    "comments": [],
+    "sharedWith": [],
+    "editHistory": [
+      {
+        "timestamp": "2025-11-22T22:35:03.986Z",
+        "action": "save"
+      },
+      {
+        "timestamp": "2025-11-22T22:37:31.794Z",
+        "action": "save"
+      },
+      {
+        "timestamp": "2025-11-22T23:29:45.624Z",
+        "action": "save"
+      },
+      {
+        "timestamp": "2025-11-22T23:30:33.261Z",
+        "action": "save"
+      },
+      {
+        "timestamp": "2025-11-22T23:32:25.120Z",
+        "action": "save"
+      },
+      {
+        "timestamp": "2025-11-22T23:47:26.006Z",
+        "action": "save"
+      },
+      {
+        "timestamp": "2025-11-23T01:02:50.317Z",
+        "action": "save"
+      }
+    ]
+  },
+  "data": {
+    "id": "MH101",
+    "title": "MH101",
+    "department": "Department of Michael Hughes",
+    "description": "An introduction to Michael Hughes",
+    "credits": 20,
+    "level": {
+      "scqflevel": 12,
+      "sqaqualification": "Professional Development Award",
+      "qheiqualification": "Doctoral Degree",
+      "apprenticeshipsvqlevel": "Professional Apprenticeship"
+    },
+    "workflow": [],
+    "assessmentmethods": [],
+    "staff": [
+      {
+        "name": "Michael Hughes",
+        "role": "Organiser"
+      }
+    ],
+    "format": [
+      {
+        "name": "Lectures",
+        "hours": 40
+      },
+      {
+        "name": "Coursework",
+        "hours": 20
+      }
+    ],
+    "learningoutcomes": [
+      {
+        "description": "Teach about Michael",
+        "assessmentcriteria": [
+          "Learn his birthday",
+          "Spell his name"
+        ]
+      }
+    ],
+    "resitmethods": [
+      {
+        "description": "",
+        "type": "Examination",
+        "occurence": "",
+        "duration": 0,
+        "weighting": 100
+      }
+    ],
+    "readinglist": [
+      {
+        "title": "The Life of Michael",
+        "authors": "Michael Hughes",
+        "edition": "1st",
+        "year": "",
+        "publisher": "",
+        "isbn": "",
+        "link": "https://www.phnx.org.uk/",
+        "recommendation": "Purchase Recommended"
+      }
+    ]
+  }
+}

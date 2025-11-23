@@ -1,0 +1,40 @@
+{
+  "id": "MH101",
+  "title": "MH101",
+  "department": "Department of Michael Hughes",
+  "description": "An introduction to Michael Hughes",
+  "credits": 20,
+  "level": {
+    "scqflevel": 12,
+    "sqaqualification": "Professional Development Award",
+    "qheiqualification": "Doctoral Degree",
+    "apprenticeshipsvqlevel": "Professional Apprenticeship"
+  },
+  "workflow": [],
+  "assessmentmethods": [],
+  "staff": [
+    {
+      "name": "Michael Hughes",
+      "role": "Organiser"
+    }
+  ],
+  "format": [
+    {
+      "name": "Lectures",
+      "hours": 40
+    },
+    {
+      "name": "Coursework",
+      "hours": 20
+    }
+  ],
+  "learningoutcomes": [
+    {
+      "description": "Teach about Michael",
+      "assessmentcriteria": [
+        "Learn his birthday",
+        "Spell his name"
+      ]
+    }
+  ]
+}
