@@ -1,0 +1,46 @@
+{
+    "description": "PR/FAQ (Press Release / Frequently Asked Questions) Document",
+    "category": "Product Management",
+    "icon": "📄",
+    "extensions": [
+        "prfaq",
+        "prfaq.json"
+    ],
+    "entrypoint": "prfaq.schema.json",
+    "fieldOrder": [
+        "title",
+        "product",
+        "pressRelease",
+        "faq"
+    ],
+    "uiHints": {
+        "pressRelease": {
+            "displayAs": "Press Release",
+            "displayType": "textarea"
+        },
+        "subtitle": {
+            "displayAs": "Subtitle/Tagline",
+            "displayType": "text"
+        },
+        "problem": {
+            "displayAs": "Problem Statement",
+            "displayType": "textarea"
+        },
+        "solution": {
+            "displayAs": "Solution Description",
+            "displayType": "textarea"
+        },
+        "customerQuote": {
+            "displayAs": "Customer Quote",
+            "displayType": "textarea"
+        },
+        "howItWorks": {
+            "displayAs": "How It Works",
+            "displayType": "textarea"
+        },
+        "closingQuote": {
+            "displayAs": "Closing Quote (Executive/Team)",
+            "displayType": "textarea"
+        }
+    }
+}

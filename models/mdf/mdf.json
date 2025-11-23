@@ -1,5 +1,7 @@
 {
     "description": "Module Descriptor Schema",
+    "category": "Academic",
+    "icon": "📘",
     "extensions": [
         "mdf",
         "module"

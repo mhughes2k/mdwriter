@@ -69,10 +69,228 @@ document.addEventListener('custom-form-change', async (e) => {
   await handleFieldChange({ dataset: { fieldPath: e.detail.fieldPath }, value: e.detail.value }, true);
 });
 
+async function showDocumentTypeDialog() {
+  // Get available document types
+  const documentTypes = await window.electronAPI.getDocumentTypes();
+  
+  if (documentTypes.length === 0) {
+    alert('No document types available');
+    return null;
+  }
+  
+  // Get recently used types from localStorage
+  const recentTypes = JSON.parse(localStorage.getItem('recentDocumentTypes') || '[]');
+  
+  // Group by category
+  const categorized = {};
+  const recentDocs = [];
+  
+  documentTypes.forEach(type => {
+    const category = type.category || 'Other';
+    if (!categorized[category]) {
+      categorized[category] = [];
+    }
+    categorized[category].push(type);
+    
+    // Add to recent if in recent list
+    if (recentTypes.includes(type.name)) {
+      recentDocs.push(type);
+    }
+  });
+  
+  // Sort recent docs by recency
+  recentDocs.sort((a, b) => recentTypes.indexOf(a.name) - recentTypes.indexOf(b.name));
+  
+  // Create modal dialog
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-dialog document-type-dialog">
+      <div class="modal-header">
+        <h2>Create New Document</h2>
+        <button class="modal-close" data-action="close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="search-box">
+          <input type="text" id="doc-type-search" placeholder="Search document types..." autocomplete="off">
+          <span class="search-icon">🔍</span>
+        </div>
+        <div class="document-type-list-view">
+          ${recentDocs.length > 0 ? `
+            <div class="type-category" data-category="recent">
+              <div class="category-header">
+                <span class="category-toggle">▼</span>
+                <span class="category-name">Recently Used</span>
+              </div>
+              <div class="category-items">
+                ${recentDocs.map(type => createTypeListItem(type)).join('')}
+              </div>
+            </div>
+          ` : ''}
+          ${Object.keys(categorized).sort().map(category => `
+            <div class="type-category" data-category="${category}">
+              <div class="category-header">
+                <span class="category-toggle">▼</span>
+                <span class="category-name">${category}</span>
+              </div>
+              <div class="category-items">
+                ${categorized[category].map(type => createTypeListItem(type)).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" data-action="close">Cancel</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Focus search input
+  const searchInput = modal.querySelector('#doc-type-search');
+  searchInput.focus();
+  
+  // Setup search functionality
+  setupDocumentTypeSearch(modal, documentTypes);
+  
+  // Setup category toggle
+  modal.querySelectorAll('.category-header').forEach(header => {
+    header.addEventListener('click', (e) => {
+      const category = e.currentTarget.closest('.type-category');
+      category.classList.toggle('collapsed');
+      const toggle = category.querySelector('.category-toggle');
+      toggle.textContent = category.classList.contains('collapsed') ? '▶' : '▼';
+    });
+  });
+  
+  // Return promise that resolves when user selects a type
+  return new Promise((resolve) => {
+    modal.querySelectorAll('.type-list-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const selectedType = item.dataset.type;
+        
+        // Save to recent types
+        saveRecentDocumentType(selectedType);
+        
+        modal.remove();
+        resolve(selectedType);
+      });
+    });
+    
+    // Close handlers
+    modal.querySelectorAll('[data-action="close"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        modal.remove();
+        resolve(null);
+      });
+    });
+    
+    // Keyboard navigation
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const firstVisible = modal.querySelector('.type-list-item:not(.hidden)');
+        if (firstVisible) {
+          firstVisible.click();
+        }
+      } else if (e.key === 'Escape') {
+        modal.remove();
+        resolve(null);
+      }
+    });
+  });
+}
+
+function createTypeListItem(type) {
+  const icon = type.icon || '📝';
+  const extensions = type.extensions.join(', ');
+  return `
+    <div class="type-list-item" data-type="${type.name}" data-search="${type.name} ${type.description} ${extensions}">
+      <span class="type-icon">${icon}</span>
+      <div class="type-info">
+        <div class="type-title">${type.description || type.name}</div>
+        <div class="type-meta">${extensions}</div>
+      </div>
+    </div>
+  `;
+}
+
+function setupDocumentTypeSearch(modal, documentTypes) {
+  const searchInput = modal.querySelector('#doc-type-search');
+  const items = modal.querySelectorAll('.type-list-item');
+  
+  searchInput.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    
+    if (!query) {
+      // Show all items
+      items.forEach(item => item.classList.remove('hidden'));
+      modal.querySelectorAll('.type-category').forEach(cat => cat.classList.remove('hidden'));
+      return;
+    }
+    
+    // Filter items
+    let hasVisibleItems = {};
+    items.forEach(item => {
+      const searchText = item.dataset.search.toLowerCase();
+      const matches = searchText.includes(query);
+      item.classList.toggle('hidden', !matches);
+      
+      // Track which categories have visible items
+      const category = item.closest('.type-category').dataset.category;
+      if (matches) {
+        hasVisibleItems[category] = true;
+      }
+    });
+    
+    // Hide empty categories
+    modal.querySelectorAll('.type-category').forEach(cat => {
+      const category = cat.dataset.category;
+      cat.classList.toggle('hidden', !hasVisibleItems[category]);
+    });
+  });
+}
+
+function saveRecentDocumentType(typeName) {
+  let recent = JSON.parse(localStorage.getItem('recentDocumentTypes') || '[]');
+  
+  // Remove if already exists
+  recent = recent.filter(t => t !== typeName);
+  
+  // Add to front
+  recent.unshift(typeName);
+  
+  // Keep only last 5
+  recent = recent.slice(0, 5);
+  
+  localStorage.setItem('recentDocumentTypes', JSON.stringify(recent));
+}
+
+function getDocumentTypeIcon(typeName) {
+  const icons = {
+    'mdf': '📘',
+    'prfaq': '📄',
+    'default': '📝'
+  };
+  return icons[typeName] || icons.default;
+}
+
 async function createNewDocument() {
-  updateStatus('Creating new document...');
+  updateStatus('Select document type...');
   
   try {
+    // Show document type selection dialog
+    const selectedType = await showDocumentTypeDialog();
+    
+    if (!selectedType) {
+      updateStatus('Cancelled');
+      return;
+    }
+    
+    documentType = selectedType;
+    updateStatus('Creating new document...');
+    
     const result = await window.electronAPI.createNewDocument(documentType);
     
     if (result.success) {

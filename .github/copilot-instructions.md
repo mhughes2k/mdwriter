@@ -9,6 +9,9 @@ MDWriter is an **ElectronJS-based, cross-platform structured writing application
 - **Target Platforms**: Windows (NSIS + portable), macOS (DMG), Linux (AppImage + deb)
 - **UI**: Pure HTML/CSS/JavaScript with Word processor-inspired interface
 
+### Node
+- Remember to load the **LTS** version of node via NPM prior to running any npm related commands. NVM is not always set up correctly due to the impact on shell configuration resolution time in VSCode. 
+
 ## Project Structure
 ```
 src/

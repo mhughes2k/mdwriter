@@ -16,21 +16,25 @@
     "module-descriptor",
     "structured-writing"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Michael Hughes",
+  "license": "UNLICENSED",
+  "private": true,
   "devDependencies": {
     "electron": "^28.0.0",
-    "electron-builder": "^24.9.1"
+    "electron-builder": "^26.0.12"
   },
   "build": {
     "appId": "com.mdwriter.app",
     "productName": "MDWriter",
+    "copyright": "Copyright © 2025 Phoenix Productions. All rights reserved.",
     "directories": {
       "output": "dist"
     },
     "files": [
       "src/**/*",
-      "models/**/*"
+      "models/**/*",
+      "LICENSE.md",
+      "docs/LICENSES.md"
     ],
     "win": {
       "target": [

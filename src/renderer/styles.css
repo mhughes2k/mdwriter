@@ -815,3 +815,267 @@ body {
   color: #856404;
 }
 
+/* Modal Dialog */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-dialog {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  min-width: 400px;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Document Type Selection Dialog */
+.document-type-dialog {
+  min-width: 500px;
+  max-width: 600px;
+  max-height: 80vh;
+}
+
+.search-box {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 40px 10px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-box input:focus {
+  border-color: #0066cc;
+}
+
+.search-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.document-type-list-view {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.type-category {
+  margin-bottom: 12px;
+}
+
+.type-category.hidden {
+  display: none;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 4px;
+  transition: background 0.2s;
+}
+
+.category-header:hover {
+  background: #e8e8e8;
+}
+
+.category-toggle {
+  font-size: 12px;
+  color: #666;
+  transition: transform 0.2s;
+  width: 12px;
+}
+
+.category-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #333;
+}
+
+.type-category.collapsed .category-items {
+  display: none;
+}
+
+.category-items {
+  padding-left: 8px;
+}
+
+.type-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.type-list-item.hidden {
+  display: none;
+}
+
+.type-list-item:hover {
+  border-color: #0066cc;
+  background: #f8f9fa;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
+}
+
+.type-list-item:active {
+  transform: translateX(2px);
+}
+
+.type-list-item .type-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.type-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.type-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.type-meta {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+}
+
+/* Scrollbar styling for list */
+.document-type-list-view::-webkit-scrollbar {
+  width: 8px;
+}
+
+.document-type-list-view::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.document-type-list-view::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.document-type-list-view::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+.btn-secondary {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+}
+
+.btn-secondary:active {
+  background: #e0e0e0;
+}
+

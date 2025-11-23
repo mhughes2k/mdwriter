@@ -1,0 +1,101 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://mdwriter.app/schemas/prfaq",
+    "title": "PR/FAQ Document",
+    "description": "Amazon-style Press Release and Frequently Asked Questions document for product proposals",
+    "type": "object",
+    "properties": {
+        "title": {
+            "description": "Product/Feature Name",
+            "type": "string"
+        },
+        "product": {
+            "description": "Product or team name",
+            "type": "string"
+        },
+        "pressRelease": {
+            "description": "The press release section",
+            "type": "object",
+            "properties": {
+                "heading": {
+                    "description": "Press release heading (product name)",
+                    "type": "string"
+                },
+                "subtitle": {
+                    "description": "One-sentence description under the heading",
+                    "type": "string"
+                },
+                "problem": {
+                    "description": "What customer problem does this solve?",
+                    "type": "string"
+                },
+                "solution": {
+                    "description": "How does the product solve this problem?",
+                    "type": "string"
+                },
+                "customerQuote": {
+                    "description": "Quote from a hypothetical customer",
+                    "type": "string"
+                },
+                "howItWorks": {
+                    "description": "Brief description of how to get started",
+                    "type": "string"
+                },
+                "closingQuote": {
+                    "description": "Quote from company executive or team leader",
+                    "type": "string"
+                }
+            },
+            "required": ["heading", "problem", "solution"]
+        },
+        "faq": {
+            "description": "Frequently asked questions",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "question": {
+                        "description": "The question",
+                        "type": "string"
+                    },
+                    "answer": {
+                        "description": "The answer",
+                        "type": "string"
+                    },
+                    "category": {
+                        "description": "Question category (e.g., Customer, Technical, Business)",
+                        "type": "string",
+                        "enum": ["Customer", "Technical", "Business", "Internal", "External"]
+                    }
+                },
+                "required": ["question", "answer"]
+            }
+        },
+        "metadata": {
+            "description": "Document metadata",
+            "type": "object",
+            "properties": {
+                "author": {
+                    "description": "Document author",
+                    "type": "string"
+                },
+                "date": {
+                    "description": "Creation/last modified date",
+                    "type": "string",
+                    "format": "date"
+                },
+                "version": {
+                    "description": "Document version",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Document status",
+                    "type": "string",
+                    "enum": ["Draft", "In Review", "Approved", "Archived"]
+                }
+            }
+        }
+    },
+    "required": ["title", "product", "pressRelease"],
+    "additionalProperties": false
+}
