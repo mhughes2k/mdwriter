@@ -29,7 +29,10 @@
     - [x] Visual indicator for empty fields
     - [x] Click to navigate and send cursor updates
 - [x] Cancel dialog spinner fix (loading indicator now properly hidden on cancel)
-- [] A "close" document option is required. This should close the current document (including checking for any persistence) and re-establish the window as if it was opening for the first time.
+- [x] A "close" document option is required. This should close the current document (including checking for any persistence) and re-establish the window as if it was opening for the first time.
+- [x] Dirty state tracking with visual indicator
+- [] User interface around a "toolbar" is inconsistent, and should be updated with some sort of framework type mechanism to allow for easier management of toolbar items. 
+- [] User interface menus are somewhat lacking.
 
 ## File Format & Persistence
 - [x] Basic .mdf file format with document data and metadata

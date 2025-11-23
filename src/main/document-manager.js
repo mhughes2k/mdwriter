@@ -243,6 +243,83 @@ class DocumentManager {
     
     return document;
   }
+
+  /**
+   * Infer document type by validating against all registered types
+   */
+  async inferDocumentType(jsonData) {
+    // Try to validate against each registered document type
+    for (const [typeName, docType] of this.schemaLoader.documentTypes) {
+      try {
+        const validation = await this.schemaLoader.validate(typeName, jsonData);
+        if (validation.valid) {
+          console.log(`[DocManager] Inferred document type: ${typeName}`);
+          return typeName;
+        }
+      } catch (err) {
+        // Continue to next type if validation fails
+        continue;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Import clean JSON data into a new or existing document
+   */
+  async importCleanJSON(filePath, existingDocument = null) {
+    try {
+      const content = await fs.readFile(filePath, 'utf8');
+      const jsonData = JSON.parse(content);
+
+      let documentType;
+      
+      // If importing into existing document, use its type
+      if (existingDocument) {
+        documentType = existingDocument.metadata.documentType;
+      } else {
+        // Try to infer document type by validating against all types
+        documentType = await this.inferDocumentType(jsonData);
+        if (!documentType) {
+          throw new Error('Unable to determine document type for the imported JSON. The data does not match any known document type schema.');
+        }
+      }
+
+      // Validate JSON data against the schema
+      const validation = await this.schemaLoader.validate(documentType, jsonData);
+      if (!validation.valid) {
+        const errorMessages = validation.errors.map(e => e.message || JSON.stringify(e)).join(', ');
+        throw new Error(`Validation failed: ${errorMessages}`);
+      }
+
+      // Wrap data in application format if creating a new document
+      if (!existingDocument) {
+        return {
+          metadata: {
+            version: '1.0',
+            documentType,
+            created: new Date().toISOString(),
+            modified: new Date().toISOString(),
+            author: '',
+            renderOrder: null,
+            hiddenFields: [],
+            activeTemplate: null,
+            comments: [],
+            sharedWith: [],
+            editHistory: []
+          },
+          data: jsonData
+        };
+      }
+
+      // Merge data into existing document
+      existingDocument.data = jsonData;
+      existingDocument.metadata.modified = new Date().toISOString();
+      return existingDocument;
+    } catch (err) {
+      throw new Error(`Failed to import JSON: ${err.message}`);
+    }
+  }
 }
 
 module.exports = DocumentManager;

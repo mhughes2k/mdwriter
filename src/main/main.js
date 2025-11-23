@@ -572,6 +572,16 @@ ipcMain.handle('templates-get-active', async (event) => {
   }
 });
 
+ipcMain.handle('import-clean-json', async (event, filePath, existingDocument) => {
+  try {
+    const importedDocument = await documentManager.importCleanJSON(filePath, existingDocument);
+    return { success: true, document: importedDocument };
+  } catch (err) {
+    console.error('[Main] Error importing JSON:', err);
+    return { success: false, error: err.message };
+  }
+});
+
 // Cleanup on app quit
 app.on('before-quit', () => {
   if (discoveryService) {

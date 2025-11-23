@@ -13,6 +13,7 @@ const elements = {
   openDoc: document.getElementById('open-doc'),
   saveDoc: document.getElementById('save-doc'),
   saveAsDoc: document.getElementById('save-as-doc'),
+  closeDoc: document.getElementById('close-doc'),
   exportJson: document.getElementById('export-json'),
   addSection: document.getElementById('add-section'),
   createNew: document.getElementById('create-new'),
@@ -22,7 +23,8 @@ const elements = {
   properties: document.getElementById('properties'),
   statusText: document.getElementById('status-text'),
   collaborationStatus: document.getElementById('collaboration-status'),
-  documentType: document.getElementById('document-type')
+  documentType: document.getElementById('document-type'),
+  modifiedIndicator: document.getElementById('modified-indicator')
 };
 
 // Current document state
@@ -45,6 +47,7 @@ elements.openDoc?.addEventListener('click', openDocument);
 elements.openExisting?.addEventListener('click', openDocument);
 elements.saveDoc?.addEventListener('click', saveDocument);
 elements.saveAsDoc?.addEventListener('click', saveDocumentAs);
+elements.closeDoc?.addEventListener('click', closeDocument);
 elements.exportJson?.addEventListener('click', exportToJson);
 elements.addSection?.addEventListener('click', addSection);
 
@@ -67,6 +70,44 @@ document.addEventListener('remove-array-item', async (e) => {
 // Listen for custom form changes
 document.addEventListener('custom-form-change', async (e) => {
   await handleFieldChange({ dataset: { fieldPath: e.detail.fieldPath }, value: e.detail.value }, true);
+});
+
+// Add event listener for importing JSON into an existing document
+const importJsonButton = document.createElement('button');
+importJsonButton.id = 'import-json-existing';
+importJsonButton.textContent = 'Import JSON into Current Document';
+importJsonButton.className = 'toolbar-button';
+
+document.querySelector('.toolbar')?.appendChild(importJsonButton);
+
+importJsonButton.addEventListener('click', async () => {
+  if (!currentDocument) {
+    alert('No document is currently open. Please open a document first.');
+    return;
+  }
+
+  updateStatus('Importing JSON into current document...');
+  try {
+    const dialogResult = await window.electronAPI.openDocumentDialog();
+    if (!dialogResult.success) {
+      updateStatus('Import canceled');
+      return;
+    }
+
+    const filePath = dialogResult.filePath;
+    const result = await window.electronAPI.importCleanJSON(filePath, currentDocument);
+
+    if (result.success) {
+      currentDocument = result.document;
+      setModified(true);
+      await renderDocument();
+      updateStatus('JSON imported successfully into current document');
+    } else {
+      updateStatus('Error importing JSON: ' + result.error);
+    }
+  } catch (err) {
+    updateStatus('Error importing JSON: ' + err.message);
+  }
 });
 
 async function showDocumentTypeDialog() {
@@ -139,6 +180,9 @@ async function showDocumentTypeDialog() {
             </div>
           `).join('')}
         </div>
+        <div class="create-from-file">
+          <button id="create-from-file" class="btn-primary">Create from Existing Data File</button>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" data-action="close">Cancel</button>
@@ -163,6 +207,53 @@ async function showDocumentTypeDialog() {
       const toggle = category.querySelector('.category-toggle');
       toggle.textContent = category.classList.contains('collapsed') ? '▶' : '▼';
     });
+  });
+  
+  // Add event listener for "Create from Existing Data File"
+  modal.querySelector('#create-from-file')?.addEventListener('click', async () => {
+    try {
+      showLoadingIndicator('Importing data file...');
+      
+      const dialogResult = await window.electronAPI.openDocumentDialog();
+      if (!dialogResult.success) {
+        hideLoadingIndicator();
+        updateStatus('Create from file canceled');
+        return;
+      }
+
+      const filePath = dialogResult.filePath;
+      updateStatus('Importing and validating data...');
+      
+      const result = await window.electronAPI.importCleanJSON(filePath);
+
+      if (result.success) {
+        currentDocument = result.document;
+        currentFilePath = null; // Reset file path for new documents
+        documentType = result.document.metadata.documentType;
+        setModified(true);
+        
+        // Load schema structure for the new document type
+        const structure = await window.electronAPI.getSchemaStructure(documentType);
+        schemaProperties = structure;
+        
+        // Close the modal first
+        modal.remove();
+        
+        // Render the document
+        await renderDocument();
+        
+        hideLoadingIndicator();
+        updateStatus('Document created from existing data file');
+      } else {
+        hideLoadingIndicator();
+        updateStatus('Error creating document: ' + result.error);
+        alert('Error creating document: ' + result.error);
+      }
+    } catch (err) {
+      hideLoadingIndicator();
+      updateStatus('Error: ' + err.message);
+      alert('Error: ' + err.message);
+    }
   });
   
   // Return promise that resolves when user selects a type
@@ -296,7 +387,7 @@ async function createNewDocument() {
     if (result.success) {
       currentDocument = result.document;
       currentFilePath = null;
-      isModified = false;
+      setModified(false);
       
       // Load schema structure
       const structure = await window.electronAPI.getSchemaStructure(documentType);
@@ -331,7 +422,7 @@ async function openDocument() {
         currentDocument = result.document;
         currentFilePath = result.document.filePath;
         documentType = result.document.metadata.documentType;
-        isModified = false;
+        setModified(false);
         
         console.log('[Open] Loading schema structure...');
         // Load schema structure
@@ -400,7 +491,7 @@ async function saveDocument() {
     hideLoadingIndicator();
     
     if (result.success) {
-      isModified = false;
+      setModified(false);
       updateStatus('Document saved successfully');
       return true;
     } else {
@@ -441,7 +532,7 @@ async function saveDocumentAs() {
       
       if (result.success) {
         currentFilePath = dialogResult.filePath;
-        isModified = false;
+        setModified(false);
         updateStatus('Document saved successfully');
       } else {
         updateStatus('Error saving: ' + result.error);
@@ -450,6 +541,85 @@ async function saveDocumentAs() {
   } catch (err) {
     updateStatus('Error saving document: ' + err.message);
   }
+}
+
+async function closeDocument() {
+  // Check for unsaved changes
+  if (isModified) {
+    const choice = confirm('You have unsaved changes. Do you want to save before closing?');
+    if (choice) {
+      const saved = await saveDocument();
+      if (!saved) {
+        // User canceled save or save failed
+        return;
+      }
+    }
+  }
+  
+  // Reset document state
+  currentDocument = null;
+  currentFilePath = null;
+  documentType = 'mdf';
+  schemaProperties = [];
+  setModified(false);
+  
+  // Reset UI to welcome screen
+  elements.editor.innerHTML = `
+    <div class="welcome-screen">
+      <h1>Welcome to MDWriter</h1>
+      <p>A structured writing application for Module Descriptors</p>
+      <div class="welcome-actions">
+        <button id="create-new" class="btn-large">Create New Document</button>
+        <button id="open-existing" class="btn-large">Open Existing Document</button>
+      </div>
+    </div>
+  `;
+  
+  // Re-attach event listeners for welcome screen buttons
+  document.getElementById('create-new')?.addEventListener('click', createNewDocument);
+  document.getElementById('open-existing')?.addEventListener('click', openDocument);
+  
+  // Clear outline
+  elements.outline.innerHTML = '<p class="placeholder">No document loaded</p>';
+  
+  // Clear preview
+  const previewContainer = document.getElementById('document-preview');
+  if (previewContainer) {
+    previewContainer.innerHTML = '<p class="placeholder">No document loaded</p>';
+  }
+  
+  // Update document type display
+  if (elements.documentType) {
+    elements.documentType.textContent = 'No Document';
+  }
+  
+  // Hide validation panel
+  const validationSummary = document.querySelector('.validation-summary');
+  if (validationSummary) {
+    validationSummary.style.display = 'none';
+  }
+  
+  // Clear validation errors
+  const errorsContainer = document.getElementById('validation-errors');
+  if (errorsContainer) {
+    errorsContainer.innerHTML = '';
+  }
+  
+  updateStatus('Document closed');
+}
+
+function setModified(modified) {
+  isModified = modified;
+  
+  // Update modified indicator visibility
+  if (elements.modifiedIndicator) {
+    elements.modifiedIndicator.style.display = modified ? 'inline' : 'none';
+  }
+  
+  // Update window title if we have access
+  const titlePrefix = isModified ? '● ' : '';
+  const fileName = currentFilePath ? currentFilePath.split(/[/\\]/).pop() : 'Untitled';
+  document.title = `${titlePrefix}${fileName} - MDWriter`;
 }
 
 async function exportToJson() {
@@ -737,7 +907,7 @@ async function handleFieldChange(input, isCustomForm = false) {
     
     if (result.success) {
       currentDocument = result.document;
-      isModified = true;
+      setModified(true);
       renderOutline();
       
       // Send to collaboration session if connected
@@ -1049,7 +1219,7 @@ function toggleFieldVisibility(fieldName) {
     hiddenFields.push(fieldName);
   }
   
-  isModified = true;
+  setModified(true);
   
   // Update UI
   updateRenderOrderList();
@@ -1064,7 +1234,7 @@ function saveRenderOrder() {
   const newOrder = Array.from(items).map(item => item.dataset.field);
   
   currentDocument.metadata.renderOrder = newOrder;
-  isModified = true;
+  setModified(true);
   
   // Re-render preview with new order
   renderDocumentPreview();
@@ -1075,7 +1245,7 @@ function resetRenderOrder() {
   
   currentDocument.metadata.renderOrder = null;
   currentDocument.metadata.hiddenFields = [];
-  isModified = true;
+  setModified(true);
   
   updateRenderOrderList();
   renderDocumentPreview();
@@ -1097,7 +1267,7 @@ function toggleFieldVisibility(fieldName) {
     currentDocument.metadata.hiddenFields.push(fieldName);
   }
   
-  isModified = true;
+  setModified(true);
   updateRenderOrderList();
   renderDocumentPreview();
 }
@@ -1435,4 +1605,32 @@ initResize();
 // Initialize
 updateStatus('Ready');
 initCollaboration();
+
+async function importCleanJSON() {
+  updateStatus('Importing JSON...');
+  try {
+    const dialogResult = await window.electronAPI.openDocumentDialog();
+    if (!dialogResult.success) {
+      updateStatus('Import canceled');
+      return;
+    }
+
+    const filePath = dialogResult.filePath;
+    const result = await window.electronAPI.importCleanJSON(filePath, currentDocument);
+
+    if (result.success) {
+      currentDocument = result.document;
+      currentFilePath = null; // Reset file path for new documents
+      isModified = true;
+      await renderDocument();
+      updateStatus('JSON imported successfully');
+    } else {
+      updateStatus('Error importing JSON: ' + result.error);
+    }
+  } catch (err) {
+    updateStatus('Error importing JSON: ' + err.message);
+  }
+}
+
+document.getElementById('import-json')?.addEventListener('click', importCleanJSON);
 

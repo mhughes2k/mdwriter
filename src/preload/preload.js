@@ -57,5 +57,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   templatesRender: (templateId, documentData, documentType) => ipcRenderer.invoke('templates-render', templateId, documentData, documentType),
   templatesCreate: (documentType, name, content) => ipcRenderer.invoke('templates-create', documentType, name, content),
   templatesSetActive: (templateId) => ipcRenderer.invoke('templates-set-active', templateId),
-  templatesGetActive: () => ipcRenderer.invoke('templates-get-active')
+  templatesGetActive: () => ipcRenderer.invoke('templates-get-active'),
+
+  // Import clean JSON
+  importCleanJSON: (filePath, existingDocument) => ipcRenderer.invoke('import-clean-json', filePath, existingDocument),
 });

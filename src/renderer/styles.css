@@ -55,6 +55,19 @@ body {
   margin-left: auto;
 }
 
+/* Modified indicator */
+.modified-indicator {
+  color: #ff9800;
+  font-size: 18px;
+  margin-left: 4px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 /* Main Container */
 .main-container {
   display: flex;
