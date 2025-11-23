@@ -1,16 +1,27 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
+const os = require('os');
 const schemaLoader = require('./schema-loader');
 const DocumentManager = require('./document-manager');
+const CollaborationServer = require('./collaboration-server');
+const DiscoveryService = require('./discovery-service');
 
 let mainWindow;
 let documentManager;
 let currentDocument = null;
+let collaborationServer = null;
+let discoveryService = null;
+let currentSession = null;
 
 async function initialize() {
   // Load all document types from models directory
   await schemaLoader.loadDocumentTypes();
   documentManager = new DocumentManager(schemaLoader);
+  
+  // Initialize collaboration services
+  collaborationServer = new CollaborationServer();
+  discoveryService = new DiscoveryService();
+  
   console.log('Application initialized');
 }
 
@@ -295,5 +306,107 @@ ipcMain.handle('add-comment', async (event, document, comment, sectionPath) => {
     return { success: true, document: currentDocument };
   } catch (err) {
     return { success: false, error: err.message };
+  }
+});
+
+// Collaboration IPC Handlers
+
+ipcMain.handle('collab-host-session', async (event, document, metadata) => {
+  try {
+    // Start server if not running
+    if (!collaborationServer.port) {
+      await collaborationServer.start(0);
+    }
+
+    // Create session
+    const sessionInfo = collaborationServer.createSession(document, {
+      ...metadata,
+      hostName: os.hostname()
+    });
+
+    // Advertise on network
+    discoveryService.advertiseSession(sessionInfo);
+
+    currentSession = sessionInfo;
+
+    return { 
+      success: true, 
+      session: sessionInfo 
+    };
+  } catch (err) {
+    console.error('[Main] Error hosting session:', err);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('collab-stop-hosting', async (event) => {
+  try {
+    discoveryService.stopAdvertising();
+    currentSession = null;
+    
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('collab-start-discovery', async (event) => {
+  try {
+    // Start browsing for sessions
+    discoveryService.startBrowsing(
+      (session) => {
+        // Send to renderer when session found
+        mainWindow.webContents.send('collab-session-found', session);
+      },
+      (session) => {
+        // Send to renderer when session lost
+        mainWindow.webContents.send('collab-session-lost', session);
+      }
+    );
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('collab-stop-discovery', async (event) => {
+  try {
+    discoveryService.stopBrowsing();
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('collab-get-discovered-sessions', async (event) => {
+  try {
+    const sessions = discoveryService.getDiscoveredSessions();
+    return { success: true, sessions };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('collab-get-current-session', async (event) => {
+  try {
+    if (!currentSession) {
+      return { success: true, session: null };
+    }
+
+    const sessionData = collaborationServer.getSession(currentSession.sessionId);
+    return { success: true, session: sessionData };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Cleanup on app quit
+app.on('before-quit', () => {
+  if (discoveryService) {
+    discoveryService.destroy();
+  }
+  if (collaborationServer) {
+    collaborationServer.stop();
   }
 });

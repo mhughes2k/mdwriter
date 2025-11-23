@@ -20,6 +20,10 @@
         <button id="export-json" class="toolbar-btn">Export JSON</button>
       </div>
       <div class="toolbar-section">
+        <button id="collab-btn" class="toolbar-btn">Collaborate</button>
+        <span id="collab-status" class="collab-status"></span>
+      </div>
+      <div class="toolbar-section">
         <span id="document-type">Document Type: Module Descriptor</span>
       </div>
     </header>
@@ -98,6 +102,62 @@
     </footer>
   </div>
 
+  <!-- Collaboration Dialog -->
+  <div id="collab-dialog" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Collaboration</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="collab-tabs">
+          <button class="collab-tab active" data-tab="host">Host Session</button>
+          <button class="collab-tab" data-tab="join">Join Session</button>
+          <button class="collab-tab" data-tab="active">Active Session</button>
+        </div>
+
+        <!-- Host Tab -->
+        <div id="host-tab" class="collab-tab-content active">
+          <div class="form-group">
+            <label>Session Name:</label>
+            <input type="text" id="session-name" placeholder="Enter session name..." />
+          </div>
+          <div class="form-group">
+            <label>Your Name:</label>
+            <input type="text" id="host-user-name" placeholder="Enter your name..." />
+          </div>
+          <button id="start-hosting-btn" class="btn-primary">Start Hosting</button>
+        </div>
+
+        <!-- Join Tab -->
+        <div id="join-tab" class="collab-tab-content">
+          <div class="form-group">
+            <label>Your Name:</label>
+            <input type="text" id="join-user-name" placeholder="Enter your name..." />
+          </div>
+          <div class="form-group">
+            <label>Available Sessions:</label>
+            <div id="sessions-list" class="sessions-list">
+              <p class="placeholder">Searching for sessions...</p>
+            </div>
+          </div>
+          <button id="refresh-sessions-btn" class="btn-secondary">Refresh</button>
+        </div>
+
+        <!-- Active Session Tab -->
+        <div id="active-tab" class="collab-tab-content">
+          <div id="session-info">
+            <p class="placeholder">No active session</p>
+          </div>
+          <div id="users-list" class="users-list"></div>
+          <button id="leave-session-btn" class="btn-danger" style="display: none;">Leave Session</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="collaboration-client.js"></script>
+  <script src="collaboration-manager.js"></script>
   <script src="form-generator.js"></script>
   <script src="renderer.js"></script>
 </body>

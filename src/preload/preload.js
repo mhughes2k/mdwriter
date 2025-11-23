@@ -26,8 +26,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Platform information
   platform: process.platform,
   
-  // Event listeners for collaboration features (future)
+  // Collaboration operations
+  collabHostSession: (document, metadata) => ipcRenderer.invoke('collab-host-session', document, metadata),
+  collabStopHosting: () => ipcRenderer.invoke('collab-stop-hosting'),
+  collabStartDiscovery: () => ipcRenderer.invoke('collab-start-discovery'),
+  collabStopDiscovery: () => ipcRenderer.invoke('collab-stop-discovery'),
+  collabGetDiscoveredSessions: () => ipcRenderer.invoke('collab-get-discovered-sessions'),
+  collabGetCurrentSession: () => ipcRenderer.invoke('collab-get-current-session'),
+  
+  // Event listeners for collaboration features
   onDocumentUpdate: (callback) => ipcRenderer.on('document-update', callback),
   onUserJoined: (callback) => ipcRenderer.on('user-joined', callback),
-  onUserLeft: (callback) => ipcRenderer.on('user-left', callback)
+  onUserLeft: (callback) => ipcRenderer.on('user-left', callback),
+  onCollabSessionFound: (callback) => ipcRenderer.on('collab-session-found', callback),
+  onCollabSessionLost: (callback) => ipcRenderer.on('collab-session-lost', callback)
 });

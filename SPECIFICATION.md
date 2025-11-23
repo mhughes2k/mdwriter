@@ -17,7 +17,7 @@ The application MUST:
 1. The Application will be deployed via:
  * installers
  * a portable format
-2. The application should also be able to be run from a web server (similar to Github CodeSpaces or VS Code). In this case the persistence would be back to the originating web server, and this may require a separate webserver based back end to provide any necessary server-side processes. **This requirement should be designed for but not implemented yet.**
+2. The application should also be able to be run from a web server (similar to Github CodeSpaces or VS Code). In this case the persistence would be back to the originating web server, and this may require a separate webserver based back end to provide any necessary server-side processes.
 
 ## User Interface guidance
 

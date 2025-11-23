@@ -495,6 +495,15 @@ async function handleFieldChange(input, isCustomForm = false) {
       isModified = true;
       renderOutline();
       
+      // Send to collaboration session if connected
+      if (window.collaborationClient && window.collaborationClient.isConnected()) {
+        window.collaborationClient.sendUpdate({
+          type: 'set',
+          path: fieldPath,
+          value: value
+        });
+      }
+      
       // Validate after change (debounced)
       clearTimeout(window.validationTimeout);
       window.validationTimeout = setTimeout(() => validateAndDisplayErrors(), 500);
@@ -523,6 +532,19 @@ async function handleAddArrayItem(arrayPath, property) {
     if (result.success) {
       currentDocument = result.document;
       isModified = true;
+      
+      // Send to collaboration session if connected
+      if (window.collaborationClient && window.collaborationClient.isConnected()) {
+        const arr = getValueAtPath(currentDocument, arrayPath);
+        const index = arr.length - 1;
+        window.collaborationClient.sendUpdate({
+          type: 'array-insert',
+          path: arrayPath,
+          value: newItem,
+          index: index
+        });
+      }
+      
       await renderDocument();
     }
   } catch (err) {
@@ -539,6 +561,16 @@ async function handleRemoveArrayItem(arrayPath, index) {
     if (result.success) {
       currentDocument = result.document;
       isModified = true;
+      
+      // Send to collaboration session if connected
+      if (window.collaborationClient && window.collaborationClient.isConnected()) {
+        window.collaborationClient.sendUpdate({
+          type: 'array-remove',
+          path: arrayPath,
+          index: index
+        });
+      }
+      
       await renderDocument();
     }
   } catch (err) {
@@ -606,5 +638,17 @@ Object.defineProperty(window, 'isModified', {
   get: () => isModified
 });
 
+// Helper function to get value at path
+function getValueAtPath(obj, path) {
+  const parts = path.split('.');
+  let current = obj;
+  for (const part of parts) {
+    current = current[part];
+    if (current === undefined) return undefined;
+  }
+  return current;
+}
+
 // Initialize
 updateStatus('Ready');
+initCollaboration();

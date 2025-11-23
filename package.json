@@ -51,6 +51,10 @@
   "dependencies": {
     "ajv": "^8.17.1",
     "ajv-errors": "^3.0.0",
-    "ajv-formats": "^3.0.1"
+    "ajv-formats": "^3.0.1",
+    "bonjour-service": "^1.3.0",
+    "nanoid": "^5.1.6",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
   }
 }
