@@ -19,10 +19,27 @@ The application MUST:
  * a portable format
 2. The application should also be able to be run from a web server (similar to Github CodeSpaces or VS Code). In this case the persistence would be back to the originating web server, and this may require a separate webserver based back end to provide any necessary server-side processes.
 
+## Configuration
+
+1. Configuration of the application should be held in "user" space somewhere.
+2. In addition to the models that ship with the program (in the `models` directory), allow for "userspace" models. These should be expected to live in a user specifiable directory.
+3. It would be nice to follow *nix approaches to this, but this might not be feasible across all of the supported platform (i.e. a "." hidden directory in the user's home directory). Work out a feasible, consistent cross-platform approach to this.
+4. By *default* the configuration has to hold user configuration information about / for use in the application, userspace templates (for rendering a document into an output format (like HTML)), userspace document models (for custom document types).
+5. Custom document types (if they exist in the relevant location) should be automatically loaded in to the "New document" UI
+
 ## User Interface guidance
 
 1. Should take cues from common word processor applications, such as Word.
 2. A specific model for a document should be able to provide extra / custom form implementations to allow the editor to get user input for complex models.
+
+## Output
+
+1. Provide a preview of the markdown content, with a customisable rendering order.
+2. Allow user to select a template to be used to render the content. This should be a markdown format file that accomodates placeholders for the various document elements, which will be renderered. These templates can be provided as part of the model in the `model\<name>\templates` directory, or they can also be loaded from a user template directory. The user template directory should be specifiable/changeable by the user to a different location.
+3. Templates are not going to be able to specify the rendering of "custom forms", these should be rendered as they are just now. Where a custom-form based field is indicated for output this just shows the location of that content.
+4. Fields can be outputted multiple times in a template.
+5. If no template is selected as being active, then the output should simply follow the default renderingOrder of the preview.
+6. If a template has been selected as being active, then the preview settings to re-order fields should not be displayed, as the preview will use the template file's information.
 
 ## Collaboration
 

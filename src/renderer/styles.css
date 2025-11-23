@@ -1110,6 +1110,8 @@ body {
   font-size: 14px;
   cursor: pointer;
   font-weight: 500;
+  transition: background-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
 .btn-primary {
@@ -1119,15 +1121,17 @@ body {
 
 .btn-primary:hover {
   background: #0052a3;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .btn-secondary {
-  background: #6c757d;
-  color: white;
+  background: #6c757d !important;
+  color: white !important;
 }
 
 .btn-secondary:hover {
-  background: #5a6268;
+  background: #5a6268 !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .btn-danger {
@@ -1137,6 +1141,7 @@ body {
 
 .btn-danger:hover {
   background: #c82333;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 /* User Presence Indicators */
@@ -1360,6 +1365,21 @@ select[data-active-user] {
 .btn-small {
   padding: 6px 12px;
   font-size: 13px;
+}
+
+/* Ensure small buttons inherit proper styling */
+.btn-secondary.btn-small,
+.btn-primary.btn-small,
+.btn-danger.btn-small {
+  padding: 6px 12px;
+  font-size: 13px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.btn-secondary.btn-small:hover,
+.btn-primary.btn-small:hover,
+.btn-danger.btn-small:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Markdown Editor Component */
