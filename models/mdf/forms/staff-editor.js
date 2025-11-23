@@ -120,6 +120,26 @@ function createCustomForm(property, value, fieldPath, data) {
   return container;
 }
 
+/**
+ * Render function for display/preview (non-interactive)
+ */
+function renderForDisplay(value) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return '';
+  }
+  
+  return value.map(staff => {
+    let output = staff.name;
+    if (staff.role) {
+      output += ` (${staff.role})`;
+    }
+    if (staff.email) {
+      output += ` - ${staff.email}`;
+    }
+    return output;
+  }).join('\n');
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { createCustomForm };
+  module.exports = { createCustomForm, renderForDisplay };
 }

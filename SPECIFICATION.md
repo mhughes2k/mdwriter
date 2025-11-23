@@ -32,6 +32,28 @@ The application MUST:
 1. Should take cues from common word processor applications, such as Word.
 2. A specific model for a document should be able to provide extra / custom form implementations to allow the editor to get user input for complex models.
 
+### Markdown editor
+1. Should support edit, preview and split modes.
+
+#### UI Schematic: Edit mode
+
+Note: [ ] Square brackets indicate a button.
+
+|-----------------------------------------|
+|  Editor area                            |
+|-----------------------------------------|
+           | [Edit] | [Preview] | [Split] |
+           |------------------------------|
+
+#### UI Schematic: Split mode
+
+Note: [ ] Square brackets indicate a button.
+
+|-----------------------|-----------------|
+|  Editor area          | Preview area    |
+|-----------------------|-----------------|
+           | [Edit] | [Preview] | [Split] |
+           |------------------------------|
 ## Output
 
 1. Provide a preview of the markdown content, with a customisable rendering order.
@@ -40,6 +62,9 @@ The application MUST:
 4. Fields can be outputted multiple times in a template.
 5. If no template is selected as being active, then the output should simply follow the default renderingOrder of the preview.
 6. If a template has been selected as being active, then the preview settings to re-order fields should not be displayed, as the preview will use the template file's information.
+7. The "active" template is a *document* specific piece of data, so it should be held in the metadata of the document, not in the user configuration. This allows for the same template to be automatically re-selected when the document is re-opened. If the template is no longer available, then the rendering should fall back onto the default preview mode, with no active template. A notification that the template is no longer available/could not be found should be displayed as a transient notification.
+8. HTML output should be ensured that it is as accessible as possible (ie. WCAG compliant).
+9. Once export to HTML is supported, export to other formats such as Word (docx) and PDF formats should be supported, using the generated HTML as the basis for these formats. Each of these formats should be generated so that they are accessible as possible.
 
 ## Collaboration
 

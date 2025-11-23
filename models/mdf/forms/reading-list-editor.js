@@ -237,6 +237,25 @@ function createCustomForm(property, value, fieldPath, data) {
   return container;
 }
 
+/**
+ * Render function for display/preview (non-interactive)
+ */
+function renderForDisplay(value) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return '';
+  }
+  
+  return value.map(item => {
+    let output = '';
+    if (item.authors) output += `${item.authors}. `;
+    if (item.title) output += `*${item.title}*. `;
+    if (item.publisher) output += `${item.publisher}, `;
+    if (item.year) output += `${item.year}. `;
+    if (item.isbn) output += `ISBN: ${item.isbn}`;
+    return output.trim();
+  }).join('\n\n');
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { createCustomForm };
+  module.exports = { createCustomForm, renderForDisplay };
 }

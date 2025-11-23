@@ -56,19 +56,6 @@ class MarkdownEditor {
     const isTextarea = property.displayType === 'textarea';
 
     container.innerHTML = `
-      <div class="markdown-editor-header">
-        <div class="markdown-editor-controls">
-          <button type="button" class="md-tab active" data-mode="edit">
-            ✏️ Edit
-          </button>
-          <button type="button" class="md-tab" data-mode="preview">
-            👁️ Preview
-          </button>
-          <button type="button" class="md-tab" data-mode="split">
-            ⚡ Split
-          </button>
-        </div>
-      </div>
       <div class="markdown-editor-body">
         <div class="markdown-edit-pane active">
           ${isTextarea 
@@ -81,6 +68,19 @@ class MarkdownEditor {
         </div>
         <div class="markdown-preview-pane">
           <div class="markdown-rendered"></div>
+        </div>
+      </div>
+      <div class="markdown-editor-footer">
+        <div class="markdown-editor-controls">
+          <button type="button" class="md-tab active" data-mode="edit">
+            ✏️ Edit
+          </button>
+          <button type="button" class="md-tab" data-mode="preview">
+            👁️ Preview
+          </button>
+          <button type="button" class="md-tab" data-mode="split">
+            ⚡ Split
+          </button>
         </div>
       </div>
     `;
@@ -97,6 +97,9 @@ class MarkdownEditor {
     const renderedDiv = container.querySelector('.markdown-rendered');
     const input = container.querySelector('[data-field-path]');
     const tabs = container.querySelectorAll('.md-tab');
+
+    // Load user's preferred view mode
+    this.loadViewModePreference(tabs, editPane, previewPane, container, renderedDiv, input);
 
     // Mode switching
     tabs.forEach(tab => {
@@ -123,6 +126,9 @@ class MarkdownEditor {
           container.classList.add('split-mode');
           this.updatePreview(input.value, renderedDiv);
         }
+        
+        // Save user's preference
+        this.saveViewModePreference(mode);
       });
     });
 
@@ -156,6 +162,71 @@ class MarkdownEditor {
       targetElement.innerHTML = html;
     } catch (err) {
       targetElement.innerHTML = `<p class="error">Error rendering Markdown: ${this.escapeHtml(err.message)}</p>`;
+    }
+  }
+  
+  /**
+   * Load and apply user's view mode preference
+   */
+  async loadViewModePreference(tabs, editPane, previewPane, container, renderedDiv, input) {
+    if (!window.electronAPI || !window.electronAPI.configGetPreference) {
+      // Default to split mode if API not available
+      this.setViewMode('split', tabs, editPane, previewPane, container, renderedDiv, input);
+      return;
+    }
+    
+    try {
+      const result = await window.electronAPI.configGetPreference('markdownEditorViewMode', 'split');
+      const mode = result.success ? result.value : 'split';
+      this.setViewMode(mode, tabs, editPane, previewPane, container, renderedDiv, input);
+    } catch (err) {
+      console.error('Error loading markdown view mode preference:', err);
+      this.setViewMode('split', tabs, editPane, previewPane, container, renderedDiv, input);
+    }
+  }
+  
+  /**
+   * Set the view mode
+   */
+  setViewMode(mode, tabs, editPane, previewPane, container, renderedDiv, input) {
+    // Update active tab
+    tabs.forEach(t => {
+      t.classList.remove('active');
+      if (t.dataset.mode === mode) {
+        t.classList.add('active');
+      }
+    });
+
+    // Update view
+    editPane.classList.remove('active');
+    previewPane.classList.remove('active');
+    container.classList.remove('split-mode');
+
+    if (mode === 'edit') {
+      editPane.classList.add('active');
+    } else if (mode === 'preview') {
+      previewPane.classList.add('active');
+      this.updatePreview(input.value, renderedDiv);
+    } else if (mode === 'split') {
+      editPane.classList.add('active');
+      previewPane.classList.add('active');
+      container.classList.add('split-mode');
+      this.updatePreview(input.value, renderedDiv);
+    }
+  }
+  
+  /**
+   * Save user's view mode preference
+   */
+  async saveViewModePreference(mode) {
+    if (!window.electronAPI || !window.electronAPI.configSetPreference) {
+      return;
+    }
+    
+    try {
+      await window.electronAPI.configSetPreference('markdownEditorViewMode', mode);
+    } catch (err) {
+      console.error('Error saving markdown view mode preference:', err);
     }
   }
 

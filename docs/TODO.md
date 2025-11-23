@@ -39,23 +39,23 @@
   - [] Web-based client interface
 
 ## Configuration & User Space
-- [] User configuration storage in cross-platform location
+- [x] User configuration storage in cross-platform location
 - [] Userspace models support (custom document types in user-specified directory)
-- [] Userspace templates directory (customizable location)
+- [x] Userspace templates directory (customizable location)
 - [] Auto-load custom document types from userspace into "New document" UI
-- [] Configuration file for user preferences and settings
+- [x] Configuration file for user preferences and settings
 
 ## Templates & Output
 - [x] Markdown preview with customizable rendering order
-- [] Template system for document rendering
-  - [] Support templates in `models/<type>/templates` directory
-  - [] Support user template directory (user-specifiable location)
-  - [] Markdown templates with placeholders for document elements
-  - [] Multiple field output support in templates
-  - [] Hide field reordering UI when template is active
-  - [] Custom form field rendering in templates
-- [] Template selection UI
-- [] Export using selected template
+- [x] Template system for document rendering
+  - [x] Support templates in `models/<type>/templates` directory
+  - [x] Support user template directory (user-specifiable location)
+  - [x] Markdown templates with placeholders for document elements
+  - [x] Multiple field output support in templates
+  - [x] Hide field reordering UI when template is active
+  - [x] Custom form field rendering in templates
+- [x] Template selection UI
+- [x] Export using selected template
 
 ## Collaboration (Advanced Features)
 - [x] Basic multi-editor support with real-time sync

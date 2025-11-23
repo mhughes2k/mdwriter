@@ -4,7 +4,7 @@
     "version": "1.0",
     "documentType": "mdf",
     "created": "2025-11-22T22:33:35.521Z",
-    "modified": "2025-11-23T01:02:50.317Z",
+    "modified": "2025-11-23T17:37:34.831Z",
     "author": "",
     "comments": [],
     "sharedWith": [],
@@ -36,12 +36,20 @@
       {
         "timestamp": "2025-11-23T01:02:50.317Z",
         "action": "save"
+      },
+      {
+        "timestamp": "2025-11-23T15:11:12.315Z",
+        "action": "save"
+      },
+      {
+        "timestamp": "2025-11-23T17:37:34.831Z",
+        "action": "save"
       }
     ]
   },
   "data": {
     "id": "MH101",
-    "title": "MH101",
+    "title": "Introduction to Michael Hughes",
     "department": "Department of Michael Hughes",
     "description": "An introduction to Michael Hughes",
     "credits": 20,
@@ -98,6 +106,10 @@
         "link": "https://www.phnx.org.uk/",
         "recommendation": "Purchase Recommended"
       }
-    ]
+    ],
+    "aim": "To teach about Michael",
+    "assessmentprinciples": "Good social constructivist attitudes.",
+    "assessmentstandard": "Just create a great class.",
+    "resitprocedures": "None"
   }
 }

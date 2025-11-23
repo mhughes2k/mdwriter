@@ -1394,18 +1394,25 @@ select[data-active-user] {
   margin-bottom: 8px;
 }
 
+.markdown-editor-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 4px;
+}
+
 .markdown-editor-controls {
   display: flex;
-  gap: 4px;
+  gap: 2px;
 }
 
 .md-tab {
-  padding: 4px 10px;
+  padding: 3px 8px;
   border: 1px solid #ddd;
   background: white;
-  border-radius: 3px;
+  border-radius: 2px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
   transition: all 0.2s;
 }
 
@@ -1429,7 +1436,7 @@ select[data-active-user] {
 .markdown-edit-pane,
 .markdown-preview-pane {
   display: none;
-  padding: 12px;
+  padding: 8px;
 }
 
 .markdown-edit-pane.active,
@@ -1463,8 +1470,8 @@ select[data-active-user] {
 }
 
 .markdown-help-hint {
-  margin-top: 8px;
-  font-size: 11px;
+  margin-top: 4px;
+  font-size: 10px;
   color: #666;
   font-style: italic;
 }
@@ -1628,6 +1635,33 @@ select[data-active-user] {
   color: #666;
 }
 
+.template-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  align-items: stretch;
+}
+
+.template-selector select {
+  flex: 1;
+}
+
+.template-selector .btn-small {
+  white-space: nowrap;
+}
+
+#render-order-section {
+  margin-top: 20px;
+}
+
+#render-order-section h4 {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #666;
+}
+
 .field-order-list {
   margin-bottom: 12px;
 }
@@ -1711,6 +1745,11 @@ select[data-active-user] {
   font-weight: 600;
 }
 
+.preview-buttons {
+  display: flex;
+  gap: 8px;
+}
+
 #document-preview {
   background: white;
   padding: 20px;
@@ -1768,4 +1807,46 @@ select[data-active-user] {
 .object-value {
   color: #333;
 }
->>>>>>> main
+
+/* Fullscreen Preview Overlay */
+.fullscreen-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: white;
+  z-index: 10000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.fullscreen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #f5f5f5;
+  border-bottom: 2px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.fullscreen-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.fullscreen-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.fullscreen-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  background: white;
+}

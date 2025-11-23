@@ -39,5 +39,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onUserJoined: (callback) => ipcRenderer.on('user-joined', callback),
   onUserLeft: (callback) => ipcRenderer.on('user-left', callback),
   onCollabSessionFound: (callback) => ipcRenderer.on('collab-session-found', callback),
-  onCollabSessionLost: (callback) => ipcRenderer.on('collab-session-lost', callback)
+  onCollabSessionLost: (callback) => ipcRenderer.on('collab-session-lost', callback),
+  
+  // Configuration operations
+  configGet: (key) => ipcRenderer.invoke('config-get', key),
+  configSet: (key, value) => ipcRenderer.invoke('config-set', key, value),
+  configGetAll: () => ipcRenderer.invoke('config-get-all'),
+  configGetPreference: (key, defaultValue) => ipcRenderer.invoke('config-get-preference', key, defaultValue),
+  configSetPreference: (key, value) => ipcRenderer.invoke('config-set-preference', key, value),
+  configAddRecentFile: (filePath) => ipcRenderer.invoke('config-add-recent-file', filePath),
+  configGetRecentFiles: () => ipcRenderer.invoke('config-get-recent-files'),
+  
+  // Template operations
+  templatesLoad: (documentType) => ipcRenderer.invoke('templates-load', documentType),
+  templatesRender: (templateId, documentData, documentType) => ipcRenderer.invoke('templates-render', templateId, documentData, documentType),
+  templatesCreate: (documentType, name, content) => ipcRenderer.invoke('templates-create', documentType, name, content),
+  templatesSetActive: (templateId) => ipcRenderer.invoke('templates-set-active', templateId),
+  templatesGetActive: () => ipcRenderer.invoke('templates-get-active')
 });

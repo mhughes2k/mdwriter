@@ -5,6 +5,8 @@ const schemaLoader = require('./schema-loader');
 const DocumentManager = require('./document-manager');
 const CollaborationServer = require('./collaboration-server');
 const DiscoveryService = require('./discovery-service');
+const { getConfigManager } = require('./config-manager');
+const { TemplateManager } = require('./template-manager');
 
 let mainWindow;
 let documentManager;
@@ -12,8 +14,17 @@ let currentDocument = null;
 let collaborationServer = null;
 let discoveryService = null;
 let currentSession = null;
+let configManager = null;
+let templateManager = null;
 
 async function initialize() {
+  // Initialize configuration
+  configManager = getConfigManager();
+  await configManager.initialize();
+  
+  // Initialize template manager
+  templateManager = new TemplateManager(configManager);
+  
   // Load all document types from models directory
   await schemaLoader.loadDocumentTypes();
   documentManager = new DocumentManager(schemaLoader);
@@ -417,6 +428,117 @@ ipcMain.handle('collab-get-current-session', async (event) => {
 
     const sessionData = collaborationServer.getSession(currentSession.sessionId);
     return { success: true, session: sessionData };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Configuration IPC handlers
+ipcMain.handle('config-get', async (event, key) => {
+  try {
+    const value = configManager.get(key);
+    return { success: true, value };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('config-set', async (event, key, value) => {
+  try {
+    await configManager.set(key, value);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('config-get-all', async () => {
+  try {
+    const config = await configManager.getAll();
+    return { success: true, config };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('config-get-preference', async (event, key, defaultValue) => {
+  try {
+    const value = await configManager.getPreference(key, defaultValue);
+    return { success: true, value };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('config-set-preference', async (event, key, value) => {
+  try {
+    await configManager.setPreference(key, value);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('config-add-recent-file', async (event, filePath) => {
+  try {
+    await configManager.addRecentFile(filePath);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('config-get-recent-files', async (event) => {
+  try {
+    const files = configManager.getRecentFiles();
+    return { success: true, files };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Template IPC handlers
+ipcMain.handle('templates-load', async (event, documentType) => {
+  try {
+    const templates = await templateManager.loadTemplatesForType(documentType);
+    return { success: true, templates };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('templates-render', async (event, templateId, documentData, documentType) => {
+  try {
+    const output = await templateManager.renderDocument(templateId, documentData, documentType);
+    return { success: true, output };
+  } catch (err) {
+    console.error('[Main] Template rendering error:', err);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('templates-create', async (event, documentType, name, content) => {
+  try {
+    const result = await templateManager.createTemplate(documentType, name, content);
+    return result;
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('templates-set-active', async (event, templateId) => {
+  try {
+    await configManager.setActiveTemplate(templateId);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('templates-get-active', async (event) => {
+  try {
+    const templateId = configManager.getActiveTemplate();
+    return { success: true, templateId };
   } catch (err) {
     return { success: false, error: err.message };
   }

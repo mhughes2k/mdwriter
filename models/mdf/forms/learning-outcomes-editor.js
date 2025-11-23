@@ -144,6 +144,32 @@ function createCustomForm(property, value, fieldPath, data) {
   return container;
 }
 
+/**
+ * Render function for display/preview (non-interactive)
+ */
+function renderForDisplay(value) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return '';
+  }
+  
+  return value.map((outcome, index) => {
+    let output = `${index + 1}. ${outcome.description || ''}`;
+    
+    // Add assessment criteria if present
+    if (Array.isArray(outcome.assessmentcriteria) && outcome.assessmentcriteria.length > 0) {
+      const criteria = outcome.assessmentcriteria
+        .filter(c => c && c.trim())
+        .map(c => `   - ${c}`)
+        .join('\n');
+      if (criteria) {
+        output += '\n' + criteria;
+      }
+    }
+    
+    return output;
+  }).join('\n\n');
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { createCustomForm };
+  module.exports = { createCustomForm, renderForDisplay };
 }

@@ -529,6 +529,15 @@ async function renderDocument() {
   renderOutline();
   updateDocumentMetadata();
   
+  // Initialize template UI and load templates
+  if (!window.templateUI) {
+    window.templateUI = initializeTemplateUI();
+  }
+  await window.templateUI.loadTemplates(currentDocument.metadata.documentType);
+  
+  // Update preview
+  await renderDocumentPreview();
+  
   // Run initial validation
   console.log('[Renderer] Running validation...');
   await validateAndDisplayErrors();
@@ -876,6 +885,52 @@ document.querySelectorAll('.panel-tab').forEach(tab => {
 // Output panel controls
 document.getElementById('reset-render-order')?.addEventListener('click', resetRenderOrder);
 document.getElementById('export-preview')?.addEventListener('click', exportPreviewHTML);
+document.getElementById('preview-fullscreen')?.addEventListener('click', togglePreviewFullscreen);
+
+// Fullscreen preview functions
+function togglePreviewFullscreen() {
+  const overlay = document.getElementById('fullscreen-preview-overlay');
+  const content = document.getElementById('fullscreen-preview-content');
+  const preview = document.getElementById('document-preview');
+  const exitBtn = document.getElementById('exit-fullscreen');
+  const exportBtn = document.getElementById('export-fullscreen');
+  
+  if (!overlay || !content || !preview) return;
+  
+  // Attach button listeners if not already attached
+  if (exitBtn && !exitBtn.hasAttribute('data-listener-attached')) {
+    exitBtn.addEventListener('click', exitPreviewFullscreen);
+    exitBtn.setAttribute('data-listener-attached', 'true');
+  }
+  
+  if (exportBtn && !exportBtn.hasAttribute('data-listener-attached')) {
+    exportBtn.addEventListener('click', exportPreviewHTML);
+    exportBtn.setAttribute('data-listener-attached', 'true');
+  }
+  
+  // Copy preview content to fullscreen overlay
+  content.innerHTML = preview.innerHTML;
+  
+  // Show overlay
+  overlay.style.display = 'flex';
+}
+
+function exitPreviewFullscreen() {
+  const overlay = document.getElementById('fullscreen-preview-overlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+  }
+}
+
+// ESC key to exit fullscreen
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const overlay = document.getElementById('fullscreen-preview-overlay');
+    if (overlay && overlay.style.display !== 'none') {
+      exitPreviewFullscreen();
+    }
+  }
+});
 
 function getRenderOrder() {
   // Get render order from document metadata, or fall back to fieldOrder
@@ -1047,12 +1102,40 @@ function toggleFieldVisibility(fieldName) {
   renderDocumentPreview();
 }
 
-function renderDocumentPreview() {
+async function renderDocumentPreview() {
   const previewContainer = document.getElementById('document-preview');
   if (!previewContainer || !currentDocument || !schemaProperties) {
     return;
   }
   
+  // Check if a template is active
+  if (window.templateUI && window.templateUI.hasActiveTemplate()) {
+    try {
+      const markdown = window.markdownEditor;
+      if (!markdown) {
+        previewContainer.innerHTML = '<p class="error">Markdown renderer not loaded</p>';
+        return;
+      }
+      
+      // Render using template - ensure document has type property
+      const documentWithType = {
+        data: currentDocument.data,
+        type: documentType
+      };
+      const templateMarkdown = await window.templateUI.renderWithTemplate(documentWithType);
+      if (templateMarkdown) {
+        const html = markdown.renderMarkdown(templateMarkdown);
+        previewContainer.innerHTML = html;
+        return;
+      }
+    } catch (err) {
+      console.error('[Renderer] Error rendering with template:', err);
+      previewContainer.innerHTML = `<p class="error">Template rendering error: ${err.message}</p>`;
+      return;
+    }
+  }
+  
+  // Fall back to regular rendering with render order
   updateRenderOrderList();
   
   const renderOrder = getRenderOrder();
@@ -1125,6 +1208,9 @@ function renderDocumentPreview() {
   
   previewContainer.innerHTML = html || '<p class="placeholder">No content to preview</p>';
 }
+
+// Expose for use by template-ui
+window.updateDocumentPreview = renderDocumentPreview;
 
 function renderObject(obj, markdown) {
   let html = '<div class="object-preview">';

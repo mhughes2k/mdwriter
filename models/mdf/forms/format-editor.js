@@ -142,6 +142,23 @@ function createCustomForm(property, value, fieldPath, data) {
   return container;
 }
 
+/**
+ * Render function for display/preview (non-interactive)
+ */
+function renderForDisplay(value) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return '';
+  }
+  
+  return value.map(format => {
+    let output = `${format.type}: ${format.hours} hours`;
+    if (format.weeks) {
+      output += ` over ${format.weeks} weeks`;
+    }
+    return output;
+  }).join('\n');
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { createCustomForm };
+  module.exports = { createCustomForm, renderForDisplay };
 }

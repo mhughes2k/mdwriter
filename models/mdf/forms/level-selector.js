@@ -115,7 +115,26 @@ function createCustomForm(property, value, fieldPath, data) {
   return container;
 }
 
+/**
+ * Render function for display/preview (non-interactive)
+ * @param {Object} value - The field value to render
+ * @returns {String} - Markdown or HTML string representation
+ */
+function renderForDisplay(value) {
+  if (!value || !value.scqflevel) {
+    return '';
+  }
+  
+  let output = `SCQF Level ${value.scqflevel}`;
+  
+  if (value.qheiqualification) {
+    output += ` - ${value.qheiqualification}`;
+  }
+  
+  return output;
+}
+
 // Export for use in renderer process via remote loading
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { createCustomForm };
+  module.exports = { createCustomForm, renderForDisplay };
 }
