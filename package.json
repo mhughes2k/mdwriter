@@ -5,6 +5,8 @@
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
+    "postinstall": "npm run copy-marked",
+    "copy-marked": "cp node_modules/marked/marked.min.js src/renderer/marked.min.js || echo 'Marked not installed yet'",
     "build": "electron-builder",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
@@ -16,21 +18,25 @@
     "module-descriptor",
     "structured-writing"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Michael Hughes",
+  "license": "UNLICENSED",
+  "private": true,
   "devDependencies": {
     "electron": "^28.0.0",
-    "electron-builder": "^24.9.1"
+    "electron-builder": "^26.0.12"
   },
   "build": {
     "appId": "com.mdwriter.app",
     "productName": "MDWriter",
+    "copyright": "Copyright © 2025 Phoenix Productions. All rights reserved.",
     "directories": {
       "output": "dist"
     },
     "files": [
       "src/**/*",
-      "models/**/*"
+      "models/**/*",
+      "LICENSE.md",
+      "docs/LICENSES.md"
     ],
     "win": {
       "target": [
@@ -56,6 +62,7 @@
     "bonjour-service": "^1.3.0",
     "nanoid": "^5.1.6",
     "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "marked": "^12.0.0"
   }
 }

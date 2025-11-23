@@ -177,13 +177,25 @@ ipcMain.handle('create-new-document', async (event, documentType) => {
 });
 
 ipcMain.handle('open-document-dialog', async () => {
+  // Build file filters dynamically from all registered document types
+  const filters = [];
+  
+  for (const [typeName, docType] of schemaLoader.documentTypes) {
+    filters.push({
+      name: docType.description || typeName,
+      extensions: docType.extensions
+    });
+  }
+  
+  // Add common filters
+  filters.push(
+    { name: 'JSON Files', extensions: ['json'] },
+    { name: 'All Files', extensions: ['*'] }
+  );
+  
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile'],
-    filters: [
-      { name: 'Module Descriptors', extensions: ['mdf', 'module'] },
-      { name: 'JSON Files', extensions: ['json'] },
-      { name: 'All Files', extensions: ['*'] }
-    ]
+    filters
   });
 
   if (!result.canceled && result.filePaths.length > 0) {
@@ -216,15 +228,24 @@ ipcMain.handle('load-document', async (event, filePath) => {
 });
 
 ipcMain.handle('save-document-dialog', async (event, isExport, defaultPath) => {
-  const filters = isExport 
-    ? [
-        { name: 'JSON Files', extensions: ['json'] },
-        { name: 'All Files', extensions: ['*'] }
-      ]
-    : [
-        { name: 'Module Descriptors', extensions: ['mdf', 'module'] },
-        { name: 'All Files', extensions: ['*'] }
-      ];
+  // Build file filters dynamically from all registered document types
+  const filters = [];
+  
+  if (isExport) {
+    filters.push(
+      { name: 'JSON Files', extensions: ['json'] },
+      { name: 'All Files', extensions: ['*'] }
+    );
+  } else {
+    // Add filters for all document types
+    for (const [typeName, docType] of schemaLoader.documentTypes) {
+      filters.push({
+        name: docType.description || typeName,
+        extensions: docType.extensions
+      });
+    }
+    filters.push({ name: 'All Files', extensions: ['*'] });
+  }
 
   const dialogOptions = {
     properties: ['createDirectory', 'showOverwriteConfirmation'],

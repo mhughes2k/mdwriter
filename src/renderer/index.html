@@ -11,6 +11,7 @@
   <div id="app">
     <header class="toolbar">
       <div class="toolbar-section">
+        <button id="toggle-sidebar" class="toolbar-btn" title="Toggle Sidebar">☰</button>
         <button id="new-doc" class="toolbar-btn">New</button>
         <button id="open-doc" class="toolbar-btn">Open</button>
         <button id="save-doc" class="toolbar-btn">Save</button>
@@ -26,6 +27,9 @@
       <div class="toolbar-section">
         <span id="document-type">Document Type: Module Descriptor</span>
       </div>
+      <div class="toolbar-section">
+        <button id="toggle-properties" class="toolbar-btn" title="Toggle Properties Panel">⋮</button>
+      </div>
     </header>
 
     <div class="main-container">
@@ -37,6 +41,7 @@
         <div class="section-controls">
           <button id="add-section" class="btn-primary">+ Add Section</button>
         </div>
+        <div class="resize-handle resize-handle-right"></div>
       </aside>
 
       <main class="editor-container">
@@ -53,9 +58,11 @@
       </main>
 
       <aside class="properties-panel">
+        <div class="resize-handle resize-handle-left"></div>
         <div class="panel-tabs">
           <button class="panel-tab active" data-tab="validation">Validation</button>
           <button class="panel-tab" data-tab="metadata">Document Info</button>
+          <button class="panel-tab" data-tab="output">Output</button>
         </div>
         
         <div class="panel-content">
@@ -89,6 +96,28 @@
               <div class="metadata-item">
                 <label>Version:</label>
                 <span id="meta-version">-</span>
+              </div>
+            </div>
+          </div>
+          
+          <div id="output-panel" class="tab-panel">
+            <div class="output-controls">
+              <h4>Preview Settings</h4>
+              <div class="field-order-list">
+                <p class="hint">Drag to reorder fields in preview</p>
+                <div id="render-order-list" class="sortable-list">
+                  <!-- Populated dynamically -->
+                </div>
+                <button id="reset-render-order" class="btn-secondary btn-small">Reset to Default</button>
+              </div>
+            </div>
+            <div class="output-preview">
+              <div class="output-header">
+                <h4>Document Preview</h4>
+                <button id="export-preview" class="btn-secondary btn-small">Export HTML</button>
+              </div>
+              <div id="document-preview" class="markdown-rendered">
+                <p class="placeholder">No document loaded</p>
               </div>
             </div>
           </div>
@@ -159,6 +188,8 @@
   <script src="socket.io.min.js"></script>
   <script src="collaboration-client.js"></script>
   <script src="collaboration-manager.js"></script>
+  <script src="marked.min.js"></script>
+  <script src="markdown-editor.js"></script>
   <script src="form-generator.js"></script>
   <script src="renderer.js"></script>
 </body>

@@ -183,6 +183,15 @@ class FormGenerator {
   }
 
   createTextInput(property, value, fieldPath) {
+    // Use Markdown editor for text inputs
+    if (window.markdownEditor) {
+      return window.markdownEditor.createEditor(fieldPath, value, {
+        ...property,
+        displayType: 'text'
+      });
+    }
+    
+    // Fallback to regular input
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'field-input';
@@ -213,6 +222,15 @@ class FormGenerator {
   }
 
   createTextarea(property, value, fieldPath) {
+    // Use Markdown editor for textareas
+    if (window.markdownEditor) {
+      return window.markdownEditor.createEditor(fieldPath, value, {
+        ...property,
+        displayType: 'textarea'
+      });
+    }
+    
+    // Fallback to regular textarea
     const textarea = document.createElement('textarea');
     textarea.className = 'field-textarea';
     textarea.value = value || '';

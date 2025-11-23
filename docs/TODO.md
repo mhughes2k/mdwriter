@@ -17,3 +17,4 @@
 
 - [x] "format" control doesn't update the total hours when a row is updated, added or removed.
 - [x] Default the export json file to the same as the "full" json file, but with JSON extension.
+-[] A "close" document option is required. This should close the current document (including checking for any persistence) and re-establish the window as if it was opening for the first time.

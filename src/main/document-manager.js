@@ -42,6 +42,8 @@ class DocumentManager {
         created: new Date().toISOString(),
         modified: new Date().toISOString(),
         author: '',
+        renderOrder: null, // null means use default fieldOrder
+        hiddenFields: [], // Fields to hide from preview
         comments: [],
         sharedWith: [],
         editHistory: []
@@ -90,6 +92,8 @@ class DocumentManager {
             created: new Date().toISOString(),
             modified: new Date().toISOString(),
             author: '',
+            renderOrder: null,
+            hiddenFields: [],
             comments: [],
             sharedWith: [],
             editHistory: []

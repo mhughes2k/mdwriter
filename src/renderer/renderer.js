@@ -69,10 +69,228 @@ document.addEventListener('custom-form-change', async (e) => {
   await handleFieldChange({ dataset: { fieldPath: e.detail.fieldPath }, value: e.detail.value }, true);
 });
 
+async function showDocumentTypeDialog() {
+  // Get available document types
+  const documentTypes = await window.electronAPI.getDocumentTypes();
+  
+  if (documentTypes.length === 0) {
+    alert('No document types available');
+    return null;
+  }
+  
+  // Get recently used types from localStorage
+  const recentTypes = JSON.parse(localStorage.getItem('recentDocumentTypes') || '[]');
+  
+  // Group by category
+  const categorized = {};
+  const recentDocs = [];
+  
+  documentTypes.forEach(type => {
+    const category = type.category || 'Other';
+    if (!categorized[category]) {
+      categorized[category] = [];
+    }
+    categorized[category].push(type);
+    
+    // Add to recent if in recent list
+    if (recentTypes.includes(type.name)) {
+      recentDocs.push(type);
+    }
+  });
+  
+  // Sort recent docs by recency
+  recentDocs.sort((a, b) => recentTypes.indexOf(a.name) - recentTypes.indexOf(b.name));
+  
+  // Create modal dialog
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-dialog document-type-dialog">
+      <div class="modal-header">
+        <h2>Create New Document</h2>
+        <button class="modal-close" data-action="close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="search-box">
+          <input type="text" id="doc-type-search" placeholder="Search document types..." autocomplete="off">
+          <span class="search-icon">🔍</span>
+        </div>
+        <div class="document-type-list-view">
+          ${recentDocs.length > 0 ? `
+            <div class="type-category" data-category="recent">
+              <div class="category-header">
+                <span class="category-toggle">▼</span>
+                <span class="category-name">Recently Used</span>
+              </div>
+              <div class="category-items">
+                ${recentDocs.map(type => createTypeListItem(type)).join('')}
+              </div>
+            </div>
+          ` : ''}
+          ${Object.keys(categorized).sort().map(category => `
+            <div class="type-category" data-category="${category}">
+              <div class="category-header">
+                <span class="category-toggle">▼</span>
+                <span class="category-name">${category}</span>
+              </div>
+              <div class="category-items">
+                ${categorized[category].map(type => createTypeListItem(type)).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" data-action="close">Cancel</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Focus search input
+  const searchInput = modal.querySelector('#doc-type-search');
+  searchInput.focus();
+  
+  // Setup search functionality
+  setupDocumentTypeSearch(modal, documentTypes);
+  
+  // Setup category toggle
+  modal.querySelectorAll('.category-header').forEach(header => {
+    header.addEventListener('click', (e) => {
+      const category = e.currentTarget.closest('.type-category');
+      category.classList.toggle('collapsed');
+      const toggle = category.querySelector('.category-toggle');
+      toggle.textContent = category.classList.contains('collapsed') ? '▶' : '▼';
+    });
+  });
+  
+  // Return promise that resolves when user selects a type
+  return new Promise((resolve) => {
+    modal.querySelectorAll('.type-list-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const selectedType = item.dataset.type;
+        
+        // Save to recent types
+        saveRecentDocumentType(selectedType);
+        
+        modal.remove();
+        resolve(selectedType);
+      });
+    });
+    
+    // Close handlers
+    modal.querySelectorAll('[data-action="close"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        modal.remove();
+        resolve(null);
+      });
+    });
+    
+    // Keyboard navigation
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const firstVisible = modal.querySelector('.type-list-item:not(.hidden)');
+        if (firstVisible) {
+          firstVisible.click();
+        }
+      } else if (e.key === 'Escape') {
+        modal.remove();
+        resolve(null);
+      }
+    });
+  });
+}
+
+function createTypeListItem(type) {
+  const icon = type.icon || '📝';
+  const extensions = type.extensions.join(', ');
+  return `
+    <div class="type-list-item" data-type="${type.name}" data-search="${type.name} ${type.description} ${extensions}">
+      <span class="type-icon">${icon}</span>
+      <div class="type-info">
+        <div class="type-title">${type.description || type.name}</div>
+        <div class="type-meta">${extensions}</div>
+      </div>
+    </div>
+  `;
+}
+
+function setupDocumentTypeSearch(modal, documentTypes) {
+  const searchInput = modal.querySelector('#doc-type-search');
+  const items = modal.querySelectorAll('.type-list-item');
+  
+  searchInput.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    
+    if (!query) {
+      // Show all items
+      items.forEach(item => item.classList.remove('hidden'));
+      modal.querySelectorAll('.type-category').forEach(cat => cat.classList.remove('hidden'));
+      return;
+    }
+    
+    // Filter items
+    let hasVisibleItems = {};
+    items.forEach(item => {
+      const searchText = item.dataset.search.toLowerCase();
+      const matches = searchText.includes(query);
+      item.classList.toggle('hidden', !matches);
+      
+      // Track which categories have visible items
+      const category = item.closest('.type-category').dataset.category;
+      if (matches) {
+        hasVisibleItems[category] = true;
+      }
+    });
+    
+    // Hide empty categories
+    modal.querySelectorAll('.type-category').forEach(cat => {
+      const category = cat.dataset.category;
+      cat.classList.toggle('hidden', !hasVisibleItems[category]);
+    });
+  });
+}
+
+function saveRecentDocumentType(typeName) {
+  let recent = JSON.parse(localStorage.getItem('recentDocumentTypes') || '[]');
+  
+  // Remove if already exists
+  recent = recent.filter(t => t !== typeName);
+  
+  // Add to front
+  recent.unshift(typeName);
+  
+  // Keep only last 5
+  recent = recent.slice(0, 5);
+  
+  localStorage.setItem('recentDocumentTypes', JSON.stringify(recent));
+}
+
+function getDocumentTypeIcon(typeName) {
+  const icons = {
+    'mdf': '📘',
+    'prfaq': '📄',
+    'default': '📝'
+  };
+  return icons[typeName] || icons.default;
+}
+
 async function createNewDocument() {
-  updateStatus('Creating new document...');
+  updateStatus('Select document type...');
   
   try {
+    // Show document type selection dialog
+    const selectedType = await showDocumentTypeDialog();
+    
+    if (!selectedType) {
+      updateStatus('Cancelled');
+      return;
+    }
+    
+    documentType = selectedType;
+    updateStatus('Creating new document...');
+    
     const result = await window.electronAPI.createNewDocument(documentType);
     
     if (result.success) {
@@ -138,6 +356,10 @@ async function openDocument() {
         hideLoadingIndicator();
         updateStatus('Error loading: ' + result.error);
       }
+    } else {
+      // User canceled the dialog
+      hideLoadingIndicator();
+      updateStatus('Open canceled');
     }
   } catch (err) {
     console.error('[Open] Error:', err);
@@ -643,8 +865,342 @@ document.querySelectorAll('.panel-tab').forEach(tab => {
     // Update active panel
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.getElementById(`${tabName}-panel`).classList.add('active');
+    
+    // If switching to output tab, render preview
+    if (tabName === 'output') {
+      renderDocumentPreview();
+    }
   });
 });
+
+// Output panel controls
+document.getElementById('reset-render-order')?.addEventListener('click', resetRenderOrder);
+document.getElementById('export-preview')?.addEventListener('click', exportPreviewHTML);
+
+function getRenderOrder() {
+  // Get render order from document metadata, or fall back to fieldOrder
+  if (currentDocument?.metadata?.renderOrder && Array.isArray(currentDocument.metadata.renderOrder)) {
+    return currentDocument.metadata.renderOrder;
+  }
+  
+  // Get document type metadata
+  const docTypeMeta = schemaProperties; // Already has ordered properties
+  if (!docTypeMeta) return [];
+  
+  return docTypeMeta.map(p => p.name);
+}
+
+function updateRenderOrderList() {
+  const container = document.getElementById('render-order-list');
+  if (!container || !schemaProperties) return;
+  
+  const renderOrder = getRenderOrder();
+  const hiddenFields = currentDocument?.metadata?.hiddenFields || [];
+  
+  container.innerHTML = renderOrder.map(fieldName => {
+    const prop = schemaProperties.find(p => p.name === fieldName);
+    const displayName = prop?.displayAs || prop?.title || fieldName;
+    const isHidden = hiddenFields.includes(fieldName);
+    
+    return `
+      <div class="render-order-item ${isHidden ? 'hidden-field' : ''}" draggable="true" data-field="${fieldName}">
+        <span class="drag-handle">☰</span>
+        <span class="field-name">${displayName}</span>
+        <span class="field-key">${fieldName}</span>
+        <button type="button" class="toggle-visibility" data-field="${fieldName}" title="${isHidden ? 'Show in preview' : 'Hide from preview'}">
+          ${isHidden ? '👁️' : '🚫'}
+        </button>
+      </div>
+    `;
+  }).join('');
+  
+  // Setup drag and drop
+  setupRenderOrderDragDrop();
+  
+  // Setup visibility toggles
+  container.querySelectorAll('.toggle-visibility').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFieldVisibility(btn.dataset.field);
+    });
+  });
+}
+
+function setupRenderOrderDragDrop() {
+  const container = document.getElementById('render-order-list');
+  if (!container) return;
+  
+  let draggedItem = null;
+  
+  container.querySelectorAll('.render-order-item').forEach(item => {
+    item.addEventListener('dragstart', (e) => {
+      draggedItem = item;
+      item.classList.add('dragging');
+    });
+    
+    item.addEventListener('dragend', (e) => {
+      item.classList.remove('dragging');
+      draggedItem = null;
+    });
+    
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      const afterElement = getDragAfterElement(container, e.clientY);
+      if (afterElement == null) {
+        container.appendChild(draggedItem);
+      } else {
+        container.insertBefore(draggedItem, afterElement);
+      }
+    });
+  });
+  
+  container.addEventListener('drop', (e) => {
+    e.preventDefault();
+    saveRenderOrder();
+  });
+}
+
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.render-order-item:not(.dragging)')];
+  
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function toggleFieldVisibility(fieldName) {
+  if (!currentDocument) return;
+  
+  // Initialize hiddenFields if not exists
+  if (!currentDocument.metadata.hiddenFields) {
+    currentDocument.metadata.hiddenFields = [];
+  }
+  
+  const hiddenFields = currentDocument.metadata.hiddenFields;
+  const index = hiddenFields.indexOf(fieldName);
+  
+  if (index > -1) {
+    // Field is hidden, make it visible
+    hiddenFields.splice(index, 1);
+  } else {
+    // Field is visible, hide it
+    hiddenFields.push(fieldName);
+  }
+  
+  isModified = true;
+  
+  // Update UI
+  updateRenderOrderList();
+  renderDocumentPreview();
+}
+
+function saveRenderOrder() {
+  if (!currentDocument) return;
+  
+  const container = document.getElementById('render-order-list');
+  const items = container.querySelectorAll('.render-order-item');
+  const newOrder = Array.from(items).map(item => item.dataset.field);
+  
+  currentDocument.metadata.renderOrder = newOrder;
+  isModified = true;
+  
+  // Re-render preview with new order
+  renderDocumentPreview();
+}
+
+function resetRenderOrder() {
+  if (!currentDocument) return;
+  
+  currentDocument.metadata.renderOrder = null;
+  currentDocument.metadata.hiddenFields = [];
+  isModified = true;
+  
+  updateRenderOrderList();
+  renderDocumentPreview();
+}
+
+function toggleFieldVisibility(fieldName) {
+  if (!currentDocument) return;
+  
+  if (!currentDocument.metadata.hiddenFields) {
+    currentDocument.metadata.hiddenFields = [];
+  }
+  
+  const index = currentDocument.metadata.hiddenFields.indexOf(fieldName);
+  if (index > -1) {
+    // Show field
+    currentDocument.metadata.hiddenFields.splice(index, 1);
+  } else {
+    // Hide field
+    currentDocument.metadata.hiddenFields.push(fieldName);
+  }
+  
+  isModified = true;
+  updateRenderOrderList();
+  renderDocumentPreview();
+}
+
+function renderDocumentPreview() {
+  const previewContainer = document.getElementById('document-preview');
+  if (!previewContainer || !currentDocument || !schemaProperties) {
+    return;
+  }
+  
+  updateRenderOrderList();
+  
+  const renderOrder = getRenderOrder();
+  const hiddenFields = currentDocument?.metadata?.hiddenFields || [];
+  const markdown = window.markdownEditor;
+  
+  if (!markdown) {
+    previewContainer.innerHTML = '<p class="error">Markdown renderer not loaded</p>';
+    return;
+  }
+  
+  let html = '';
+  
+  // Render title if exists
+  if (currentDocument.data.title) {
+    html += `<h1 class="doc-title">${escapeHtml(currentDocument.data.title)}</h1>`;
+  }
+  
+  // Render fields in order, skipping hidden ones
+  renderOrder.forEach(fieldName => {
+    // Skip hidden fields
+    if (hiddenFields.includes(fieldName)) {
+      return;
+    }
+    
+    const prop = schemaProperties.find(p => p.name === fieldName);
+    const value = currentDocument.data[fieldName];
+    
+    if (!value || !prop) return;
+    
+    const displayName = prop.displayAs || prop.title || fieldName;
+    
+    // Skip title since we already rendered it
+    if (fieldName === 'title') return;
+    
+    // Render section
+    if (prop.type === 'string') {
+      html += `<div class="preview-section">`;
+      html += `<h2 class="section-title">${displayName}</h2>`;
+      html += `<div class="section-content">${markdown.renderMarkdown(value)}</div>`;
+      html += `</div>`;
+    } else if (prop.type === 'array' && Array.isArray(value)) {
+      html += `<div class="preview-section">`;
+      html += `<h2 class="section-title">${displayName}</h2>`;
+      html += `<div class="section-content">`;
+      
+      if (value.length === 0) {
+        html += '<p><em>None</em></p>';
+      } else {
+        value.forEach((item, index) => {
+          if (typeof item === 'string') {
+            html += `<div class="array-item">${markdown.renderMarkdown(item)}</div>`;
+          } else if (typeof item === 'object') {
+            html += `<div class="array-item">`;
+            html += renderObject(item, markdown);
+            html += `</div>`;
+          }
+        });
+      }
+      
+      html += `</div></div>`;
+    } else if (prop.type === 'object' && typeof value === 'object') {
+      html += `<div class="preview-section">`;
+      html += `<h2 class="section-title">${displayName}</h2>`;
+      html += `<div class="section-content">`;
+      html += renderObject(value, markdown);
+      html += `</div></div>`;
+    }
+  });
+  
+  previewContainer.innerHTML = html || '<p class="placeholder">No content to preview</p>';
+}
+
+function renderObject(obj, markdown) {
+  let html = '<div class="object-preview">';
+  
+  Object.keys(obj).forEach(key => {
+    const value = obj[key];
+    html += `<div class="object-field">`;
+    html += `<span class="object-key">${escapeHtml(key)}:</span> `;
+    
+    if (typeof value === 'string') {
+      html += `<span class="object-value">${markdown.renderMarkdown(value)}</span>`;
+    } else if (Array.isArray(value)) {
+      html += `<span class="object-value">${escapeHtml(JSON.stringify(value))}</span>`;
+    } else if (typeof value === 'object') {
+      html += renderObject(value, markdown);
+    } else {
+      html += `<span class="object-value">${escapeHtml(String(value))}</span>`;
+    }
+    
+    html += `</div>`;
+  });
+  
+  html += '</div>';
+  return html;
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+async function exportPreviewHTML() {
+  if (!currentDocument) {
+    alert('No document to export');
+    return;
+  }
+  
+  const previewContainer = document.getElementById('document-preview');
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(currentDocument.data.title || 'Document')}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; line-height: 1.6; }
+    h1 { border-bottom: 2px solid #333; padding-bottom: 10px; }
+    h2 { margin-top: 30px; color: #333; }
+    table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+    th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+    th { background: #f5f5f5; font-weight: 600; }
+    code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+    pre { background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto; }
+    blockquote { border-left: 4px solid #ddd; margin: 20px 0; padding-left: 16px; color: #666; }
+  </style>
+</head>
+<body>
+${previewContainer.innerHTML}
+</body>
+</html>
+  `;
+  
+  // Save to file
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${currentDocument.data.title || 'document'}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  
+  updateStatus('Preview exported to HTML');
+}
 
 // Expose functions and state for main process to call
 window.saveDocument = saveDocument;
@@ -663,6 +1219,134 @@ function getValueAtPath(obj, path) {
   return current;
 }
 
+// Panel Toggle and Resize Functionality
+const sidebar = document.querySelector('.sidebar');
+const propertiesPanel = document.querySelector('.properties-panel');
+const toggleSidebarBtn = document.getElementById('toggle-sidebar');
+const togglePropertiesBtn = document.getElementById('toggle-properties');
+
+console.log('Toggle buttons:', { sidebar: toggleSidebarBtn, properties: togglePropertiesBtn });
+console.log('Panels:', { sidebar, propertiesPanel });
+
+// Toggle sidebar
+toggleSidebarBtn?.addEventListener('click', () => {
+  console.log('Toggling sidebar');
+  const isHidden = sidebar.classList.contains('hidden');
+  
+  if (isHidden) {
+    // Show sidebar
+    sidebar.classList.remove('hidden');
+    const savedWidth = localStorage.getItem('sidebar-width-before-hide') || '250px';
+    sidebar.style.width = savedWidth;
+    localStorage.setItem('sidebar-hidden', 'false');
+  } else {
+    // Hide sidebar
+    localStorage.setItem('sidebar-width-before-hide', sidebar.style.width || getComputedStyle(sidebar).width);
+    sidebar.style.width = '0';
+    sidebar.classList.add('hidden');
+    localStorage.setItem('sidebar-hidden', 'true');
+  }
+});
+
+// Toggle properties panel
+togglePropertiesBtn?.addEventListener('click', () => {
+  console.log('Toggling properties panel');
+  const isHidden = propertiesPanel.classList.contains('hidden');
+  
+  if (isHidden) {
+    // Show panel
+    propertiesPanel.classList.remove('hidden');
+    const savedWidth = localStorage.getItem('properties-width-before-hide') || '300px';
+    propertiesPanel.style.width = savedWidth;
+    localStorage.setItem('properties-hidden', 'false');
+  } else {
+    // Hide panel
+    localStorage.setItem('properties-width-before-hide', propertiesPanel.style.width || getComputedStyle(propertiesPanel).width);
+    propertiesPanel.style.width = '0';
+    propertiesPanel.classList.add('hidden');
+    localStorage.setItem('properties-hidden', 'true');
+  }
+});
+
+// Restore panel states from localStorage
+if (localStorage.getItem('sidebar-hidden') === 'true') {
+  sidebar.classList.add('hidden');
+}
+if (localStorage.getItem('properties-hidden') === 'true') {
+  propertiesPanel.classList.add('hidden');
+}
+
+// Resize functionality
+function initResize() {
+  const resizeHandles = document.querySelectorAll('.resize-handle');
+  
+  resizeHandles.forEach(handle => {
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+    let panel = null;
+    
+    handle.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      startX = e.clientX;
+      panel = handle.closest('.sidebar, .properties-panel');
+      startWidth = panel.offsetWidth;
+      handle.classList.add('resizing');
+      
+      // Prevent text selection during resize
+      e.preventDefault();
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'ew-resize';
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      
+      const isRightHandle = handle.classList.contains('resize-handle-right');
+      const delta = isRightHandle ? e.clientX - startX : startX - e.clientX;
+      const newWidth = startWidth + delta;
+      
+      // Apply min/max constraints
+      const minWidth = parseInt(getComputedStyle(panel).minWidth);
+      const maxWidth = parseInt(getComputedStyle(panel).maxWidth);
+      
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        panel.style.width = newWidth + 'px';
+      }
+    });
+    
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        handle.classList.remove('resizing');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        
+        // Save width to localStorage
+        if (panel) {
+          const key = panel.classList.contains('sidebar') ? 'sidebar-width' : 'properties-width';
+          localStorage.setItem(key, panel.style.width);
+        }
+      }
+    });
+  });
+  
+  // Restore widths from localStorage
+  const sidebarWidth = localStorage.getItem('sidebar-width');
+  const propertiesWidth = localStorage.getItem('properties-width');
+  
+  if (sidebarWidth) {
+    sidebar.style.width = sidebarWidth;
+  }
+  if (propertiesWidth) {
+    propertiesPanel.style.width = propertiesWidth;
+  }
+}
+
+// Initialize resize handles
+initResize();
+
 // Initialize
 updateStatus('Ready');
 initCollaboration();
+
