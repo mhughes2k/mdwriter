@@ -65,11 +65,23 @@ body {
 /* Sidebar */
 .sidebar {
   width: 250px;
+  min-width: 150px;
+  max-width: 500px;
   background: #f8f8f8;
   border-right: 1px solid #ccc;
   display: flex;
   flex-direction: column;
   padding: 12px;
+  position: relative;
+  transition: width 0.3s ease, margin-left 0.3s ease;
+}
+
+.sidebar.hidden {
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  margin-left: -1px;
+  overflow: hidden;
 }
 
 .sidebar h3 {
@@ -160,10 +172,45 @@ body {
 /* Properties Panel */
 .properties-panel {
   width: 300px;
+  min-width: 200px;
+  max-width: 600px;
   background: #f8f8f8;
   border-left: 1px solid #ccc;
   display: flex;
   flex-direction: column;
+  position: relative;
+  transition: width 0.3s ease, margin-right 0.3s ease;
+}
+
+.properties-panel.hidden {
+  width: 0;
+  min-width: 0;
+  margin-right: -1px;
+  overflow: hidden;
+}
+
+/* Resize Handles */
+.resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: ew-resize;
+  z-index: 10;
+  transition: background-color 0.2s;
+}
+
+.resize-handle:hover,
+.resize-handle.resizing {
+  background-color: rgba(0, 102, 204, 0.3);
+}
+
+.resize-handle-right {
+  right: 0;
+}
+
+.resize-handle-left {
+  left: 0;
 }
 
 .panel-tabs {
@@ -1310,7 +1357,7 @@ body {
 }
 
 /* Output Panel Styles */
-#output-panel {
+#output-panel.active {
   display: flex;
   flex-direction: column;
   height: 100%;

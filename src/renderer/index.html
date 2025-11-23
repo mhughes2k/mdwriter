@@ -11,6 +11,7 @@
   <div id="app">
     <header class="toolbar">
       <div class="toolbar-section">
+        <button id="toggle-sidebar" class="toolbar-btn" title="Toggle Sidebar">☰</button>
         <button id="new-doc" class="toolbar-btn">New</button>
         <button id="open-doc" class="toolbar-btn">Open</button>
         <button id="save-doc" class="toolbar-btn">Save</button>
@@ -21,6 +22,9 @@
       </div>
       <div class="toolbar-section">
         <span id="document-type">Document Type: Module Descriptor</span>
+      </div>
+      <div class="toolbar-section">
+        <button id="toggle-properties" class="toolbar-btn" title="Toggle Properties Panel">⋮</button>
       </div>
     </header>
 
@@ -33,6 +37,7 @@
         <div class="section-controls">
           <button id="add-section" class="btn-primary">+ Add Section</button>
         </div>
+        <div class="resize-handle resize-handle-right"></div>
       </aside>
 
       <main class="editor-container">
@@ -49,6 +54,7 @@
       </main>
 
       <aside class="properties-panel">
+        <div class="resize-handle resize-handle-left"></div>
         <div class="panel-tabs">
           <button class="panel-tab active" data-tab="validation">Validation</button>
           <button class="panel-tab" data-tab="metadata">Document Info</button>

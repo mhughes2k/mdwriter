@@ -356,6 +356,10 @@ async function openDocument() {
         hideLoadingIndicator();
         updateStatus('Error loading: ' + result.error);
       }
+    } else {
+      // User canceled the dialog
+      hideLoadingIndicator();
+      updateStatus('Open canceled');
     }
   } catch (err) {
     console.error('[Open] Error:', err);
@@ -845,22 +849,35 @@ function updateRenderOrderList() {
   if (!container || !schemaProperties) return;
   
   const renderOrder = getRenderOrder();
+  const hiddenFields = currentDocument?.metadata?.hiddenFields || [];
   
   container.innerHTML = renderOrder.map(fieldName => {
     const prop = schemaProperties.find(p => p.name === fieldName);
     const displayName = prop?.displayAs || prop?.title || fieldName;
+    const isHidden = hiddenFields.includes(fieldName);
     
     return `
-      <div class="render-order-item" draggable="true" data-field="${fieldName}">
+      <div class="render-order-item ${isHidden ? 'hidden-field' : ''}" draggable="true" data-field="${fieldName}">
         <span class="drag-handle">☰</span>
         <span class="field-name">${displayName}</span>
         <span class="field-key">${fieldName}</span>
+        <button type="button" class="toggle-visibility" data-field="${fieldName}" title="${isHidden ? 'Show in preview' : 'Hide from preview'}">
+          ${isHidden ? '👁️' : '🚫'}
+        </button>
       </div>
     `;
   }).join('');
   
   // Setup drag and drop
   setupRenderOrderDragDrop();
+  
+  // Setup visibility toggles
+  container.querySelectorAll('.toggle-visibility').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFieldVisibility(btn.dataset.field);
+    });
+  });
 }
 
 function setupRenderOrderDragDrop() {
@@ -912,6 +929,32 @@ function getDragAfterElement(container, y) {
   }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
+function toggleFieldVisibility(fieldName) {
+  if (!currentDocument) return;
+  
+  // Initialize hiddenFields if not exists
+  if (!currentDocument.metadata.hiddenFields) {
+    currentDocument.metadata.hiddenFields = [];
+  }
+  
+  const hiddenFields = currentDocument.metadata.hiddenFields;
+  const index = hiddenFields.indexOf(fieldName);
+  
+  if (index > -1) {
+    // Field is hidden, make it visible
+    hiddenFields.splice(index, 1);
+  } else {
+    // Field is visible, hide it
+    hiddenFields.push(fieldName);
+  }
+  
+  isModified = true;
+  
+  // Update UI
+  updateRenderOrderList();
+  renderDocumentPreview();
+}
+
 function saveRenderOrder() {
   if (!currentDocument) return;
   
@@ -930,8 +973,30 @@ function resetRenderOrder() {
   if (!currentDocument) return;
   
   currentDocument.metadata.renderOrder = null;
+  currentDocument.metadata.hiddenFields = [];
   isModified = true;
   
+  updateRenderOrderList();
+  renderDocumentPreview();
+}
+
+function toggleFieldVisibility(fieldName) {
+  if (!currentDocument) return;
+  
+  if (!currentDocument.metadata.hiddenFields) {
+    currentDocument.metadata.hiddenFields = [];
+  }
+  
+  const index = currentDocument.metadata.hiddenFields.indexOf(fieldName);
+  if (index > -1) {
+    // Show field
+    currentDocument.metadata.hiddenFields.splice(index, 1);
+  } else {
+    // Hide field
+    currentDocument.metadata.hiddenFields.push(fieldName);
+  }
+  
+  isModified = true;
   updateRenderOrderList();
   renderDocumentPreview();
 }
@@ -945,6 +1010,7 @@ function renderDocumentPreview() {
   updateRenderOrderList();
   
   const renderOrder = getRenderOrder();
+  const hiddenFields = currentDocument?.metadata?.hiddenFields || [];
   const markdown = window.markdownEditor;
   
   if (!markdown) {
@@ -959,8 +1025,13 @@ function renderDocumentPreview() {
     html += `<h1 class="doc-title">${escapeHtml(currentDocument.data.title)}</h1>`;
   }
   
-  // Render fields in order
+  // Render fields in order, skipping hidden ones
   renderOrder.forEach(fieldName => {
+    // Skip hidden fields
+    if (hiddenFields.includes(fieldName)) {
+      return;
+    }
+    
     const prop = schemaProperties.find(p => p.name === fieldName);
     const value = currentDocument.data[fieldName];
     
@@ -1090,6 +1161,133 @@ window.saveDocument = saveDocument;
 Object.defineProperty(window, 'isModified', {
   get: () => isModified
 });
+
+// Panel Toggle and Resize Functionality
+const sidebar = document.querySelector('.sidebar');
+const propertiesPanel = document.querySelector('.properties-panel');
+const toggleSidebarBtn = document.getElementById('toggle-sidebar');
+const togglePropertiesBtn = document.getElementById('toggle-properties');
+
+console.log('Toggle buttons:', { sidebar: toggleSidebarBtn, properties: togglePropertiesBtn });
+console.log('Panels:', { sidebar, propertiesPanel });
+
+// Toggle sidebar
+toggleSidebarBtn?.addEventListener('click', () => {
+  console.log('Toggling sidebar');
+  const isHidden = sidebar.classList.contains('hidden');
+  
+  if (isHidden) {
+    // Show sidebar
+    sidebar.classList.remove('hidden');
+    const savedWidth = localStorage.getItem('sidebar-width-before-hide') || '250px';
+    sidebar.style.width = savedWidth;
+    localStorage.setItem('sidebar-hidden', 'false');
+  } else {
+    // Hide sidebar
+    localStorage.setItem('sidebar-width-before-hide', sidebar.style.width || getComputedStyle(sidebar).width);
+    sidebar.style.width = '0';
+    sidebar.classList.add('hidden');
+    localStorage.setItem('sidebar-hidden', 'true');
+  }
+});
+
+// Toggle properties panel
+togglePropertiesBtn?.addEventListener('click', () => {
+  console.log('Toggling properties panel');
+  const isHidden = propertiesPanel.classList.contains('hidden');
+  
+  if (isHidden) {
+    // Show panel
+    propertiesPanel.classList.remove('hidden');
+    const savedWidth = localStorage.getItem('properties-width-before-hide') || '300px';
+    propertiesPanel.style.width = savedWidth;
+    localStorage.setItem('properties-hidden', 'false');
+  } else {
+    // Hide panel
+    localStorage.setItem('properties-width-before-hide', propertiesPanel.style.width || getComputedStyle(propertiesPanel).width);
+    propertiesPanel.style.width = '0';
+    propertiesPanel.classList.add('hidden');
+    localStorage.setItem('properties-hidden', 'true');
+  }
+});
+
+// Restore panel states from localStorage
+if (localStorage.getItem('sidebar-hidden') === 'true') {
+  sidebar.classList.add('hidden');
+}
+if (localStorage.getItem('properties-hidden') === 'true') {
+  propertiesPanel.classList.add('hidden');
+}
+
+// Resize functionality
+function initResize() {
+  const resizeHandles = document.querySelectorAll('.resize-handle');
+  
+  resizeHandles.forEach(handle => {
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+    let panel = null;
+    
+    handle.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      startX = e.clientX;
+      panel = handle.closest('.sidebar, .properties-panel');
+      startWidth = panel.offsetWidth;
+      handle.classList.add('resizing');
+      
+      // Prevent text selection during resize
+      e.preventDefault();
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'ew-resize';
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      
+      const isRightHandle = handle.classList.contains('resize-handle-right');
+      const delta = isRightHandle ? e.clientX - startX : startX - e.clientX;
+      const newWidth = startWidth + delta;
+      
+      // Apply min/max constraints
+      const minWidth = parseInt(getComputedStyle(panel).minWidth);
+      const maxWidth = parseInt(getComputedStyle(panel).maxWidth);
+      
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        panel.style.width = newWidth + 'px';
+      }
+    });
+    
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        handle.classList.remove('resizing');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        
+        // Save width to localStorage
+        if (panel) {
+          const key = panel.classList.contains('sidebar') ? 'sidebar-width' : 'properties-width';
+          localStorage.setItem(key, panel.style.width);
+        }
+      }
+    });
+  });
+  
+  // Restore widths from localStorage
+  const sidebarWidth = localStorage.getItem('sidebar-width');
+  const propertiesWidth = localStorage.getItem('properties-width');
+  
+  if (sidebarWidth) {
+    sidebar.style.width = sidebarWidth;
+  }
+  if (propertiesWidth) {
+    propertiesPanel.style.width = propertiesWidth;
+  }
+}
+
+// Initialize resize handles
+initResize();
 
 // Initialize
 updateStatus('Ready');
