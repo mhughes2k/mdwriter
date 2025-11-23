@@ -61,4 +61,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Import clean JSON
   importCleanJSON: (filePath, existingDocument) => ipcRenderer.invoke('import-clean-json', filePath, existingDocument),
+  
+  // Menu state management
+  updateMenuState: (state) => ipcRenderer.invoke('update-menu-state', state),
+  
+  // Menu action listeners
+  onMenuAction: (action, callback) => ipcRenderer.on(action, callback),
+  removeMenuListener: (action, callback) => ipcRenderer.removeListener(action, callback)
 });

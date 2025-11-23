@@ -12,9 +12,8 @@ const elements = {
   newDoc: document.getElementById('new-doc'),
   openDoc: document.getElementById('open-doc'),
   saveDoc: document.getElementById('save-doc'),
-  saveAsDoc: document.getElementById('save-as-doc'),
-  closeDoc: document.getElementById('close-doc'),
-  exportJson: document.getElementById('export-json'),
+  validateBtn: document.getElementById('validate-btn'),
+  previewFullscreenBtn: document.getElementById('preview-fullscreen-btn'),
   addSection: document.getElementById('add-section'),
   createNew: document.getElementById('create-new'),
   openExisting: document.getElementById('open-existing'),
@@ -46,9 +45,18 @@ elements.createNew?.addEventListener('click', createNewDocument);
 elements.openDoc?.addEventListener('click', openDocument);
 elements.openExisting?.addEventListener('click', openDocument);
 elements.saveDoc?.addEventListener('click', saveDocument);
-elements.saveAsDoc?.addEventListener('click', saveDocumentAs);
-elements.closeDoc?.addEventListener('click', closeDocument);
-elements.exportJson?.addEventListener('click', exportToJson);
+elements.validateBtn?.addEventListener('click', async () => {
+  if (currentDocument) {
+    await validateAndDisplayErrors();
+    updateStatus('Validation complete');
+  }
+});
+elements.previewFullscreenBtn?.addEventListener('click', () => {
+  // Switch to output panel first
+  document.querySelector('[data-tab="output"]')?.click();
+  // Then toggle fullscreen
+  setTimeout(() => togglePreviewFullscreen(), 100);
+});
 elements.addSection?.addEventListener('click', addSection);
 
 // Listen for form changes
@@ -70,44 +78,6 @@ document.addEventListener('remove-array-item', async (e) => {
 // Listen for custom form changes
 document.addEventListener('custom-form-change', async (e) => {
   await handleFieldChange({ dataset: { fieldPath: e.detail.fieldPath }, value: e.detail.value }, true);
-});
-
-// Add event listener for importing JSON into an existing document
-const importJsonButton = document.createElement('button');
-importJsonButton.id = 'import-json-existing';
-importJsonButton.textContent = 'Import JSON into Current Document';
-importJsonButton.className = 'toolbar-button';
-
-document.querySelector('.toolbar')?.appendChild(importJsonButton);
-
-importJsonButton.addEventListener('click', async () => {
-  if (!currentDocument) {
-    alert('No document is currently open. Please open a document first.');
-    return;
-  }
-
-  updateStatus('Importing JSON into current document...');
-  try {
-    const dialogResult = await window.electronAPI.openDocumentDialog();
-    if (!dialogResult.success) {
-      updateStatus('Import canceled');
-      return;
-    }
-
-    const filePath = dialogResult.filePath;
-    const result = await window.electronAPI.importCleanJSON(filePath, currentDocument);
-
-    if (result.success) {
-      currentDocument = result.document;
-      setModified(true);
-      await renderDocument();
-      updateStatus('JSON imported successfully into current document');
-    } else {
-      updateStatus('Error importing JSON: ' + result.error);
-    }
-  } catch (err) {
-    updateStatus('Error importing JSON: ' + err.message);
-  }
 });
 
 async function showDocumentTypeDialog() {
@@ -396,6 +366,7 @@ async function createNewDocument() {
       // Render document
       await renderDocument();
       updateStatus('New document created');
+      updateMenuState();
     } else {
       updateStatus('Error: ' + result.error);
     }
@@ -443,6 +414,7 @@ async function openDocument() {
         } else {
           updateStatus('Document loaded successfully');
         }
+        updateMenuState();
       } else {
         hideLoadingIndicator();
         updateStatus('Error loading: ' + result.error);
@@ -606,6 +578,7 @@ async function closeDocument() {
   }
   
   updateStatus('Document closed');
+  updateMenuState();
 }
 
 function setModified(modified) {
@@ -620,6 +593,9 @@ function setModified(modified) {
   const titlePrefix = isModified ? '● ' : '';
   const fileName = currentFilePath ? currentFilePath.split(/[/\\]/).pop() : 'Untitled';
   document.title = `${titlePrefix}${fileName} - MDWriter`;
+  
+  // Update menu state
+  updateMenuState();
 }
 
 async function exportToJson() {
@@ -1387,13 +1363,21 @@ function renderObject(obj, markdown) {
   
   Object.keys(obj).forEach(key => {
     const value = obj[key];
+    
+    // Skip undefined, null, or empty string values
+    if (value === undefined || value === null || value === '') {
+      return;
+    }
+    
     html += `<div class="object-field">`;
     html += `<span class="object-key">${escapeHtml(key)}:</span> `;
     
     if (typeof value === 'string') {
       html += `<span class="object-value">${markdown.renderMarkdown(value)}</span>`;
     } else if (Array.isArray(value)) {
-      html += `<span class="object-value">${escapeHtml(JSON.stringify(value))}</span>`;
+      if (value.length > 0) {
+        html += `<span class="object-value">${escapeHtml(JSON.stringify(value))}</span>`;
+      }
     } else if (typeof value === 'object') {
       html += renderObject(value, markdown);
     } else {
@@ -1602,35 +1586,253 @@ function initResize() {
 // Initialize resize handles
 initResize();
 
-// Initialize
-updateStatus('Ready');
-initCollaboration();
+// Initialize menu action listeners
+initMenuListeners();
 
-async function importCleanJSON() {
-  updateStatus('Importing JSON...');
-  try {
-    const dialogResult = await window.electronAPI.openDocumentDialog();
-    if (!dialogResult.success) {
-      updateStatus('Import canceled');
-      return;
-    }
-
-    const filePath = dialogResult.filePath;
-    const result = await window.electronAPI.importCleanJSON(filePath, currentDocument);
-
-    if (result.success) {
-      currentDocument = result.document;
-      currentFilePath = null; // Reset file path for new documents
-      isModified = true;
-      await renderDocument();
-      updateStatus('JSON imported successfully');
-    } else {
-      updateStatus('Error importing JSON: ' + result.error);
-    }
-  } catch (err) {
-    updateStatus('Error importing JSON: ' + err.message);
+// Update menu state helper
+function updateMenuState() {
+  if (window.electronAPI && window.electronAPI.updateMenuState) {
+    window.electronAPI.updateMenuState({
+      hasDocument: !!currentDocument,
+      isModified: isModified,
+      canUndo: false, // TODO: Implement undo/redo
+      canRedo: false, // TODO: Implement undo/redo
+      isHosting: false, // TODO: Track collaboration state
+      isInSession: false // TODO: Track collaboration state
+    });
   }
 }
 
-document.getElementById('import-json')?.addEventListener('click', importCleanJSON);
+// Initialize menu action listeners
+function initMenuListeners() {
+  if (!window.electronAPI || !window.electronAPI.onMenuAction) {
+    console.warn('electronAPI or onMenuAction not available');
+    return;
+  }
+  
+  console.log('Initializing menu listeners...');
+  
+  // File menu actions
+  window.electronAPI.onMenuAction('menu-new-document', () => {
+    console.log('[Menu] New document triggered');
+    createNewDocument();
+  });
+  window.electronAPI.onMenuAction('menu-open-document', () => {
+    console.log('[Menu] Open document triggered');
+    openDocument();
+  });
+  window.electronAPI.onMenuAction('menu-close-document', () => {
+    console.log('[Menu] Close document triggered');
+    closeDocument();
+  });
+  window.electronAPI.onMenuAction('menu-save-document', () => {
+    console.log('[Menu] Save document triggered');
+    saveDocument();
+  });
+  window.electronAPI.onMenuAction('menu-save-document-as', () => {
+    console.log('[Menu] Save As triggered');
+    saveDocumentAs();
+  });
+  window.electronAPI.onMenuAction('menu-export-json', () => {
+    console.log('[Menu] Export JSON triggered');
+    exportToJson();
+  });
+  window.electronAPI.onMenuAction('menu-export-html', () => {
+    console.log('[Menu] Export HTML triggered');
+    exportPreviewHTML();
+  });
+  
+  // Import actions
+  window.electronAPI.onMenuAction('menu-import-json-existing', async () => {
+    if (!currentDocument) {
+      alert('No document is currently open. Please open a document first.');
+      return;
+    }
+    const dialogResult = await window.electronAPI.openDocumentDialog();
+    if (!dialogResult.success) return;
+    
+    const result = await window.electronAPI.importCleanJSON(dialogResult.filePath, currentDocument);
+    if (result.success) {
+      currentDocument = result.document;
+      setModified(true);
+      await renderDocument();
+      updateStatus('JSON imported successfully into current document');
+    } else {
+      updateStatus('Error importing JSON: ' + result.error);
+    }
+  });
+  
+  window.electronAPI.onMenuAction('menu-import-json-new', async () => {
+    // Trigger the create from file dialog
+    createNewDocument();
+  });
+  
+  // View menu actions
+  window.electronAPI.onMenuAction('menu-toggle-sidebar', () => {
+    toggleSidebarBtn?.click();
+  });
+  
+  window.electronAPI.onMenuAction('menu-toggle-properties', () => {
+    togglePropertiesBtn?.click();
+  });
+  
+  window.electronAPI.onMenuAction('menu-zoom-in', () => {
+    document.body.style.zoom = (parseFloat(document.body.style.zoom || 1) + 0.1).toString();
+  });
+  
+  window.electronAPI.onMenuAction('menu-zoom-out', () => {
+    document.body.style.zoom = (parseFloat(document.body.style.zoom || 1) - 0.1).toString();
+  });
+  
+  window.electronAPI.onMenuAction('menu-zoom-reset', () => {
+    document.body.style.zoom = '1';
+  });
+  
+  // Document menu actions
+  window.electronAPI.onMenuAction('menu-add-section', () => addSection());
+  
+  window.electronAPI.onMenuAction('menu-validate', async () => {
+    if (currentDocument) {
+      await validateAndDisplayErrors();
+      updateStatus('Validation complete');
+    }
+  });
+  
+  window.electronAPI.onMenuAction('menu-document-properties', () => {
+    // Switch to metadata panel
+    document.querySelector('[data-tab="metadata"]')?.click();
+  });
+  
+  // Collaboration menu actions
+  window.electronAPI.onMenuAction('menu-host-session', () => {
+    const collabDialog = document.getElementById('collab-dialog');
+    const collabBtn = document.getElementById('collab-btn');
+    
+    // Open dialog if not already open
+    if (collabDialog && collabDialog.style.display !== 'flex') {
+      collabBtn?.click();
+    }
+    
+    // Switch to host tab
+    setTimeout(() => {
+      const hostTab = document.querySelector('.collab-tab[data-tab="host"]');
+      hostTab?.click();
+    }, 100);
+  });
+  
+  window.electronAPI.onMenuAction('menu-join-session', () => {
+    console.log('[Menu] Join session triggered');
+    const collabDialog = document.getElementById('collab-dialog');
+    const collabBtn = document.getElementById('collab-btn');
+    
+    // Open dialog if not already open
+    if (collabDialog.style.display !== 'flex') {
+      collabBtn?.click();
+    }
+    
+    // Switch to join tab
+    setTimeout(() => {
+      const joinTab = document.querySelector('.collab-tab[data-tab="join"]');
+      joinTab?.click();
+    }, 100);
+  });
+  
+  window.electronAPI.onMenuAction('menu-stop-hosting', () => {
+    console.log('[Menu] Stop hosting triggered');
+    // TODO: Implement stop hosting
+    updateStatus('Stop hosting not yet implemented');
+  });
+  
+  window.electronAPI.onMenuAction('menu-session-info', () => {
+    console.log('[Menu] Session info triggered');
+    const collabDialog = document.getElementById('collab-dialog');
+    const collabBtn = document.getElementById('collab-btn');
+    
+    // Open dialog if not already open
+    if (collabDialog.style.display !== 'flex') {
+      collabBtn?.click();
+    }
+    
+    // Switch to active session tab
+    setTimeout(() => {
+      const activeTab = document.querySelector('.collab-tab[data-tab="active"]');
+      activeTab?.click();
+    }, 100);
+  });
+  
+  // Recent files
+  window.electronAPI.onMenuAction('menu-open-recent', async (event, filePath) => {
+    try {
+      const result = await window.electronAPI.loadDocument(filePath);
+      if (result.success) {
+        currentDocument = result.document;
+        currentFilePath = result.document.filePath;
+        documentType = result.document.metadata.documentType;
+        setModified(false);
+        
+        const structure = await window.electronAPI.getSchemaStructure(documentType);
+        schemaProperties = structure;
+        
+        await renderDocument();
+        updateStatus('Document loaded successfully');
+        updateMenuState();
+      } else {
+        updateStatus('Error loading: ' + result.error);
+      }
+    } catch (err) {
+      updateStatus('Error opening document: ' + err.message);
+    }
+  });
+  
+  window.electronAPI.onMenuAction('menu-clear-recent', async () => {
+    // TODO: Implement clear recent files
+    updateStatus('Recent files cleared');
+  });
+  
+  // Help menu
+  window.electronAPI.onMenuAction('menu-keyboard-shortcuts', () => {
+    showKeyboardShortcuts();
+  });
+  
+  window.electronAPI.onMenuAction('menu-about', () => {
+    showAboutDialog();
+  });
+}
+
+function showKeyboardShortcuts() {
+  alert(`Keyboard Shortcuts:
+  
+File:
+  Ctrl/Cmd+N - New Document
+  Ctrl/Cmd+O - Open Document  
+  Ctrl/Cmd+W - Close Document
+  Ctrl/Cmd+S - Save
+  Ctrl/Cmd+Shift+S - Save As
+  
+View:
+  Ctrl/Cmd+1 - Toggle Sidebar
+  Ctrl/Cmd+2 - Toggle Properties
+  Ctrl/Cmd++ - Zoom In
+  Ctrl/Cmd+- - Zoom Out
+  Ctrl/Cmd+0 - Reset Zoom
+  
+Document:
+  Ctrl/Cmd+Shift+V - Validate Document`);
+}
+
+function showAboutDialog() {
+  alert(`MDWriter
+  
+A structured writing application for Module Descriptors
+
+Version: 1.0.0
+Built with Electron
+
+© 2025`);
+}
+
+// Initialize
+updateStatus('Ready');
+updateMenuState();
+initCollaboration();
 

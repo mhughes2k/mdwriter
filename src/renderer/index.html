@@ -11,26 +11,29 @@
   <div id="app">
     <header class="toolbar">
       <div class="toolbar-section">
-        <button id="toggle-sidebar" class="toolbar-btn" title="Toggle Sidebar">☰</button>
-        <button id="new-doc" class="toolbar-btn">New</button>
-        <button id="open-doc" class="toolbar-btn">Open</button>
-        <button id="save-doc" class="toolbar-btn">Save</button>
-        <button id="save-as-doc" class="toolbar-btn">Save As</button>
-        <button id="close-doc" class="toolbar-btn">Close</button>
+        <button id="toggle-sidebar" class="toolbar-btn" title="Toggle Document Structure (Ctrl+1)">☰</button>
+        <button id="new-doc" class="toolbar-btn" title="New Document (Ctrl+N)">📄 New</button>
+        <button id="open-doc" class="toolbar-btn" title="Open Document (Ctrl+O)">📁 Open</button>
+        <button id="save-doc" class="toolbar-btn" title="Save Document (Ctrl+S)">💾 Save</button>
       </div>
       <div class="toolbar-section">
-        <button id="export-json" class="toolbar-btn">Export JSON</button>
+        <button id="validate-btn" class="toolbar-btn toolbar-btn-validate" title="Validate Document (Ctrl+Shift+V)">
+          <span class="validate-icon">✓</span> Validate
+        </button>
       </div>
       <div class="toolbar-section">
-        <button id="collab-btn" class="toolbar-btn">Collaborate</button>
+        <button id="preview-fullscreen-btn" class="toolbar-btn" title="Preview Fullscreen">👁️ Preview</button>
+      </div>
+      <div class="toolbar-section">
+        <button id="collab-btn" class="toolbar-btn" title="Collaboration">👥 Collaborate</button>
         <span id="collab-status" class="collab-status"></span>
       </div>
-      <div class="toolbar-section">
+      <div class="toolbar-section toolbar-section-info">
         <span id="document-type">No Document</span>
         <span id="modified-indicator" class="modified-indicator" style="display: none;">●</span>
       </div>
       <div class="toolbar-section">
-        <button id="toggle-properties" class="toolbar-btn" title="Toggle Properties Panel">⋮</button>
+        <button id="toggle-properties" class="toolbar-btn" title="Toggle Properties Panel (Ctrl+2)">⋮</button>
       </div>
     </header>
 
@@ -148,11 +151,11 @@
   </div>
 
   <!-- Collaboration Dialog -->
-  <div id="collab-dialog" class="modal" style="display: none;">
-    <div class="modal-content">
+  <div id="collab-dialog" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog">
       <div class="modal-header">
         <h2>Collaboration</h2>
-        <button class="close-modal">&times;</button>
+        <button class="modal-close">&times;</button>
       </div>
       <div class="modal-body">
         <div class="collab-tabs">

@@ -151,7 +151,8 @@ function renderForDisplay(value) {
   }
   
   return value.map(format => {
-    let output = `${format.type}: ${format.hours} hours`;
+    const name = format.name || 'Unnamed';
+    let output = `${name}: ${format.hours || 0} hours`;
     if (format.weeks) {
       output += ` over ${format.weeks} weeks`;
     }

@@ -21,32 +21,71 @@ body {
   display: flex;
   gap: 20px;
   padding: 8px 12px;
-  background: #f0f0f0;
+  background: linear-gradient(180deg, #f8f8f8 0%, #f0f0f0 100%);
   border-bottom: 1px solid #ccc;
   align-items: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .toolbar-section {
   display: flex;
   gap: 8px;
   align-items: center;
+  padding: 0 8px;
+  border-right: 1px solid #ddd;
+}
+
+.toolbar-section:last-child {
+  border-right: none;
+}
+
+.toolbar-section-info {
+  margin-left: auto;
+  border-right: none;
+  padding-right: 0;
 }
 
 .toolbar-btn {
   padding: 6px 12px;
   border: 1px solid #999;
   background: white;
-  border-radius: 3px;
+  border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .toolbar-btn:hover {
   background: #e8e8e8;
+  border-color: #666;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .toolbar-btn:active {
   background: #d0d0d0;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolbar-btn-validate {
+  background: #f0f8ff;
+  border-color: #4a90e2;
+}
+
+.toolbar-btn-validate:hover {
+  background: #e3f2fd;
+}
+
+.validate-icon {
+  color: #4caf50;
+  font-weight: bold;
 }
 
 #document-type {

@@ -14,7 +14,7 @@ let hostedSessionId = null;
 function initCollaboration() {
   const collabBtn = document.getElementById('collab-btn');
   const collabDialog = document.getElementById('collab-dialog');
-  const closeModal = collabDialog.querySelector('.close-modal');
+  const closeModal = collabDialog.querySelector('.modal-close');
   
   // Open collaboration dialog
   collabBtn.addEventListener('click', () => {

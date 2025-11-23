@@ -31,8 +31,24 @@
 - [x] Cancel dialog spinner fix (loading indicator now properly hidden on cancel)
 - [x] A "close" document option is required. This should close the current document (including checking for any persistence) and re-establish the window as if it was opening for the first time.
 - [x] Dirty state tracking with visual indicator
-- [] User interface around a "toolbar" is inconsistent, and should be updated with some sort of framework type mechanism to allow for easier management of toolbar items. 
-- [] User interface menus are somewhat lacking.
+- [x] Native application menu system
+  - [x] File menu (New, Open, Close, Save, Import, Export) with keyboard shortcuts
+  - [x] Edit menu (Undo, Redo, Cut, Copy, Paste, Find)
+  - [x] View menu (Toggle panels, Zoom, Fullscreen)
+  - [x] Document menu (Add Section, Validate, Properties)
+  - [x] Collaborate menu (Host, Join, Session Info)
+  - [x] Help menu (Documentation, Shortcuts, About)
+  - [x] Dynamic menu state (enable/disable based on document state)
+  - [x] Recent files submenu with keyboard shortcuts
+- [x] Simplified toolbar UI
+  - [x] Removed redundant buttons (now in menus)
+  - [x] Added icons to remaining buttons
+  - [x] Better visual grouping with separators
+  - [x] Validation button with status indicator
+  - [x] Preview quick-access button
+- [x] User interface around a "toolbar" is inconsistent, and should be updated with some sort of framework type mechanism to allow for easier management of toolbar items. 
+- [x] User interface menus are somewhat lacking.
+- [] User preferences screen has to be implemented.
 
 ## File Format & Persistence
 - [x] Basic .mdf file format with document data and metadata
@@ -41,9 +57,9 @@
 - [] Shared with users information in file format
 - [x] Export to clean JSON (schema-only, no metadata)
 - [] Clear documentation of .mdf format vs export JSON format
-- [] Import of clean JSON into:
-    - [] New Document
-    - [] Existing document
+- [x] Import of clean JSON into:
+    - [x] New Document
+    - [x] Existing document
 
 ## Deployment
 - [] Build installers for Windows, macOS, Linux

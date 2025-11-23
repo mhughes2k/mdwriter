@@ -7,6 +7,7 @@ const CollaborationServer = require('./collaboration-server');
 const DiscoveryService = require('./discovery-service');
 const { getConfigManager } = require('./config-manager');
 const { TemplateManager } = require('./template-manager');
+const MenuBuilder = require('./menu-builder');
 
 let mainWindow;
 let documentManager;
@@ -16,6 +17,7 @@ let discoveryService = null;
 let currentSession = null;
 let configManager = null;
 let templateManager = null;
+let menuBuilder = null;
 
 async function initialize() {
   // Initialize configuration
@@ -106,7 +108,22 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+    menuBuilder = null;
   });
+  
+  // Initialize menu builder after window is created
+  menuBuilder = new MenuBuilder(mainWindow, app);
+  menuBuilder.rebuild();
+  
+  // Update recent files in menu
+  updateRecentFilesMenu();
+}
+
+async function updateRecentFilesMenu() {
+  if (menuBuilder && configManager) {
+    const recentFiles = configManager.getRecentFiles();
+    await menuBuilder.updateRecentFiles(recentFiles);
+  }
 }
 
 app.whenReady().then(async () => {
@@ -580,6 +597,36 @@ ipcMain.handle('import-clean-json', async (event, filePath, existingDocument) =>
     console.error('[Main] Error importing JSON:', err);
     return { success: false, error: err.message };
   }
+});
+
+// Menu state update handler
+ipcMain.handle('update-menu-state', async (event, state) => {
+  if (menuBuilder) {
+    menuBuilder.updateState(state);
+  }
+  return { success: true };
+});
+
+// Menu action handlers (forward menu clicks to renderer)
+const menuActions = [
+  'menu-new-document', 'menu-open-document', 'menu-close-document',
+  'menu-save-document', 'menu-save-document-as', 'menu-export-json',
+  'menu-export-html', 'menu-export-word', 'menu-export-pdf',
+  'menu-import-json-existing', 'menu-import-json-new',
+  'menu-undo', 'menu-redo', 'menu-find', 'menu-find-next', 'menu-replace',
+  'menu-toggle-sidebar', 'menu-toggle-properties',
+  'menu-zoom-in', 'menu-zoom-out', 'menu-zoom-reset',
+  'menu-add-section', 'menu-validate', 'menu-document-properties',
+  'menu-host-session', 'menu-join-session', 'menu-stop-hosting', 'menu-session-info',
+  'menu-preferences', 'menu-keyboard-shortcuts', 'menu-about',
+  'menu-clear-recent'
+];
+
+// No need to handle these - they're sent directly from menu-builder
+
+// Handle open recent file
+ipcMain.on('menu-open-recent', (event, filePath) => {
+  mainWindow.webContents.send('menu-open-recent', filePath);
 });
 
 // Cleanup on app quit
