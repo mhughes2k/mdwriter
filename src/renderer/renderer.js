@@ -898,6 +898,10 @@ async function handleFieldChange(input, isCustomForm = false) {
       // Validate after change (debounced)
       clearTimeout(window.validationTimeout);
       window.validationTimeout = setTimeout(() => validateAndDisplayErrors(), 500);
+      
+      // Update preview after change (debounced)
+      clearTimeout(window.previewUpdateTimeout);
+      window.previewUpdateTimeout = setTimeout(() => renderDocumentPreview(), 500);
     }
   } catch (err) {
     console.error('Error updating field:', err);
@@ -937,6 +941,9 @@ async function handleAddArrayItem(arrayPath, property) {
       }
       
       await renderDocument();
+      
+      // Update preview immediately for array changes
+      await renderDocumentPreview();
     }
   } catch (err) {
     console.error('Error adding array item:', err);
@@ -963,6 +970,9 @@ async function handleRemoveArrayItem(arrayPath, index) {
       }
       
       await renderDocument();
+      
+      // Update preview immediately for array changes
+      await renderDocumentPreview();
     }
   } catch (err) {
     console.error('Error removing array item:', err);
@@ -1266,7 +1276,7 @@ async function renderDocumentPreview() {
       // Render using template - ensure document has type property
       const documentWithType = {
         data: currentDocument.data,
-        type: documentType
+        type: currentDocument.metadata.documentType
       };
       const templateMarkdown = await window.templateUI.renderWithTemplate(documentWithType);
       if (templateMarkdown) {

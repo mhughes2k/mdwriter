@@ -97,10 +97,10 @@ class TemplateUI {
    * Update template selector dropdown
    */
   updateTemplateSelector() {
-    // Clear existing options except the first (no template)
-    while (this.elements.templateSelect.options.length > 1) {
-      this.elements.templateSelect.remove(1);
-    }
+    // Clear all existing options and optgroups except the first option (no template)
+    const firstOption = this.elements.templateSelect.options[0];
+    this.elements.templateSelect.innerHTML = '';
+    this.elements.templateSelect.appendChild(firstOption);
     
     // Group templates by source
     const bundledTemplates = this.currentTemplates.filter(t => t.source === 'bundled');
