@@ -194,8 +194,8 @@ class DocumentManager {
     return document;
   }
 
-  export(filePath, document) {
-    return this.exportClean(filePath, document);
+  async export(filePath, document) {
+    return await this.exportClean(filePath, document);
   }
 
   shareWith(document, email, role) {
