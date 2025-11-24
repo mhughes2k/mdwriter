@@ -102,7 +102,7 @@ class TemplateManager {
         templates.push(template);
       }
       
-      console.log(`[TemplateManager] Loaded ${templates.length} templates from ${dirPath} as a ${source}`);
+      console.log(`[TemplateManager] Loaded ${templates.length} templates from ${dirPath} as ${source}`);
     } catch (err) {
       // Directory doesn't exist or can't be read
       console.log(`[TemplateManager] Could not load templates from ${dirPath}:`, err.message);
