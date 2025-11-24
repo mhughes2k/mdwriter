@@ -7,6 +7,10 @@
     "start": "electron .",
     "postinstall": "npm run copy-marked",
     "copy-marked": "cp node_modules/marked/marked.min.js src/renderer/marked.min.js || echo 'Marked not installed yet'",
+      "test": "jest",
+      "test:watch": "jest --watch",
+      "test:coverage": "jest --coverage",
+      "test:verbose": "jest --verbose",
     "build": "electron-builder",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
@@ -23,7 +27,10 @@
   "private": true,
   "devDependencies": {
     "electron": "^28.0.0",
-    "electron-builder": "^26.0.12"
+     "electron-builder": "^26.0.12",
+     "jest": "^29.7.0",
+     "@jest/globals": "^29.7.0",
+     "jest-environment-node": "^29.7.0"
   },
   "build": {
     "appId": "com.mdwriter.app",
