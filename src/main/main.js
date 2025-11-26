@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const os = require('os');
-const schemaLoader = require('./schema-loader');
+const { instance: schemaLoader } = require('./schema-loader');
 const DocumentManager = require('./document-manager');
 const CollaborationServer = require('./collaboration-server');
 const DiscoveryService = require('./discovery-service');

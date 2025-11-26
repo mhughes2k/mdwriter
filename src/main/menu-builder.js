@@ -384,3 +384,5 @@ class MenuBuilder {
 }
 
 module.exports = MenuBuilder;
+module.exports.MenuBuilder = MenuBuilder;
+module.exports.getInstance = (mainWindow, callbacks) => new MenuBuilder(mainWindow, callbacks);

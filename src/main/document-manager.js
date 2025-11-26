@@ -366,3 +366,5 @@ class DocumentManager {
 }
 
 module.exports = DocumentManager;
+module.exports.DocumentManager = DocumentManager;
+module.exports.getInstance = (schemaLoader) => new DocumentManager(schemaLoader);

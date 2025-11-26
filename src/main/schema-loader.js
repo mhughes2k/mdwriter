@@ -415,9 +415,14 @@ class SchemaLoader {
   }
 }
 
-// Export class and a default singleton instance for convenience
+// Standardized exports:
+// - `SchemaLoader`: the class for consumers that want to construct their own loader
+// - `instance`: a default singleton instance for convenience
+// - `getInstance()`: factory to create a new instance
 const schemaLoaderInstance = new SchemaLoader();
-module.exports = schemaLoaderInstance;
-module.exports.SchemaLoader = SchemaLoader;
-module.exports.getInstance = () => new SchemaLoader();
+module.exports = {
+  SchemaLoader,
+  instance: schemaLoaderInstance,
+  getInstance: () => new SchemaLoader()
+};
 

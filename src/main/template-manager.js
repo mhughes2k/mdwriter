@@ -457,3 +457,4 @@ class TemplateManager {
 // so tests can import either the default or destructured form.
 module.exports = TemplateManager;
 module.exports.TemplateManager = TemplateManager;
+module.exports.getInstance = (configManager) => new TemplateManager(configManager);
