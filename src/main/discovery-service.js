@@ -149,3 +149,5 @@ class DiscoveryService {
 }
 
 module.exports = DiscoveryService;
+module.exports.DiscoveryService = DiscoveryService;
+module.exports.getInstance = () => new DiscoveryService();

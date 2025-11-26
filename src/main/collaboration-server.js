@@ -383,3 +383,5 @@ class CollaborationServer {
 }
 
 module.exports = CollaborationServer;
+module.exports.CollaborationServer = CollaborationServer;
+module.exports.getInstance = () => new CollaborationServer();

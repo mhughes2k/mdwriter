@@ -38,7 +38,7 @@ class TemplateManager {
       );
       templates.push(...bundledTemplates);
     } catch (err) {
-      console.log(`[TemplateManager] No bundled templates for ${documentType}:`, err.message);
+      // Silently ignore - missing bundled templates is expected for some document types
     }
     
     // 2. Load user templates
@@ -53,13 +53,12 @@ class TemplateManager {
       );
       templates.push(...userTemplates);
     } catch (err) {
-      console.log(`[TemplateManager] No user templates for ${documentType}:`, err.message);
+      // Silently ignore - missing user templates directory is expected until user creates templates
     }
     
     // Cache templates
-    templates.forEach(template => {
-      this.templates.set(template.id, template);
-    });
+    // Preserve relative ordering: bundled first then user (tests rely on index 0 being bundled)
+    templates.forEach(t => this.templates.set(t.id, t));
     
     return templates;
   }
@@ -86,24 +85,32 @@ class TemplateManager {
         const metadata = this.parseTemplateMetadata(content);
         const templateId = `${source}:${documentType}:${path.parse(file).name}`;
         
+        // Normalise filePath.
+        const normalizedFilePath = filePath.replace(/\\/g, '/');
+
         const template = {
           id: templateId,
           name: metadata.name || path.parse(file).name,
           description: metadata.description || '',
-          source: source, // 'bundled' or 'user'
-          documentType: documentType,
-          filePath: filePath,
-          content: content,
+          source: source,
+          documentType,
+          normalizedFilePath,
+          content,
           placeholders: this.extractPlaceholders(content)
         };
         
         templates.push(template);
       }
       
-      console.log(`[TemplateManager] Loaded ${templates.length} templates from ${dirPath}`);
+      if (templates.length > 0) {
+        console.log(`[TemplateManager] Loaded ${templates.length} templates from ${dirPath} as ${source}`);
+      }
     } catch (err) {
-      // Directory doesn't exist or can't be read
-      console.log(`[TemplateManager] Could not load templates from ${dirPath}:`, err.message);
+      // Silently handle missing directories (ENOENT) - this is expected behavior
+      // Log warnings only for other errors (permission issues, corrupt files, etc.)
+      if (err.code !== 'ENOENT') {
+        console.warn(`[TemplateManager] Warning: Could not access ${dirPath}:`, err.message);
+      }
     }
     
     return templates;
@@ -126,11 +133,14 @@ class TemplateManager {
       const lines = frontmatter.split('\n');
       
       for (const line of lines) {
-        const colonIndex = line.indexOf(':');
-        if (colonIndex > 0) {
-          const key = line.substring(0, colonIndex).trim();
-          const value = line.substring(colonIndex + 1).trim();
-          metadata[key] = value;
+        // Accept only single colon key: value pairs
+        const parts = line.split(':');
+        if (parts.length === 2) { // treat extra colons as malformed; ignore
+          const key = parts[0].trim();
+          const value = parts[1].trim();
+          if (/^[a-zA-Z0-9_-]+$/.test(key)) {
+            metadata[key] = value;
+          }
         }
       }
     }
@@ -222,15 +232,15 @@ class TemplateManager {
   /**
    * Get value from document data using dot notation path
    */
-  getValueFromPath(data, path) {
-    const keys = path.split('.');
+  getValueFromPath(data, propPath) {
+    const keys = propPath.split('.');
     let value = data;
-    
+
     for (const key of keys) {
       value = value?.[key];
       if (value === undefined) return undefined;
     }
-    
+
     return value;
   }
   
@@ -352,6 +362,99 @@ class TemplateManager {
       filePath: filePath
     };
   }
+
+  /**
+   * Render a simple template object (tests pass inline object with content).
+   * Supports:
+   *  - {{path.to.field}} placeholders
+   *  - {{#each items}}...{{/each}} blocks (minimal implementation)
+   * Missing values are left as their original placeholder.
+   */
+  async renderTemplate(templateObj, data) {
+    if (!templateObj || typeof templateObj.content !== 'string') {
+      return '';
+    }
+    let output = templateObj.content;
+
+    // Handle each blocks first
+    const eachRegex = /\{\{#each\s+([^}]+)\}\}([\s\S]*?)\{\{\/each\}\}/g;
+    output = output.replace(eachRegex, (match, collectionPath, inner) => {
+      const collection = this.getValueFromPath(data, collectionPath.trim());
+      if (!Array.isArray(collection)) {
+        return ''; // If not array, drop block
+      }
+      return collection.map(item => {
+        return inner.replace(/\{\{([^}]+)\}\}/g, (m, ph) => {
+          const key = ph.trim();
+          const val = item[key];
+          return (val === undefined || val === null) ? m : String(val);
+        });
+      }).join('');
+    });
+
+    // Replace simple placeholders
+    output = output.replace(/\{\{([^}]+)\}\}/g, (match, placeholder) => {
+      // Skip if it's an each directive already processed or closing tag
+      if (placeholder.startsWith('#each') || placeholder.startsWith('/each')) {
+        return ''; // remove stray directive remnants if any
+      }
+      const value = this.getValueFromPath(data, placeholder.trim());
+      if (value === undefined || value === null) {
+        return match; // leave placeholder untouched per test expectation
+      }
+      return String(value);
+    });
+    return output;
+  }
+
+  /**
+   * Save a user template to disk with frontmatter.
+   */
+  async saveUserTemplate(documentType, templateId, template) {
+    try {
+      const userTemplatesDir = this.configManager.getUserspaceTemplatesDirectory();
+      const typeDir = path.join(userTemplatesDir, documentType);
+      await fs.mkdir(typeDir, { recursive: true });
+      const filePath = path.join(typeDir, `${templateId}.md`);
+      const frontmatterLines = [
+        '---',
+        `name: ${template.name || templateId}`
+      ];
+      if (template.description) {
+        frontmatterLines.push(`description: ${template.description}`);
+      }
+      frontmatterLines.push('---');
+      const content = `${frontmatterLines.join('\n')}\n${template.content || ''}`;
+      await fs.writeFile(filePath, content, 'utf-8');
+      return { success: true, templateId: `user:${documentType}:${templateId}`, filePath };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }
+
+  /**
+   * Delete a user template. templateKey format: user:<type>:<id>
+   */
+  async deleteUserTemplate(templateKey) {
+    try {
+      const [source, typeName, id] = templateKey.split(':');
+      if (source !== 'user') {
+        return { success: false, error: 'Cannot delete bundled or non-user templates' };
+      }
+      const userTemplatesDir = this.configManager.getUserspaceTemplatesDirectory();
+      const filePath = path.join(userTemplatesDir, typeName, `${id}.md`);
+      await fs.unlink(filePath);
+      // Remove from in-memory cache if present
+      this.templates.delete(templateKey);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }
 }
 
-module.exports = { TemplateManager };
+// Export the constructor as the module export but also attach as a property
+// so tests can import either the default or destructured form.
+module.exports = TemplateManager;
+module.exports.TemplateManager = TemplateManager;
+module.exports.getInstance = (configManager) => new TemplateManager(configManager);
