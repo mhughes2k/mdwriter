@@ -71,78 +71,94 @@ describe('MenuBuilder', () => {
   
   describe('buildMenu', () => {
     test('should build menu template', () => {
-      const menu = menuBuilder.buildMenu();
-      
+      menuBuilder.buildMenu();
+      expect(mockMenu.buildFromTemplate).toHaveBeenCalled();
+      const menu = mockMenu.buildFromTemplate.mock.calls[0][0];
+
       expect(Array.isArray(menu)).toBe(true);
       expect(menu.length).toBeGreaterThan(0);
     });
     
     test('should include File menu', () => {
-      const menu = menuBuilder.buildMenu();
+      menuBuilder.buildMenu();
+      const menu = mockMenu.buildFromTemplate.mock.calls[0][0];
       const fileMenu = menu.find(item => item.label === 'File');
-      
+
       expect(fileMenu).toBeDefined();
       expect(fileMenu.submenu).toBeDefined();
     });
     
     test('should include Edit menu', () => {
-      const menu = menuBuilder.buildMenu();
+      menuBuilder.buildMenu();
+      const menu = mockMenu.buildFromTemplate.mock.calls[0][0];
       const editMenu = menu.find(item => item.label === 'Edit');
-      
+
       expect(editMenu).toBeDefined();
     });
     
     test('should include View menu', () => {
-      const menu = menuBuilder.buildMenu();
+      menuBuilder.buildMenu();
+      const menu = mockMenu.buildFromTemplate.mock.calls[0][0];
       const viewMenu = menu.find(item => item.label === 'View');
-      
+
       expect(viewMenu).toBeDefined();
     });
     
     test('should include Help menu', () => {
-      const menu = menuBuilder.buildMenu();
+      menuBuilder.buildMenu();
+      const menu = mockMenu.buildFromTemplate.mock.calls[0][0];
       const helpMenu = menu.find(item => item.label === 'Help');
-      
+
       expect(helpMenu).toBeDefined();
     });
   });
   
   describe('getFileMenu', () => {
     test('should include New menu item', () => {
-      const fileMenu = menuBuilder.getFileMenu();
+      menuBuilder.buildMenu();
+      const menu = mockMenu.buildFromTemplate.mock.calls[0][0];
+      const fileMenu = menu.find(item => item.label === 'File');
       const newItem = fileMenu.submenu.find(item => item.label === 'New...');
-      
+
       expect(newItem).toBeDefined();
       expect(newItem.accelerator).toBeDefined();
     });
     
     test('should include Open menu item', () => {
-      const fileMenu = menuBuilder.getFileMenu();
+      menuBuilder.buildMenu();
+      const menu = mockMenu.buildFromTemplate.mock.calls[0][0];
+      const fileMenu = menu.find(item => item.label === 'File');
       const openItem = fileMenu.submenu.find(item => item.label === 'Open...');
-      
+
       expect(openItem).toBeDefined();
       expect(typeof openItem.click).toBe('function');
     });
     
     test('should include Save menu item', () => {
-      const fileMenu = menuBuilder.getFileMenu();
+      menuBuilder.buildMenu();
+      const menu = mockMenu.buildFromTemplate.mock.calls[0][0];
+      const fileMenu = menu.find(item => item.label === 'File');
       const saveItem = fileMenu.submenu.find(item => item.label === 'Save');
-      
+
       expect(saveItem).toBeDefined();
       expect(saveItem.accelerator).toContain('S');
     });
     
     test('should include Export menu item', () => {
-      const fileMenu = menuBuilder.getFileMenu();
+      menuBuilder.buildMenu();
+      const menu = mockMenu.buildFromTemplate.mock.calls[0][0];
+      const fileMenu = menu.find(item => item.label === 'File');
       const exportItem = fileMenu.submenu.find(item => item.label && item.label.includes('Export'));
-      
+
       expect(exportItem).toBeDefined();
     });
     
     test('should include Recent Files submenu', () => {
-      const fileMenu = menuBuilder.getFileMenu();
+      menuBuilder.buildMenu();
+      const menu = mockMenu.buildFromTemplate.mock.calls[0][0];
+      const fileMenu = menu.find(item => item.label === 'File');
       const recentItem = fileMenu.submenu.find(item => item.label === 'Open Recent');
-      
+
       expect(recentItem).toBeDefined();
       expect(recentItem.submenu).toBeDefined();
     });
@@ -190,29 +206,35 @@ describe('MenuBuilder', () => {
   
   describe('Menu Item Callbacks', () => {
     test('should call onNew callback', () => {
-      const fileMenu = menuBuilder.getFileMenu();
+      menuBuilder.buildMenu();
+      const menu = mockMenu.buildFromTemplate.mock.calls[0][0];
+      const fileMenu = menu.find(item => item.label === 'File');
       const newItem = fileMenu.submenu.find(item => item.label === 'New...');
-      
+
       newItem.click();
-      
+
       expect(mockCallbacks.onNew).toHaveBeenCalled();
     });
     
     test('should call onOpen callback', () => {
-      const fileMenu = menuBuilder.getFileMenu();
+      menuBuilder.buildMenu();
+      const menu = mockMenu.buildFromTemplate.mock.calls[0][0];
+      const fileMenu = menu.find(item => item.label === 'File');
       const openItem = fileMenu.submenu.find(item => item.label === 'Open...');
-      
+
       openItem.click();
-      
+
       expect(mockCallbacks.onOpen).toHaveBeenCalled();
     });
     
     test('should call onSave callback', () => {
-      const fileMenu = menuBuilder.getFileMenu();
+      menuBuilder.buildMenu();
+      const menu = mockMenu.buildFromTemplate.mock.calls[0][0];
+      const fileMenu = menu.find(item => item.label === 'File');
       const saveItem = fileMenu.submenu.find(item => item.label === 'Save');
-      
+
       saveItem.click();
-      
+
       expect(mockCallbacks.onSave).toHaveBeenCalled();
     });
   });
@@ -221,12 +243,13 @@ describe('MenuBuilder', () => {
     test('should include macOS app menu on darwin', () => {
       const originalPlatform = process.platform;
       Object.defineProperty(process, 'platform', { value: 'darwin' });
-      
-      const menu = menuBuilder.buildMenu();
-      
+
+      menuBuilder.buildMenu();
+      const menu = mockMenu.buildFromTemplate.mock.calls[0][0];
+
       // On macOS, first menu should be app menu
       expect(menu[0].label).toBe('MDWriter');
-      
+
       Object.defineProperty(process, 'platform', { value: originalPlatform });
     });
   });

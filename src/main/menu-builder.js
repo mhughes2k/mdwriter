@@ -367,10 +367,9 @@ class MenuBuilder {
       }
     ];
 
-    // In test environment, return raw template array so tests can inspect
-    if (process.env.JEST_WORKER_ID) {
-      return template;
-    }
+    // Always build an Electron Menu from the template.
+    // Tests should mock or inspect Electron's Menu API instead of relying
+    // on internal test-only conditionals.
     return Menu.buildFromTemplate(template);
   }
 
