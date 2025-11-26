@@ -1,6 +1,6 @@
 {
     "$schema": "https://strath.ac.uk/draft/2025-11/module-descriptor",
-    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/modules-workflow-item",
+    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/module-workflow-item",
     "title": "Workflow Item",
     "description": "",
     "type":"object",

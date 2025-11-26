@@ -1,0 +1,25 @@
+{
+    "$schema": "https://strath.ac.uk/draft/2025-11/module-descriptor",
+    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/module-code",
+    "title": "Module Code",
+    "description": "Schema for module code structure and validation",
+    "type": "object",
+    "properties": {
+        "code": {
+            "type": "string",
+            "title": "Module Code",
+            "description": "The unique identifier code for this module",
+            "pattern": "^[A-Z]{2,4}[0-9]{3,4}[A-Z]?$",
+            "examples": ["CS101", "MATH2001", "ENG101A"]
+        },
+        "status": {
+            "type": "string",
+            "title": "Module Code Status",
+            "description": "The current status of the module code",
+            "enum": ["proposed", "issued", "retired"],
+            "default": "proposed"
+        }
+    },
+    "required": ["code", "status"],
+    "additionalProperties": false
+}

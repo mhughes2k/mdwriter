@@ -9,6 +9,10 @@
             "description": "Unique Identifier for the Module",
             "type": "string"
         },
+        "modulecode": {
+            "description": "The module code",
+            "$ref": "module-code"
+        },
         "title": {
             "description": "Title of the proposed module",
             "type": "string"
@@ -32,7 +36,7 @@
         },
         "level": {
             "description": "The level of the module",
-            "$ref": "level"
+            "$ref": "module-level"
         },
         "workflow": {
             "description": "The workflow history for the module",
@@ -63,7 +67,7 @@
             "description": "The learning outcomes of the module",
             "type": "array",
             "items": {
-                "$ref": "module-learning-outcomes"
+                "$ref": "module-learning-outcome"
             }
         },
         "assessmentprinciples":{

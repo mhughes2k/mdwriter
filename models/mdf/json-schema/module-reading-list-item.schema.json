@@ -1,6 +1,6 @@
 {
     "$schema": "https://strath.ac.uk/draft/2025-11/module-descriptor",
-    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/modules-reading-list-item",
+    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/module-reading-list-item",
     "title": "Reading List Item",
     "description": "",
     "type":"object",

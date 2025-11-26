@@ -48,6 +48,15 @@
         "closingQuote": {
             "displayAs": "Closing Quote (Executive/Team)",
             "displayType": "textarea"
+        },
+        "faq": {
+            "displayAs": "Frequently Asked Questions",
+            "customForm": "faq-editor"
+        }
+    },
+    "customForms": {
+        "faq-editor": {
+            "implementation": "forms/faq-editor.js"
         }
     }
 }

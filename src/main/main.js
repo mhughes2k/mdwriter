@@ -278,6 +278,9 @@ ipcMain.handle('load-document', async (event, filePath) => {
     console.log('[Main] Validating document...');
     const validation = await documentManager.validate(currentDocument);
     console.log('[Main] Validation complete:', validation.valid ? 'valid' : `${validation.errors.length} errors`);
+    if (!validation.valid && validation.errors.length > 0) {
+      console.log('[Main] First validation error:', JSON.stringify(validation.errors[0], null, 2));
+    }
     
     return { 
       success: true, 

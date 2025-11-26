@@ -1,0 +1,452 @@
+
+> mdwriter@0.1.0 test
+> jest
+
+PASS tests/template-manager.test.js
+  TemplateManager
+    Constructor
+      ÔêÜ should initialize with empty template map (31 ms)
+      ÔêÜ should store config manager reference (1 ms)
+    loadTemplatesForType
+      ÔêÜ should load bundled templates (7 ms)
+      ÔêÜ should load user templates (5 ms)
+      ÔêÜ should load both bundled and user templates (2 ms)
+      ÔêÜ should handle missing template directories (4 ms)
+      ÔêÜ should cache loaded templates (2 ms)
+    parseTemplateMetadata
+      ÔêÜ should parse YAML frontmatter (1 ms)
+      ÔêÜ should handle templates without frontmatter (1 ms)
+      ÔêÜ should handle malformed frontmatter (2 ms)
+    extractPlaceholders
+      ÔêÜ should extract placeholders from template (2 ms)
+      ÔêÜ should handle nested placeholders (2 ms)
+      ÔêÜ should deduplicate placeholders (1 ms)
+      ÔêÜ should handle templates with no placeholders (1 ms)
+    renderTemplate
+      ÔêÜ should replace placeholders with values (2 ms)
+      ÔêÜ should handle nested data (1 ms)
+      ÔêÜ should handle missing data gracefully (2 ms)
+      ÔêÜ should handle arrays (3 ms)
+    getTemplate
+      ÔêÜ should retrieve cached template by id (1 ms)
+      ÔêÜ should return undefined for unknown template (2 ms)
+    saveUserTemplate
+      ÔêÜ should save template to user directory (3 ms)
+      ÔêÜ should create directory if it does not exist (2 ms)
+      ÔêÜ should handle save errors (1 ms)
+    deleteUserTemplate
+      ÔêÜ should delete user template (1 ms)
+      ÔêÜ should not delete bundled templates (1 ms)
+
+PASS tests/form-generator.test.js
+  FormGenerator
+    Constructor
+      ÔêÜ should initialize with empty maps (4 ms)
+    setDocumentType
+      ÔêÜ should set document type (1 ms)
+    generateField
+      ÔêÜ should create field container with label (3 ms)
+      ÔêÜ should use displayAs for label if provided (2 ms)
+      ÔêÜ should mark required fields (1 ms)
+    createTextInput
+      ÔêÜ should create text input (1 ms)
+      ÔêÜ should handle empty value (2 ms)
+    createTextarea
+      ÔêÜ should create textarea for long text (1 ms)
+    createNumberInput
+      ÔêÜ should create number input (106 ms)
+      ÔêÜ should set min and max attributes (3 ms)
+    createCheckbox
+      ÔêÜ should create checkbox for boolean (3 ms)
+      ÔêÜ should handle false value (2 ms)
+    createArrayInput
+      ÔêÜ should create array container (2 ms)
+    createInput
+      ÔêÜ should create text input for string type (1 ms)
+      ÔêÜ should create textarea for string with textarea format (3 ms)
+      ÔêÜ should create textarea for string with textarea displayType (1 ms)
+      ÔêÜ should create number input for number type (1 ms)
+      ÔêÜ should create checkbox for boolean type (1 ms)
+      ÔêÜ should create array container for array type (2 ms)
+    createCustomForm
+      ÔêÜ should load custom form data (9 ms)
+      ÔêÜ should show error placeholder on custom form error (3 ms)
+      ÔêÜ should show placeholder when implementation missing (3 ms)
+    createPlaceholder
+      ÔêÜ should create placeholder element (2 ms)
+
+  console.error
+    [DocManager] Error loading: Error: File not found
+        at Object.<anonymous> (C:\Users\igs03102\localprojects\mdwriter\mdwriter\tests\document-manager.test.js:178:37)
+        at Promise.then.completed (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\utils.js:298:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\utils.js:231:10)
+        at _callCircusTest (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:316:40)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at _runTest (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:252:3)
+        at _runTestsForDescribeBlock (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:126:9)
+        at _runTestsForDescribeBlock (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:121:9)
+        at _runTestsForDescribeBlock (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:121:9)
+        at run (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:71:3)
+        at runAndTransformResultsToJestFormat (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+        at jestAdapter (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+        at runTestInternal (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-runner\build\runTest.js:367:16)
+        at runTest (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-runner\build\runTest.js:444:34)
+        at Object.worker (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-runner\build\testWorker.js:106:12)
+
+    [0m [90m  9 |[39m       info[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39minfo([33m...[39margs)[33m,[39m
+     [90m 10 |[39m       warn[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39mwarn([33m...[39margs)[33m,[39m
+    [31m[1m>[22m[39m[90m 11 |[39m       error[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39merror([33m...[39margs)[33m,[39m
+     [90m    |[39m                                   [31m[1m^[22m[39m
+     [90m 12 |[39m       debug[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39mdebug([33m...[39margs)
+     [90m 13 |[39m     }[33m;[39m
+     [90m 14 |[39m   } [36melse[39m {[0m
+
+      at Object.error (src/main/logger.js:11:35)
+      at DocumentManager.error [as load] (src/main/document-manager.js:107:14)
+      at Object.<anonymous> (tests/document-manager.test.js:180:7)
+
+PASS tests/menu-builder.test.js
+  MenuBuilder
+    Constructor
+      ÔêÜ should store main window reference (33 ms)
+      ÔêÜ should store callbacks (2 ms)
+      ÔêÜ should initialize recent files as empty (8 ms)
+    buildMenu
+      ÔêÜ should build menu template (5 ms)
+      ÔêÜ should include File menu (2 ms)
+      ÔêÜ should include Edit menu (2 ms)
+      ÔêÜ should include View menu (1 ms)
+      ÔêÜ should include Help menu (1 ms)
+    getFileMenu
+      ÔêÜ should include New menu item (2 ms)
+      ÔêÜ should include Open menu item (2 ms)
+      ÔêÜ should include Save menu item (3 ms)
+      ÔêÜ should include Export menu item (1 ms)
+      ÔêÜ should include Recent Files submenu (1 ms)
+    updateRecentFiles
+      ÔêÜ should update recent files menu (2 ms)
+      ÔêÜ should rebuild menu when recent files change (1 ms)
+    setDocumentOpen
+      ÔêÜ should enable save menu when document is open (1 ms)
+      ÔêÜ should disable save menu when no document
+      ÔêÜ should rebuild menu when document state changes (1 ms)
+    Menu Item Callbacks
+      ÔêÜ should call onNew callback (1 ms)
+      ÔêÜ should call onOpen callback (2 ms)
+      ÔêÜ should call onSave callback (1 ms)
+    Platform-specific menus
+      ÔêÜ should include macOS app menu on darwin (1 ms)
+
+  console.error
+    [DocManager] Error loading: SyntaxError: Unexpected token 'i', "invalid json {{{" is not valid JSON
+        at JSON.parse (<anonymous>)
+        at DocumentManager.parse [as load] (C:\Users\igs03102\localprojects\mdwriter\mdwriter\src\main\document-manager.js:65:29)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at Object.<anonymous> (C:\Users\igs03102\localprojects\mdwriter\mdwriter\tests\document-manager.test.js:186:7)
+
+    [0m [90m  9 |[39m       info[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39minfo([33m...[39margs)[33m,[39m
+     [90m 10 |[39m       warn[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39mwarn([33m...[39margs)[33m,[39m
+    [31m[1m>[22m[39m[90m 11 |[39m       error[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39merror([33m...[39margs)[33m,[39m
+     [90m    |[39m                                   [31m[1m^[22m[39m
+     [90m 12 |[39m       debug[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39mdebug([33m...[39margs)
+     [90m 13 |[39m     }[33m;[39m
+     [90m 14 |[39m   } [36melse[39m {[0m
+
+      at Object.error (src/main/logger.js:11:35)
+      at DocumentManager.error [as load] (src/main/document-manager.js:107:14)
+      at Object.<anonymous> (tests/document-manager.test.js:186:7)
+
+  console.error
+    [DocManager] Error loading: Error: Could not determine document type from extension: xyz
+        at DocumentManager.load (C:\Users\igs03102\localprojects\mdwriter\mdwriter\src\main\document-manager.js:84:17)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at Object.<anonymous> (C:\Users\igs03102\localprojects\mdwriter\mdwriter\tests\document-manager.test.js:194:7)
+
+    [0m [90m  9 |[39m       info[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39minfo([33m...[39margs)[33m,[39m
+     [90m 10 |[39m       warn[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39mwarn([33m...[39margs)[33m,[39m
+    [31m[1m>[22m[39m[90m 11 |[39m       error[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39merror([33m...[39margs)[33m,[39m
+     [90m    |[39m                                   [31m[1m^[22m[39m
+     [90m 12 |[39m       debug[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39mdebug([33m...[39margs)
+     [90m 13 |[39m     }[33m;[39m
+     [90m 14 |[39m   } [36melse[39m {[0m
+
+      at Object.error (src/main/logger.js:11:35)
+      at DocumentManager.error [as load] (src/main/document-manager.js:107:14)
+      at Object.<anonymous> (tests/document-manager.test.js:194:7)
+
+PASS tests/document-manager.test.js
+  DocumentManager
+    createNew
+      ÔêÜ should create new document with required fields (82 ms)
+      ÔêÜ should set metadata fields correctly (8 ms)
+      ÔêÜ should generate UUID for id field (7 ms)
+      ÔêÜ should throw error for unknown document type (187 ms)
+    load
+      ÔêÜ should load document in application format (4 ms)
+      ÔêÜ should load raw JSON document and wrap in application format (2 ms)
+      ÔêÜ should handle file read errors (586 ms)
+      ÔêÜ should handle invalid JSON (12 ms)
+      ÔêÜ should handle unknown file extension (7 ms)
+    save
+      ÔêÜ should save document in application format (4 ms)
+      ÔêÜ should update modified timestamp on save (1 ms)
+      ÔêÜ should handle save errors (2 ms)
+    export
+      ÔêÜ should export clean JSON without metadata (4 ms)
+    validate
+      ÔêÜ should validate document against schema (2 ms)
+      ÔêÜ should return validation errors (1 ms)
+      ÔêÜ should handle unknown document type (2 ms)
+    addComment
+      ÔêÜ should add comment to document (2 ms)
+    shareWith
+      ÔêÜ should add user to shared list (2 ms)
+      ÔêÜ should not duplicate users (1 ms)
+    recordEdit
+      ÔêÜ should record edit in history (2 ms)
+
+PASS tests/preload.test.js
+  Preload Script
+    API Exposure
+      ÔêÜ should expose electronAPI to main world (5 ms)
+      ÔêÜ should expose document operations (3 ms)
+      ÔêÜ should expose schema operations (1 ms)
+      ÔêÜ should expose template operations (1 ms)
+      ÔêÜ should expose file operations (9 ms)
+      ÔêÜ should expose configuration operations (2 ms)
+    IPC Communication
+      ÔêÜ loadDocumentTypes should invoke IPC (1 ms)
+      ÔêÜ loadDocument should pass file path (1 ms)
+      ÔêÜ saveDocument should pass path and document (1 ms)
+      ÔêÜ validateDocument should pass document (1 ms)
+      ÔêÜ createNewDocument should pass type name (1 ms)
+      ÔêÜ getFieldOrder should pass type name (1 ms)
+      ÔêÜ getCustomFormData should pass type and form name (1 ms)
+      ÔêÜ loadTemplates should pass type name (1 ms)
+      ÔêÜ renderTemplate should pass template ID and data (1 ms)
+      ÔêÜ getConfig should pass key (1 ms)
+      ÔêÜ setConfig should pass key and value
+    Event Listeners
+      ÔêÜ onDocumentUpdate should register listener (1 ms)
+      ÔêÜ onDocumentUpdate should call callback with data (1 ms)
+      ÔêÜ onMenuAction should register listener
+    Security
+      ÔêÜ should not expose Node.js APIs directly (1 ms)
+      ÔêÜ should only expose whitelisted IPC channels (2 ms)
+      ÔêÜ should use invoke pattern for async operations
+
+  console.error
+    [ConfigManager] Error saving config: Error: Disk full
+        at Object.<anonymous> (C:\Users\igs03102\localprojects\mdwriter\mdwriter\tests\config-manager.test.js:140:38)
+        at Promise.then.completed (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\utils.js:298:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\utils.js:231:10)
+        at _callCircusTest (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:316:40)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at _runTest (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:252:3)
+        at _runTestsForDescribeBlock (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:126:9)
+        at _runTestsForDescribeBlock (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:121:9)
+        at _runTestsForDescribeBlock (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:121:9)
+        at run (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:71:3)
+        at runAndTransformResultsToJestFormat (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+        at jestAdapter (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+        at runTestInternal (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-runner\build\runTest.js:367:16)
+        at runTest (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-runner\build\runTest.js:444:34)
+        at Object.worker (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-runner\build\testWorker.js:106:12)
+
+    [0m [90m  9 |[39m       info[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39minfo([33m...[39margs)[33m,[39m
+     [90m 10 |[39m       warn[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39mwarn([33m...[39margs)[33m,[39m
+    [31m[1m>[22m[39m[90m 11 |[39m       error[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39merror([33m...[39margs)[33m,[39m
+     [90m    |[39m                                   [31m[1m^[22m[39m
+     [90m 12 |[39m       debug[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39mdebug([33m...[39margs)
+     [90m 13 |[39m     }[33m;[39m
+     [90m 14 |[39m   } [36melse[39m {[0m
+
+      at Object.error (src/main/logger.js:11:35)
+      at ConfigManager.error [as save] (src/main/config-manager.js:128:14)
+      at Object.<anonymous> (tests/config-manager.test.js:141:22)
+
+  console.error
+    [DocManager] Error loading: Error: ENOENT: no such file
+        at Object.<anonymous> (C:\Users\igs03102\localprojects\mdwriter\mdwriter\tests\edge-cases.test.js:234:37)
+        at Promise.then.completed (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\utils.js:298:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\utils.js:231:10)
+        at _callCircusTest (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:316:40)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at _runTest (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:252:3)
+        at _runTestsForDescribeBlock (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:126:9)
+        at _runTestsForDescribeBlock (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:121:9)
+        at _runTestsForDescribeBlock (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:121:9)
+        at run (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:71:3)
+        at runAndTransformResultsToJestFormat (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+        at jestAdapter (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+        at runTestInternal (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-runner\build\runTest.js:367:16)
+        at runTest (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-runner\build\runTest.js:444:34)
+        at Object.worker (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-runner\build\testWorker.js:106:12)
+
+    [0m [90m  9 |[39m       info[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39minfo([33m...[39margs)[33m,[39m
+     [90m 10 |[39m       warn[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39mwarn([33m...[39margs)[33m,[39m
+    [31m[1m>[22m[39m[90m 11 |[39m       error[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39merror([33m...[39margs)[33m,[39m
+     [90m    |[39m                                   [31m[1m^[22m[39m
+     [90m 12 |[39m       debug[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39mdebug([33m...[39margs)
+     [90m 13 |[39m     }[33m;[39m
+     [90m 14 |[39m   } [36melse[39m {[0m
+
+      at Object.error (src/main/logger.js:11:35)
+      at DocumentManager.error [as load] (src/main/document-manager.js:107:14)
+      at Object.<anonymous> (tests/edge-cases.test.js:236:7)
+
+PASS tests/config-manager.test.js (6.068 s)
+  ConfigManager
+    Constructor
+      ÔêÜ should set user data path from electron (406 ms)
+      ÔêÜ should set config file path (81 ms)
+      ÔêÜ should define default configuration (123 ms)
+    initialize
+      ÔêÜ should load existing configuration (212 ms)
+      ÔêÜ should create default config if none exists (285 ms)
+      ÔêÜ should merge loaded config with defaults (170 ms)
+      ÔêÜ should ensure userspace directories exist (206 ms)
+    save
+      ÔêÜ should save configuration to disk (103 ms)
+      ÔêÜ should handle save errors (436 ms)
+    get
+      ÔêÜ should get top-level config value (59 ms)
+      ÔêÜ should get nested config value (45 ms)
+      ÔêÜ should get deeply nested value (71 ms)
+      ÔêÜ should return undefined for missing key (34 ms)
+    set
+      ÔêÜ should set top-level config value (38 ms)
+      ÔêÜ should set nested config value (36 ms)
+      ÔêÜ should create nested objects if needed (34 ms)
+      ÔêÜ should save after setting value (28 ms)
+    getUserspaceModelsDirectory
+      ÔêÜ should return models directory path (31 ms)
+    getUserspaceTemplatesDirectory
+      ÔêÜ should return templates directory path (40 ms)
+    addRecentFile
+      ÔêÜ should add file to recent files (42 ms)
+      ÔêÜ should move existing file to top (31 ms)
+      ÔêÜ should limit recent files to max (29 ms)
+    removeRecentFile
+      ÔêÜ should remove file from recent files (38 ms)
+      ÔêÜ should handle removing non-existent file (32 ms)
+    getPreference
+      ÔêÜ should get preference value (33 ms)
+    setPreference
+      ÔêÜ should set preference value (29 ms)
+
+PASS tests/edge-cases.test.js (5.947 s)
+  Edge Cases and Error Scenarios
+    SchemaLoader Error Handling
+      ÔêÜ should handle corrupted JSON in document type metadata (48 ms)
+      ÔêÜ should handle missing entrypoint schema file (51 ms)
+      ÔêÜ should handle circular schema references (18 ms)
+      ÔêÜ should validate extremely large documents (20 ms)
+      ÔêÜ should handle empty schema (12 ms)
+      ÔêÜ should validate document with null values (11 ms)
+      ÔêÜ should handle deeply nested schema validation (13 ms)
+    DocumentManager Error Handling
+      ÔêÜ should handle loading document with no metadata (3 ms)
+      ÔêÜ should handle saving to readonly location (2 ms)
+      ÔêÜ should handle loading non-existent file (181 ms)
+      ÔêÜ should handle document with missing required metadata fields (1 ms)
+      ÔêÜ should handle very long file paths (2 ms)
+      ÔêÜ should handle document with special characters in data (3 ms)
+      ÔêÜ should handle empty document data (1 ms)
+    Boundary Conditions
+      ÔêÜ should handle document type with no extensions (10 ms)
+      ÔêÜ should handle document with maximum nesting depth (11 ms)
+      ÔêÜ should handle unicode in all text fields (10 ms)
+      ÔêÜ should handle zero and negative numbers in number fields (13 ms)
+    Security Validations
+      ÔêÜ should not execute code in document data (1 ms)
+      ÔêÜ should validate file paths for directory traversal (2 ms)
+
+PASS tests/integration.test.js (5.937 s)
+  Integration Tests
+    Complete Document Lifecycle
+      ÔêÜ should create, validate, save, and load a document (62 ms)
+    Document Type Discovery and Usage
+      ÔêÜ should discover multiple document types and create documents (21 ms)
+    Template Rendering with Documents
+      ÔêÜ should load template and render with document data (20 ms)
+    Configuration Persistence
+      ÔêÜ should persist configuration across sessions (13 ms)
+    Schema Validation Integration
+      ÔêÜ should validate complex nested structures (26 ms)
+      ÔêÜ should detect validation errors in nested structures (18 ms)
+    Document Collaboration Metadata
+      ÔêÜ should track comments and edit history (30 ms)
+    Export Functionality
+      ÔêÜ should export clean JSON without application metadata (12 ms)
+
+  console.error
+    [SchemaLoader] Error loading document types from C:\Users\igs03102\localprojects\mdwriter\mdwriter\models: Error: ENOENT
+        at Object.<anonymous> (C:\Users\igs03102\localprojects\mdwriter\mdwriter\tests\schema-loader.test.js:93:36)
+        at Promise.then.completed (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\utils.js:298:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\utils.js:231:10)
+        at _callCircusTest (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:316:40)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at _runTest (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:252:3)
+        at _runTestsForDescribeBlock (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:126:9)
+        at _runTestsForDescribeBlock (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:121:9)
+        at _runTestsForDescribeBlock (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:121:9)
+        at run (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\run.js:71:3)
+        at runAndTransformResultsToJestFormat (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+        at jestAdapter (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+        at runTestInternal (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-runner\build\runTest.js:367:16)
+        at runTest (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-runner\build\runTest.js:444:34)
+        at Object.worker (C:\Users\igs03102\localprojects\mdwriter\mdwriter\node_modules\jest-runner\build\testWorker.js:106:12)
+
+    [0m [90m  9 |[39m       info[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39minfo([33m...[39margs)[33m,[39m
+     [90m 10 |[39m       warn[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39mwarn([33m...[39margs)[33m,[39m
+    [31m[1m>[22m[39m[90m 11 |[39m       error[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39merror([33m...[39margs)[33m,[39m
+     [90m    |[39m                                   [31m[1m^[22m[39m
+     [90m 12 |[39m       debug[33m:[39m ([33m...[39margs) [33m=>[39m console[33m.[39mdebug([33m...[39margs)
+     [90m 13 |[39m     }[33m;[39m
+     [90m 14 |[39m   } [36melse[39m {[0m
+
+      at Object.error (src/main/logger.js:11:35)
+      at SchemaLoader.error [as loadDocumentTypesFromDirectory] (src/main/schema-loader.js:137:14)
+      at SchemaLoader.loadDocumentTypes (src/main/schema-loader.js:78:7)
+      at Object.<anonymous> (tests/schema-loader.test.js:95:21)
+
+PASS tests/schema-loader.test.js (6.452 s)
+  SchemaLoader
+    ÔêÜ should initialize Ajv instance (54 ms)
+    ÔêÜ should have format validators configured (11 ms)
+    setUserspaceModelsDirectory
+      ÔêÜ should set userspace models path (18 ms)
+      ÔêÜ should keep Ajv initialized after setting path (10 ms)
+    loadDocumentTypes
+      ÔêÜ should load document types from models directory (17 ms)
+      ÔêÜ should handle missing models directory gracefully (226 ms)
+      ÔêÜ should load userspace models if configured (30 ms)
+    getDocumentType
+      ÔêÜ should return document type by name (40 ms)
+      ÔêÜ should return null for unknown type (18 ms)
+    loadSchema
+      ÔêÜ should load and cache schema (17 ms)
+      ÔêÜ should return cached schema on subsequent calls (14 ms)
+      ÔêÜ should handle schema loading errors (11 ms)
+    validateDocument
+      ÔêÜ should validate valid document (26 ms)
+      ÔêÜ should detect missing required fields (23 ms)
+      ÔêÜ should detect type mismatches (22 ms)
+      ÔêÜ should allow empty strings for non-required format fields (34 ms)
+      ÔêÜ should validate email format (15 ms)
+    getFieldOrder
+      ÔêÜ should return custom field order from metadata (18 ms)
+      ÔêÜ should return null if no custom order defined (11 ms)
+    getUIHints
+      ÔêÜ should return UI hints from metadata (7 ms)
+
+Test Suites: 9 passed, 9 total
+Tests:       187 passed, 187 total
+Snapshots:   0 total
+Time:        7.727 s, estimated 16 s
+Ran all test suites.

@@ -1,6 +1,6 @@
 {
     "$schema": "https://strath.ac.uk/draft/2025-11/module-descriptor",
-    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/assessment-method",
+    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/module-assessment-method",
     "title": "Assessment Method",
     "description": "Assessment Method",
     "type":"object",

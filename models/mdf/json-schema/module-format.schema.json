@@ -1,6 +1,6 @@
 {
     "$schema": "https://strath.ac.uk/draft/2025-11/module-descriptor",
-    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/format",
+    "$id": "https://strath.ac.uk/draft/2025-11/module-descriptor/module-format",
     "title": "Module Component Format",
 
     "properties":{

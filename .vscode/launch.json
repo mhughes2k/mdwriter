@@ -74,20 +74,19 @@
       ],
       "outputCapture": "std",
       "console": "integratedTerminal"
-    }
-  ],
-  "compounds": [
+    },
     {
-      "name": "Electron: Main + Renderer",
-      "configurations": [
-        "Electron: All",
-        "Electron: Renderer Process"
+      "name": "Debug Jest Tests",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "--inspect-brk",
+        "${workspaceRoot}/node_modules/.bin/jest",
+        "--runInBand",
+        "${fileBasenameNoExtension}"
       ],
-      "presentation": {
-        "hidden": false,
-        "group": "",
-        "order": 1
-      }
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
     }
   ]
 }

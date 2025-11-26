@@ -1,0 +1,166 @@
+
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "General Academic Regulations",
+  "type": "object",
+  "properties": {
+    "documentType": {
+      "type": "string",
+      "enum": ["UG", "PGT", "PGR"]
+    },
+    "versionHistory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string" },
+          "date": { "type": "string", "format": "date" },
+          "changes": { "type": "string" }
+        },
+        "required": ["version", "date"]
+      }
+    },
+    "glossary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "term": { "type": "string" },
+          "definition": { "type": "string" }
+        },
+        "required": ["term", "definition"]
+      }
+    },
+    "awards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "awardName": { "type": "string" },
+          "level": { "type": "string" }
+        },
+        "required": ["awardName"]
+      }
+    },
+    "admissions": {
+      "type": "object",
+      "properties": {
+        "criteria": { "type": "string" },
+        "recognitionOfPriorLearning": { "type": "string" }
+      }
+    },
+    "studyDetails": {
+      "type": "object",
+      "properties": {
+        "periodsOfStudy": { "type": "string" },
+        "modesOfStudy": { "type": "string" },
+        "registrationRequirements": { "type": "string" }
+      }
+    },
+    "programmeStructure": {
+      "type": "object",
+      "properties": {
+        "curriculum": { "type": "string" },
+        "creditRequirements": {
+          "type": "object",
+          "properties": {
+            "totalCredits": { "type": "integer" },
+            "breakdown": { "type": "string" }
+          }
+        },
+        "progressionRules": { "type": "string" }
+      }
+    },
+    "assessment": {
+      "type": "object",
+      "properties": {
+        "methods": { "type": "array", "items": { "type": "string" } },
+        "gradingScheme": { "type": "string" },
+        "reassessmentPolicy": { "type": "string" }
+      }
+    },
+    "appealsAndComplaints": {
+      "type": "object",
+      "properties": {
+        "appealsProcess": { "type": "string" },
+        "complaintsProcess": { "type": "string" }
+      }
+    },
+    "conductAndEngagement": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "documentType",
+    "versionHistory",
+    "awards",
+    "admissions",
+    "studyDetails",
+    "programmeStructure",
+    "assessment"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "documentType": { "const": "UG" } }
+      },
+      "then": {
+        "properties": {
+          "classificationRules": {
+            "type": "object",
+            "properties": {
+              "honorsClasses": { "type": "string" },
+              "passMarks": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "documentType": { "const": "PGT" } }
+      },
+      "then": {
+        "properties": {
+          "dissertationRequirements": {
+            "type": "object",
+            "properties": {
+              "wordCount": { "type": "integer" },
+              "submissionDeadline": { "type": "string", "format": "date" }
+            }
+          },
+          "exitAwards": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "documentType": { "const": "PGR" } }
+      },
+      "then": {
+        "properties": {
+          "supervisionDetails": {
+            "type": "object",
+            "properties": {
+              "minimumMeetings": { "type": "integer" },
+              "roles": { "type": "string" }
+            }
+          },
+          "thesisAndExamination": {
+            "type": "object",
+            "properties": {
+              "oralExamRequired": { "type": "boolean" },
+              "committeeComposition": { "type": "string" }
+            }
+          },
+          "professionalDevelopment": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
+}

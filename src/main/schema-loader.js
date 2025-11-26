@@ -246,10 +246,8 @@ class SchemaLoader {
         // Add by short name if not already added
         if (!this.ajv.getSchema(shortName)) {
           console.log('[SchemaLoader] Adding schema:', shortName);
-          // Don't pass $id when adding by name, let Ajv use the name as key
-          const schemaWithoutId = { ...schema };
-          delete schemaWithoutId.$id;
-          this.ajv.addSchema(schemaWithoutId, shortName);
+          // Keep the schema as-is with its $id for proper $ref resolution
+          this.ajv.addSchema(schema, shortName);
         }
       }
     }
@@ -311,6 +309,29 @@ class SchemaLoader {
     }
     try {
       if (schemaFile) {
+        // First, pre-load all schemas for proper $ref resolution
+        const docType = this.documentTypes.get(typeName);
+        if (docType && !this.validatorCache.has(typeName)) {
+          // Pre-load all schemas if not already done
+          const fs = require('fs').promises;
+          const schemaDir = docType.path;
+          const schemaFiles = await fs.readdir(schemaDir);
+          
+          for (const file of schemaFiles) {
+            if (file.endsWith('.schema.json')) {
+              const schemaPath = path.join(schemaDir, file);
+              const schemaContent = await fs.readFile(schemaPath, 'utf8');
+              const schema = JSON.parse(schemaContent);
+              const shortName = file.replace('.schema.json', '');
+              
+              if (!this.ajv.getSchema(shortName)) {
+                // Add schemas with their $id preserved for proper $ref resolution
+                this.ajv.addSchema(schema, shortName);
+              }
+            }
+          }
+        }
+        
         // Load specific schema file and compile ad-hoc (without caching result for tests)
         const schema = await this.loadSchema(typeName, schemaFile);
         const schemaWithoutId = { ...schema };

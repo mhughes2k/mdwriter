@@ -1,0 +1,9 @@
+{
+    "description": "University Regulations",
+    "category": "Academic",
+    "icon": "📘",
+    "extensions": [
+        "regs"
+    ],
+    "entrypoint": "regs.schema.json"
+}

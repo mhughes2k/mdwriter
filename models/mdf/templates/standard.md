@@ -3,11 +3,11 @@ name: Standard Module Descriptor
 description: Standard template for module descriptor documents
 ---
 
-# {{id}} - {{title}}
+# {{modulecode}} - {{title}}
 
 ## Module Information
 
-**Module Code:** {{id}}  
+**Module Code:** {{imodulecoded}}  
 **Department:** {{department}}  
 **Credits:** {{credits}}  
 **Level:** {{level.scqflevel}} - {{level.qheiqualification}}
@@ -60,3 +60,4 @@ description: Standard template for module descriptor documents
 
 *Document created: {{metadata.created}}*  
 *Last modified: {{metadata.modified}}*
+*Document ID: {{id}}*

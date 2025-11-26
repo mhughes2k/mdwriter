@@ -9,6 +9,7 @@
     "entrypoint": "module-descriptor.schema.json",
     "fieldOrder": [
         "id",
+        "modulecode",
         "title",
         "department",
         "description",
@@ -41,6 +42,10 @@
         },
         "level": {
             "customForm": "level-selector"
+        },
+        "modulecode": {
+            "displayAs": "Module Code",
+            "customForm": "module-code-editor"
         },
         "learningoutcomes": {
             "displayAs": "Learning Outcomes",
@@ -92,6 +97,11 @@
         "reading-list-editor": {
             "type": "reading-list-editor",
             "implementation": "forms/reading-list-editor.js"
+        }
+        ,
+        "module-code-editor": {
+            "type": "module-code-editor",
+            "implementation": "forms/module-code-editor.js"
         }
     }
 }
