@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveDocument: (filePath, document) => ipcRenderer.invoke('save-document', filePath, document),
   exportDocument: (filePath, document) => ipcRenderer.invoke('export-document', filePath, document),
   validateDocument: (document) => ipcRenderer.invoke('validate-document', document),
+  showUnsavedChangesDialog: () => ipcRenderer.invoke('show-unsaved-changes-dialog'),
   
   // Document editing
   updateField: (document, fieldPath, value) => ipcRenderer.invoke('update-field', document, fieldPath, value),

@@ -149,6 +149,10 @@ class TemplateUI {
    * @param {boolean} saveToMetadata - Whether to save to document metadata (default true)
    */
   async handleTemplateChange(templateId, saveToMetadata = true) {
+    // Don't mark as modified during initial document load
+    const isLoading = typeof window.isLoadingDocument === 'function' && window.isLoadingDocument();
+    console.log('[TemplateUI] handleTemplateChange called: templateId=' + templateId + ', saveToMetadata=' + saveToMetadata + ', isLoading=' + isLoading);
+    
     this.activeTemplateId = templateId;
     
     // Save active template to document metadata
@@ -156,9 +160,12 @@ class TemplateUI {
       currentDocument.metadata.activeTemplate = templateId || null;
       currentDocument.metadata.modified = new Date().toISOString();
       
-      // Mark document as modified
-      if (typeof isModified !== 'undefined') {
+      // Mark document as modified (but not during initial load)
+      if (!isLoading && typeof isModified !== 'undefined') {
+        console.log('[TemplateUI] Marking document as modified');
         isModified = true;
+      } else {
+        console.log('[TemplateUI] NOT marking as modified (isLoading=' + isLoading + ')');
       }
       
       console.log('[TemplateUI] Saved active template to document metadata:', templateId || 'none');

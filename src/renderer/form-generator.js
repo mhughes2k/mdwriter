@@ -534,6 +534,13 @@ class FormGenerator {
    * Handle field change - update document and send to collaboration
    */
   handleFieldChange(fieldPath, value) {
+    // Don't process field changes during initial document load
+    const isLoading = typeof window.isLoadingDocument === 'function' && window.isLoadingDocument();
+    if (isLoading) {
+      console.log('[FormGenerator] Ignoring field change during load: ' + fieldPath);
+      return;
+    }
+    
     console.log('[FormGenerator] Field changed:', fieldPath, value);
     
     // Update the document

@@ -360,6 +360,20 @@ ipcMain.handle('validate-document', async (event, document) => {
   }
 });
 
+ipcMain.handle('show-unsaved-changes-dialog', async (event) => {
+  const choice = dialog.showMessageBoxSync(mainWindow, {
+    type: 'question',
+    buttons: ['Save', 'Don\'t Save', 'Cancel'],
+    defaultId: 0,
+    cancelId: 2,
+    title: 'Unsaved Changes',
+    message: 'Do you want to save the changes you made?',
+    detail: 'Your changes will be lost if you don\'t save them.'
+  });
+  
+  return { choice };
+});
+
 ipcMain.handle('update-field', async (event, document, fieldPath, value) => {
   try {
     currentDocument = documentManager.updateField(document, fieldPath, value);

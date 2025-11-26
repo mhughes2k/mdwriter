@@ -33,6 +33,10 @@ let documentType = 'mdf';
 let schemaProperties = [];
 let formGenerator = null;
 let isModified = false;
+let isLoading = false; // Track if we're currently loading/rendering a document
+
+// Expose isLoading globally so other modules can check it
+window.isLoadingDocument = () => isLoading;
 
 // Initialize form generator
 if (typeof FormGenerator !== 'undefined') {
@@ -62,7 +66,11 @@ elements.addSection?.addEventListener('click', addSection);
 // Listen for form changes
 document.addEventListener('input', (e) => {
   if (e.target.dataset.fieldPath) {
-    handleFieldChange(e.target);
+    if (!isLoading) {
+      handleFieldChange(e.target);
+    } else {
+      console.log('[Renderer] Input event ignored during load for field: ' + e.target.dataset.fieldPath);
+    }
   }
 });
 
@@ -393,7 +401,9 @@ async function openDocument() {
         currentDocument = result.document;
         currentFilePath = result.document.filePath;
         documentType = result.document.metadata.documentType;
+        console.log('[Open] About to call setModified(false)...');
         setModified(false);
+        console.log('[Open] isModified after setModified(false):', isModified);
         
         console.log('[Open] Loading schema structure...');
         // Load schema structure
@@ -404,7 +414,7 @@ async function openDocument() {
         // Render document (now awaited since it's async)
         console.log('[Open] Rendering document...');
         await renderDocument();
-        console.log('[Open] Document rendered');
+        console.log('[Open] Document rendered, isModified is now:', isModified);
         
         hideLoadingIndicator();
         
@@ -517,15 +527,23 @@ async function saveDocumentAs() {
 
 async function closeDocument() {
   // Check for unsaved changes
+  console.log('[Close] closeDocument called, isModified=' + isModified);
   if (isModified) {
-    const choice = confirm('You have unsaved changes. Do you want to save before closing?');
-    if (choice) {
+    const result = await window.electronAPI.showUnsavedChangesDialog();
+    const choice = result.choice;
+    
+    if (choice === 0) {
+      // Save
       const saved = await saveDocument();
       if (!saved) {
         // User canceled save or save failed
         return;
       }
+    } else if (choice === 2) {
+      // Cancel
+      return;
     }
+    // If choice === 1 (Don't Save), continue to close
   }
   
   // Reset document state
@@ -582,6 +600,10 @@ async function closeDocument() {
 }
 
 function setModified(modified) {
+  console.log('[Renderer] setModified called with modified=' + modified);
+  if (modified === true) {
+    console.trace('[Renderer] Stack trace for setModified(true):');
+  }
   isModified = modified;
   
   // Update modified indicator visibility
@@ -593,6 +615,7 @@ function setModified(modified) {
   const titlePrefix = isModified ? '● ' : '';
   const fileName = currentFilePath ? currentFilePath.split(/[/\\]/).pop() : 'Untitled';
   document.title = `${titlePrefix}${fileName} - MDWriter`;
+  console.log('[Renderer] Title updated to: ' + document.title);
   
   // Update menu state
   updateMenuState();
@@ -636,9 +659,11 @@ function addSection() {
 }
 
 async function renderDocument() {
-  console.log('[Renderer] Starting renderDocument...');
+  console.log('[Renderer] Starting renderDocument, setting isLoading=true');
+  isLoading = true; // Prevent input events from marking as modified
   if (!currentDocument || !schemaProperties) {
     console.log('[Renderer] Missing document or schema properties');
+    isLoading = false;
     return;
   }
 
@@ -687,7 +712,9 @@ async function renderDocument() {
   // Run initial validation
   console.log('[Renderer] Running validation...');
   await validateAndDisplayErrors();
-  console.log('[Renderer] renderDocument complete');
+  console.log('[Renderer] Setting isLoading=false after rendering');
+  isLoading = false; // Re-enable input event handling after rendering
+  console.log('[Renderer] renderDocument complete, isModified=' + isModified);
 }
 
 async function validateAndDisplayErrors() {
@@ -865,6 +892,14 @@ async function handleFieldChange(input, isCustomForm = false) {
   if (!currentDocument) return;
   
   const fieldPath = input.dataset.fieldPath;
+  console.log('[Renderer] handleFieldChange called for field: ' + fieldPath + ', isLoading=' + isLoading);
+  
+  // Don't process field changes during initial document load
+  if (isLoading) {
+    console.log('[Renderer] Ignoring field change during load for field: ' + fieldPath);
+    return;
+  }
+  
   let value;
   
   if (isCustomForm) {
