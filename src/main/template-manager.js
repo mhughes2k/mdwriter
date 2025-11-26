@@ -9,6 +9,7 @@
 
 const fs = require('fs').promises;
 const path = require('path');
+const logger = require('./logger');
 
 class TemplateManager {
   constructor(configManager) {
@@ -103,13 +104,13 @@ class TemplateManager {
       }
       
       if (templates.length > 0) {
-        console.log(`[TemplateManager] Loaded ${templates.length} templates from ${dirPath} as ${source}`);
+          logger.info(`[TemplateManager] Loaded ${templates.length} templates from ${dirPath} as ${source}`);
       }
     } catch (err) {
       // Silently handle missing directories (ENOENT) - this is expected behavior
       // Log warnings only for other errors (permission issues, corrupt files, etc.)
       if (err.code !== 'ENOENT') {
-        console.warn(`[TemplateManager] Warning: Could not access ${dirPath}:`, err.message);
+        logger.warn(`[TemplateManager] Warning: Could not access ${dirPath}:`, err.message);
       }
     }
     
@@ -195,7 +196,7 @@ class TemplateManager {
         metadata = JSON.parse(metadataContent);
         metadata._documentType = documentType; // Store for later use
       } catch (err) {
-        console.warn('[TemplateManager] Could not load metadata for custom forms:', err.message);
+          logger.warn('[TemplateManager] Could not load metadata for custom forms:', err.message);
       }
     }
     
@@ -351,7 +352,7 @@ class TemplateManager {
     
     await fs.writeFile(filePath, content, 'utf-8');
     
-    console.log('[TemplateManager] Created template:', filePath);
+      logger.info('[TemplateManager] Created template:', filePath);
     
     // Reload templates for this type
     await this.loadTemplatesForType(documentType);

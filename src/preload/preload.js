@@ -68,4 +68,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Menu action listeners
   onMenuAction: (action, callback) => ipcRenderer.on(action, callback),
   removeMenuListener: (action, callback) => ipcRenderer.removeListener(action, callback)
+  ,
+  // Renderer -> Main logging helper
+  sendLog: (level, args) => ipcRenderer.send('renderer-log', { level, args })
 });

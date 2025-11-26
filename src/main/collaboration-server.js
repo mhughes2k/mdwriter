@@ -1,5 +1,6 @@
 const { Server } = require('socket.io');
 const crypto = require('crypto');
+const logger = require('./logger');
 
 /**
  * Generate a random session ID
@@ -44,14 +45,14 @@ class CollaborationServer {
 
         // Setup connection handler
         this.io.on('connection', (socket) => {
-          console.log('[Collab] Client connected:', socket.id);
+          logger.info('[Collab] Client connected:', socket.id);
           this.handleConnection(socket);
         });
 
         // Start listening on all interfaces (0.0.0.0)
         this.httpServer.listen(port, '0.0.0.0', () => {
           this.port = this.httpServer.address().port;
-          console.log(`[Collab] Server started on 0.0.0.0:${this.port}`);
+          logger.info(`[Collab] Server started on 0.0.0.0:${this.port}`);
           resolve(this.port);
         });
 
@@ -72,8 +73,8 @@ class CollaborationServer {
     }
     if (this.httpServer) {
       return new Promise((resolve) => {
-        this.httpServer.close(() => {
-          console.log('[Collab] Server stopped');
+          this.httpServer.close(() => {
+          logger.info('[Collab] Server stopped');
           resolve();
         });
       });
@@ -103,7 +104,7 @@ class CollaborationServer {
     };
 
     this.sessions.set(sessionId, session);
-    console.log(`[Collab] Created session: ${sessionId}`);
+    logger.info(`[Collab] Created session: ${sessionId}`);
     return {
       sessionId,
       metadata: session.metadata,
@@ -167,7 +168,7 @@ class CollaborationServer {
       socket.join(sessionId);
       socket.sessionId = sessionId;
 
-      console.log(`[Collab] User ${userData.name} joined session ${sessionId}`);
+      logger.info(`[Collab] User ${userData.name} joined session ${sessionId}`);
 
       // Send current document state to new user
       socket.emit('session-joined', {
@@ -216,9 +217,9 @@ class CollaborationServer {
           userId: socket.id
         });
 
-        console.log(`[Collab] Document updated in session ${sessionId}, version ${session.version}`);
+        logger.info(`[Collab] Document updated in session ${sessionId}, version ${session.version}`);
       } catch (err) {
-        console.error('[Collab] Error applying operation:', err);
+        logger.error('[Collab] Error applying operation:', err);
         socket.emit('error', { message: 'Failed to apply operation' });
       }
     });
@@ -244,14 +245,14 @@ class CollaborationServer {
       const user = session.users.get(socket.id);
       session.users.delete(socket.id);
 
-      console.log(`[Collab] User ${user?.name} left session ${sessionId}`);
+      logger.info(`[Collab] User ${user?.name} left session ${sessionId}`);
 
       // Notify other users
       socket.to(sessionId).emit('user-left', { userId: socket.id });
 
       // Clean up empty sessions
       if (session.users.size === 0) {
-        console.log(`[Collab] Removing empty session ${sessionId}`);
+        logger.info(`[Collab] Removing empty session ${sessionId}`);
         this.sessions.delete(sessionId);
       }
     });

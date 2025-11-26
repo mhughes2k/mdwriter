@@ -1,5 +1,6 @@
 const Bonjour = require('bonjour-service');
 const os = require('os');
+const logger = require('./logger');
 
 /**
  * Network Discovery Service
@@ -45,7 +46,7 @@ class DiscoveryService {
       }
     });
 
-    console.log(`[Discovery] Advertising session ${sessionId} on port ${port}`);
+    logger.info(`[Discovery] Advertising session ${sessionId} on port ${port}`);
   }
 
   /**
@@ -55,7 +56,7 @@ class DiscoveryService {
     if (this.service) {
       this.service.stop();
       this.service = null;
-      console.log('[Discovery] Stopped advertising');
+      logger.info('[Discovery] Stopped advertising');
     }
   }
 
@@ -71,22 +72,22 @@ class DiscoveryService {
 
     this.browser = this.bonjour.find({ type: 'mdwriter' });
 
-    this.browser.on('up', (service) => {
+      this.browser.on('up', (service) => {
       const session = this.parseService(service);
       this.sessions.set(session.id, session);
-      console.log(`[Discovery] Found session: ${session.metadata.title} (${session.id})`);
+      logger.info(`[Discovery] Found session: ${session.metadata.title} (${session.id})`);
       
       if (onSessionFound) {
         onSessionFound(session);
       }
     });
 
-    this.browser.on('down', (service) => {
+      this.browser.on('down', (service) => {
       const sessionId = service.txt?.sessionId;
       if (sessionId && this.sessions.has(sessionId)) {
         const session = this.sessions.get(sessionId);
         this.sessions.delete(sessionId);
-        console.log(`[Discovery] Lost session: ${session.metadata.title} (${sessionId})`);
+        logger.info(`[Discovery] Lost session: ${session.metadata.title} (${sessionId})`);
         
         if (onSessionLost) {
           onSessionLost(session);
@@ -94,7 +95,7 @@ class DiscoveryService {
       }
     });
 
-    console.log('[Discovery] Started browsing for sessions');
+    logger.info('[Discovery] Started browsing for sessions');
   }
 
   /**
@@ -104,7 +105,7 @@ class DiscoveryService {
     if (this.browser) {
       this.browser.stop();
       this.browser = null;
-      console.log('[Discovery] Stopped browsing');
+      logger.info('[Discovery] Stopped browsing');
     }
   }
 
@@ -144,7 +145,7 @@ class DiscoveryService {
     this.stopAdvertising();
     this.stopBrowsing();
     this.bonjour.destroy();
-    console.log('[Discovery] Service destroyed');
+    logger.info('[Discovery] Service destroyed');
   }
 }
 

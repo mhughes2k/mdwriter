@@ -1,6 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
+const logger = require('./logger');
 
 // Simple UUID v4 generator
 function generateUUID() {
@@ -58,23 +59,23 @@ class DocumentManager {
    */
   async load(filePath) {
     try {
-      console.log('[DocManager] Reading file:', filePath);
+      logger.info('[DocManager] Reading file:', filePath);
       const content = await fs.readFile(filePath, 'utf8');
-      console.log('[DocManager] File read, parsing JSON...');
+      logger.debug('[DocManager] File read, parsing JSON...');
       const document = JSON.parse(content);
-      console.log('[DocManager] JSON parsed successfully');
+      logger.debug('[DocManager] JSON parsed successfully');
       
       // Check if it's our file format or just raw data
       if (document.metadata && document.data) {
         // Application file format
-        console.log('[DocManager] Using application file format');
+        logger.debug('[DocManager] Using application file format');
         return {
           filePath,
           ...document
         };
       } else {
         // Raw JSON document - infer type from file extension
-        console.log('[DocManager] Raw format, inferring type from extension');
+        logger.debug('[DocManager] Raw format, inferring type from extension');
         const ext = path.extname(filePath).slice(1);
         const docType = Array.from(this.schemaLoader.documentTypes.values())
           .find(dt => dt.extensions.includes(ext));
@@ -84,7 +85,7 @@ class DocumentManager {
         }
 
         // Wrap in our format
-        console.log('[DocManager] Wrapping in application format');
+        logger.debug('[DocManager] Wrapping in application format');
         return {
           filePath,
           metadata: {
@@ -103,7 +104,7 @@ class DocumentManager {
         };
       }
     } catch (err) {
-      console.error('[DocManager] Error loading:', err);
+      logger.error('[DocManager] Error loading:', err);
       throw new Error(`Failed to load document: ${err.message}`);
     }
   }
@@ -153,7 +154,7 @@ class DocumentManager {
    * Validate document data against its schema
    */
   async validate(document) {
-    console.log('[DocManager] Starting validation for type:', document.metadata.documentType);
+    logger.debug('[DocManager] Starting validation for type:', document.metadata.documentType);
     const typeName = document.metadata.documentType;
     const docType = this.schemaLoader.getDocumentType(typeName);
     if (!docType) {
@@ -168,7 +169,7 @@ class DocumentManager {
     } else {
       result = await this.schemaLoader.validateDocument(typeName, document.data);
     }
-    console.log('[DocManager] Validation complete');
+    logger.debug('[DocManager] Validation complete');
     return result;
   }
 
@@ -296,7 +297,7 @@ class DocumentManager {
       try {
         const validation = await this.schemaLoader.validate(typeName, jsonData);
         if (validation.valid) {
-          console.log(`[DocManager] Inferred document type: ${typeName}`);
+          logger.info(`[DocManager] Inferred document type: ${typeName}`);
           return typeName;
         }
       } catch (err) {

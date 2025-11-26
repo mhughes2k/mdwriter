@@ -7,6 +7,7 @@
 
 let app;
 const path = require('path');
+const logger = require('./logger');
 try {
   // electron may not be available in test environments; gracefully fall back
   // to a minimal shim using os.homedir()
@@ -74,9 +75,9 @@ class ConfigManager {
       const data = await fs.readFile(this.configPath, 'utf-8');
       this.config = JSON.parse(data);
       this.config = this.mergeWithDefaults(this.config);
-      console.log('[ConfigManager] Configuration loaded from:', this.configPath);
+      logger.info('[ConfigManager] Configuration loaded from:', this.configPath);
     } catch (err) {
-      console.log('[ConfigManager] No config found, creating default');
+      logger.info('[ConfigManager] No config found, creating default');
       this.config = { ...this.defaultConfig };
       await this.save();
     }
@@ -121,10 +122,10 @@ class ConfigManager {
         'utf-8'
       );
       
-      console.log('[ConfigManager] Configuration saved');
+      logger.info('[ConfigManager] Configuration saved');
       return { success: true };
     } catch (err) {
-      console.error('[ConfigManager] Error saving config:', err);
+      logger.error('[ConfigManager] Error saving config:', err);
       return { success: false, error: err.message };
     }
   }
@@ -185,11 +186,11 @@ class ConfigManager {
       await fs.mkdir(modelsDir, { recursive: true });
       await fs.mkdir(templatesDir, { recursive: true });
       
-      console.log('[ConfigManager] Userspace directories ensured:');
-      console.log('  Models:', modelsDir);
-      console.log('  Templates:', templatesDir);
+      logger.info('[ConfigManager] Userspace directories ensured:');
+      logger.info('  Models:', modelsDir);
+      logger.info('  Templates:', templatesDir);
     } catch (err) {
-      console.error('[ConfigManager] Error creating userspace directories:', err);
+      logger.error('[ConfigManager] Error creating userspace directories:', err);
     }
   }
   

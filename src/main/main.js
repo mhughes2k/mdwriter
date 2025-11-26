@@ -8,6 +8,23 @@ const DiscoveryService = require('./discovery-service');
 const { getConfigManager } = require('./config-manager');
 const { TemplateManager } = require('./template-manager');
 const MenuBuilder = require('./menu-builder');
+const logger = require('./logger');
+
+// Receive logs forwarded from renderer processes and emit via main logger
+ipcMain.on('renderer-log', (event, payload) => {
+  try {
+    const { level, args } = payload || {};
+    if (!level || !args) return;
+    if (typeof logger[level] === 'function') {
+      logger[level](...args);
+    } else {
+      logger.info(...args);
+    }
+  } catch (e) {
+    // Swallow to avoid crashing main process from bad renderer log
+    logger.error('[Main] Failed to forward renderer log:', e);
+  }
+});
 
 let mainWindow;
 let documentManager;
@@ -43,7 +60,7 @@ async function initialize() {
   collaborationServer = new CollaborationServer();
   discoveryService = new DiscoveryService();
   
-  console.log('Application initialized');
+  logger.info('Application initialized');
 }
 
 function createWindow() {
@@ -101,7 +118,7 @@ function createWindow() {
         // If Cancel (choice === 2), do nothing - window stays open
       })
       .catch(err => {
-        console.error('[Main] Error checking unsaved changes:', err);
+        logger.error('[Main] Error checking unsaved changes:', err);
         mainWindow.destroy();
       });
   });
@@ -151,12 +168,12 @@ ipcMain.handle('get-document-types', async () => {
 
 ipcMain.handle('get-schema-structure', async (event, documentType) => {
   try {
-    console.log('[Main] Getting schema structure for:', documentType);
+    logger.debug('[Main] Getting schema structure for:', documentType);
     const result = await schemaLoader.getSchemaStructure(documentType);
-    console.log('[Main] Schema structure loaded, properties:', result?.length || 0);
+    logger.debug('[Main] Schema structure loaded, properties:', result?.length || 0);
     return result;
   } catch (err) {
-    console.error('[Main] Error getting schema structure:', err);
+    logger.error('[Main] Error getting schema structure:', err);
     return { error: err.message };
   }
 });
@@ -188,7 +205,7 @@ ipcMain.handle('get-custom-form-data', async (event, documentType, formName) => 
       try {
         formImplementation = await require('fs').promises.readFile(implPath, 'utf8');
       } catch (err) {
-        console.warn('Custom form implementation not found:', implPath);
+        logger.warn('Custom form implementation not found:', implPath);
       }
     }
     
