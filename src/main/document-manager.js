@@ -159,18 +159,14 @@ class DocumentManager {
     if (!docType) {
       throw new Error('Unknown document type');
     }
+    if (typeof this.schemaLoader.validateDocument !== 'function') {
+      throw new Error('schemaLoader must implement validateDocument(typeName, entrypoint, data)');
+    }
     let result;
-    // Prefer validateDocument when available (tests stub this method frequently)
-    if (typeof this.schemaLoader.validateDocument === 'function') {
-      if (docType && docType.entrypoint) {
-        result = await this.schemaLoader.validateDocument(typeName, docType.entrypoint, document.data);
-      } else {
-        result = await this.schemaLoader.validateDocument(typeName, document.data);
-      }
-    } else if (typeof this.schemaLoader.validate === 'function') {
-      result = await this.schemaLoader.validate(typeName, document.data);
+    if (docType && docType.entrypoint) {
+      result = await this.schemaLoader.validateDocument(typeName, docType.entrypoint, document.data);
     } else {
-      throw new Error('No validation method available on schemaLoader');
+      result = await this.schemaLoader.validateDocument(typeName, document.data);
     }
     console.log('[DocManager] Validation complete');
     return result;
