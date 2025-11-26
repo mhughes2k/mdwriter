@@ -417,9 +417,7 @@ class SchemaLoader {
 
 // Export class and a default singleton instance for convenience
 const schemaLoaderInstance = new SchemaLoader();
-module.exports = {
-  SchemaLoader,
-  instance: schemaLoaderInstance,
-  getInstance: () => new SchemaLoader()
-};
+module.exports = schemaLoaderInstance;
+module.exports.SchemaLoader = SchemaLoader;
+module.exports.getInstance = () => new SchemaLoader();
 

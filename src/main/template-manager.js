@@ -38,7 +38,7 @@ class TemplateManager {
       );
       templates.push(...bundledTemplates);
     } catch (err) {
-      console.log(`[TemplateManager] No bundled templates for ${documentType}:`, err.message);
+      // Silently ignore - missing bundled templates is expected for some document types
     }
     
     // 2. Load user templates
@@ -53,7 +53,7 @@ class TemplateManager {
       );
       templates.push(...userTemplates);
     } catch (err) {
-      console.log(`[TemplateManager] No user templates for ${documentType}:`, err.message);
+      // Silently ignore - missing user templates directory is expected until user creates templates
     }
     
     // Cache templates
@@ -102,10 +102,15 @@ class TemplateManager {
         templates.push(template);
       }
       
-      console.log(`[TemplateManager] Loaded ${templates.length} templates from ${dirPath} as ${source}`);
+      if (templates.length > 0) {
+        console.log(`[TemplateManager] Loaded ${templates.length} templates from ${dirPath} as ${source}`);
+      }
     } catch (err) {
-      // Directory doesn't exist or can't be read
-      console.log(`[TemplateManager] Could not load templates from ${dirPath}:`, err.message);
+      // Silently handle missing directories (ENOENT) - this is expected behavior
+      // Log warnings only for other errors (permission issues, corrupt files, etc.)
+      if (err.code !== 'ENOENT') {
+        console.warn(`[TemplateManager] Warning: Could not access ${dirPath}:`, err.message);
+      }
     }
     
     return templates;
