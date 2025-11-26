@@ -227,15 +227,15 @@ class TemplateManager {
   /**
    * Get value from document data using dot notation path
    */
-  getValueFromPath(data, path) {
-    const keys = path.split('.');
+  getValueFromPath(data, propPath) {
+    const keys = propPath.split('.');
     let value = data;
-    
+
     for (const key of keys) {
       value = value?.[key];
       if (value === undefined) return undefined;
     }
-    
+
     return value;
   }
   
