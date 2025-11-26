@@ -591,3 +591,7 @@ class FormGenerator {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = FormGenerator;
 }
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports.FormGenerator = FormGenerator;
+  module.exports.getInstance = () => new FormGenerator();
+}

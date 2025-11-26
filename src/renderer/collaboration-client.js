@@ -255,3 +255,7 @@ if (typeof window !== 'undefined') {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = CollaborationClient;
 }
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports.CollaborationClient = CollaborationClient;
+  module.exports.getInstance = () => new CollaborationClient();
+}

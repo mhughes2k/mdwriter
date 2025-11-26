@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const os = require('os');
-const schemaLoader = require('./schema-loader');
+const { instance: schemaLoader } = require('./schema-loader');
 const DocumentManager = require('./document-manager');
 const CollaborationServer = require('./collaboration-server');
 const DiscoveryService = require('./discovery-service');
@@ -216,12 +216,22 @@ ipcMain.handle('open-document-dialog', async () => {
   // Build file filters dynamically from all registered document types
   const filters = [];
   
+  const allSupportedExtensions = [];
   for (const [typeName, docType] of schemaLoader.documentTypes) {
     filters.push({
       name: docType.description || typeName,
       extensions: docType.extensions
     });
+    allSupportedExtensions.push(...docType.extensions);
   }
+  console.log('All supported extensions for open dialog:', allSupportedExtensions);
+  // Combine all Supported extensions into one filter
+  const allFileFilter = {
+    name: 'All Supported Files',
+    extensions: Array.from(new Set(allSupportedExtensions))
+  };
+
+  filters.unshift(allFileFilter);
   
   // Add common filters
   filters.push(

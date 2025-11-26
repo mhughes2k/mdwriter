@@ -5,14 +5,40 @@
  * Provides cross-platform paths for configuration, userspace models, and templates.
  */
 
-const { app } = require('electron');
+let app;
 const path = require('path');
+try {
+  // electron may not be available in test environments; gracefully fall back
+  // to a minimal shim using os.homedir()
+  ({ app } = require('electron'));
+} catch (err) {
+  app = {
+    getPath: (name) => {
+      const os = require('os');
+      if (name === 'userData') {
+        return path.join(os.homedir(), '.mdwriter');
+      }
+      return os.homedir();
+    }
+  };
+}
 const fs = require('fs').promises;
 
 class ConfigManager {
   constructor() {
     // Cross-platform user data directory
-    this.userDataPath = app.getPath('userData');
+    // app.getPath may exist but return undefined in some test mocks; ensure a safe fallback
+    let userDataPath;
+    try {
+      userDataPath = app && typeof app.getPath === 'function' ? app.getPath('userData') : null;
+    } catch (err) {
+      userDataPath = null;
+    }
+    if (!userDataPath) {
+      const os = require('os');
+      userDataPath = path.join(os.homedir(), '.mdwriter');
+    }
+    this.userDataPath = userDataPath;
     this.configPath = path.join(this.userDataPath, 'config.json');
     
     // Default configuration
@@ -44,26 +70,17 @@ class ConfigManager {
    */
   async initialize() {
     try {
-      // Check if config file exists
       await fs.access(this.configPath);
-      // Load existing config
       const data = await fs.readFile(this.configPath, 'utf-8');
       this.config = JSON.parse(data);
-      
-      // Merge with defaults (in case new fields were added)
       this.config = this.mergeWithDefaults(this.config);
-      
       console.log('[ConfigManager] Configuration loaded from:', this.configPath);
     } catch (err) {
-      // Config doesn't exist, create default
       console.log('[ConfigManager] No config found, creating default');
       this.config = { ...this.defaultConfig };
       await this.save();
     }
-    
-    // Ensure userspace directories exist
     await this.ensureUserspaceDirs();
-    
     return this.config;
   }
   
@@ -226,6 +243,16 @@ class ConfigManager {
     
     return await this.set('preferences.recentFiles', recentFiles);
   }
+
+  /**
+   * Remove a file from recent files
+   */
+  async removeRecentFile(filePath) {
+    let recentFiles = this.config.preferences.recentFiles || [];
+    recentFiles = recentFiles.filter(f => f !== filePath);
+    this.config.preferences.recentFiles = recentFiles;
+    await this.save();
+  }
   
   /**
    * Get recent files
@@ -255,6 +282,14 @@ class ConfigManager {
     const preferences = this.config.preferences || {};
     return preferences[key] !== undefined ? preferences[key] : defaultValue;
   }
+
+  /**
+   * Synchronous getPreference for test compatibility
+   */
+  getPreferenceSync(key, defaultValue = null) {
+    const preferences = this.config.preferences || {};
+    return preferences[key] !== undefined ? preferences[key] : defaultValue;
+  }
   
   /**
    * Set a specific preference value
@@ -278,4 +313,6 @@ function getConfigManager() {
   return configManager;
 }
 
-module.exports = { ConfigManager, getConfigManager };
+module.exports = ConfigManager;
+module.exports.getConfigManager = getConfigManager;
+module.exports.ConfigManager = ConfigManager;
