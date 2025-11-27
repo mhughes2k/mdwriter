@@ -107,6 +107,19 @@ class SchemaLoader {
           try {
             const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
             
+            // Validate that the entrypoint schema file exists
+            if (metadata.entrypoint) {
+              const entrypointPath = path.join(dirPath, typeName, 'json-schema', metadata.entrypoint);
+              try {
+                await fs.access(entrypointPath);
+              } catch (err) {
+                const errorMsg = `Model definition fault: entrypoint schema not found at "${entrypointPath}" for document type "${typeName}"`;
+                console.error(`[SchemaLoader] ${errorMsg}`);
+                // Log the error but continue loading other types
+                continue;
+              }
+            }
+            
             // Use composite key if userspace to avoid conflicts
             const typeKey = source === 'userspace' ? `userspace:${typeName}` : typeName;
             
@@ -168,7 +181,25 @@ class SchemaLoader {
       schemaPath = path.join(this.modelsPath, typeName, 'json-schema', schemaFile);
     }
     console.log('[SchemaLoader] Reading schema file:', schemaPath);
-    let schemaContent = await fs.readFile(schemaPath, 'utf8');
+    
+    let schemaContent;
+    try {
+      schemaContent = await fs.readFile(schemaPath, 'utf8');
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        const msg = `Model definition fault: Cannot find entrypoint schema file "${schemaFile}" for document type "${typeName}" at path: ${schemaPath}`;
+        console.error(`[SchemaLoader] ${msg}`);
+        const error = new Error(msg);
+        error.code = 'MODEL_DEFINITION_FAULT';
+        error.isModelFault = true;
+        error.typeName = typeName;
+        error.schemaFile = schemaFile;
+        error.schemaPath = schemaPath;
+        throw error;
+      }
+      throw err;
+    }
+    
     let parsed = JSON.parse(schemaContent);
 
     // Some repositories/layouts may have a metadata file at the location

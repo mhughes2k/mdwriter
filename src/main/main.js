@@ -225,7 +225,15 @@ ipcMain.handle('create-new-document', async (event, documentType) => {
     currentDocument = await documentManager.createNew(documentType);
     return { success: true, document: currentDocument };
   } catch (err) {
-    return { success: false, error: err.message };
+    const isModelFault = err.isModelFault || err.code === 'MODEL_DEFINITION_FAULT';
+    if (isModelFault) {
+      logger.error(`[Main] Model definition fault for type "${documentType}": ${err.message}`);
+    }
+    return { 
+      success: false, 
+      error: err.message,
+      isModelFault: isModelFault
+    };
   }
 });
 
@@ -289,7 +297,15 @@ ipcMain.handle('load-document', async (event, filePath) => {
     };
   } catch (err) {
     console.error('[Main] Error loading document:', err);
-    return { success: false, error: err.message };
+    const isModelFault = err.isModelFault || err.code === 'MODEL_DEFINITION_FAULT';
+    if (isModelFault) {
+      logger.error(`[Main] Model definition fault when loading document: ${err.message}`);
+    }
+    return { 
+      success: false, 
+      error: err.message,
+      isModelFault: isModelFault
+    };
   }
 });
 
@@ -356,7 +372,15 @@ ipcMain.handle('validate-document', async (event, document) => {
     const validation = await documentManager.validate(document);
     return validation;
   } catch (err) {
-    return { valid: false, errors: [{ message: err.message }] };
+    const isModelFault = err.isModelFault || err.code === 'MODEL_DEFINITION_FAULT';
+    if (isModelFault) {
+      logger.error(`[Main] Model definition fault during validation: ${err.message}`);
+    }
+    return { 
+      valid: false, 
+      errors: [{ message: err.message }],
+      isModelFault: isModelFault
+    };
   }
 });
 

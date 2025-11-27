@@ -47,23 +47,17 @@ describe('Edge Cases and Error Scenarios', () => {
     });
     
     test('should handle missing entrypoint schema file', async () => {
-      fs.readdir.mockResolvedValue([
-        { name: 'test', isDirectory: () => true },
-      ]);
+      const enoentError = new Error('ENOENT: no such file or directory');
+      enoentError.code = 'ENOENT';
       
-      fs.readFile
-        .mockResolvedValueOnce(JSON.stringify({
-          description: 'Test Type',
-          category: 'Test',
-          icon: '🧪',
-          extensions: ['test'],
-          entrypoint: 'missing.schema.json'
-        }))
-        .mockRejectedValueOnce(new Error('File not found'));
+      fs.readFile.mockRejectedValueOnce(enoentError);
       
-      await expect(
-        schemaLoader.loadSchema('test', 'missing.schema.json')
-      ).rejects.toThrow();
+      const error = await schemaLoader.loadSchema('test', 'missing.schema.json').catch(e => e);
+      expect(error).toBeDefined();
+      expect(error.code).toBe('MODEL_DEFINITION_FAULT');
+      expect(error.isModelFault).toBe(true);
+      expect(error.message).toContain('Model definition fault');
+      expect(error.message).toContain('missing.schema.json');
     });
     
     test('should handle circular schema references', async () => {

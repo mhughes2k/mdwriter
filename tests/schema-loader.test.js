@@ -122,6 +122,42 @@ describe('SchemaLoader', () => {
       expect(types[0].name).toBe('custom');
       expect(types[0].source).toBe('userspace');
     });
+
+    test('should skip document types with missing entrypoint schemas', async () => {
+      // Mock directory structure
+      fs.readdir.mockResolvedValueOnce([
+        { name: 'good', isDirectory: () => true },
+        { name: 'broken', isDirectory: () => true },
+      ]);
+
+      // Mock good metadata file and its entrypoint existence check
+      fs.readFile.mockResolvedValueOnce(JSON.stringify({
+        description: 'Good Type',
+        category: 'Test',
+        icon: '✅',
+        extensions: ['good'],
+        entrypoint: 'good.schema.json'
+      }));
+
+      fs.access.mockResolvedValueOnce(undefined); // Good entrypoint exists
+
+      // Mock broken metadata file
+      fs.readFile.mockResolvedValueOnce(JSON.stringify({
+        description: 'Broken Type',
+        category: 'Test',
+        icon: '❌',
+        extensions: ['broken'],
+        entrypoint: 'missing.schema.json'
+      }));
+
+      fs.access.mockRejectedValueOnce(new Error('ENOENT')); // Broken entrypoint missing
+
+      const types = await schemaLoader.loadDocumentTypes();
+
+      // Should only have loaded the good type
+      expect(types).toHaveLength(1);
+      expect(types[0].name).toBe('good');
+    });
   });
 
   describe('getDocumentType', () => {
