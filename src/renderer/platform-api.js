@@ -33,7 +33,18 @@ class PlatformAPI {
     if (isElectron) {
       return window.electronAPI.getDocumentTypes();
     }
-    return this._webRequest('/api/document-types');
+    // Web: API returns array directly
+    try {
+      const response = await fetch('/api/document-types');
+      if (!response.ok) {
+        console.error('[PlatformAPI] Error fetching document types:', response.statusText);
+        return [];
+      }
+      return await response.json();
+    } catch (err) {
+      console.error('[PlatformAPI] Error fetching document types:', err);
+      return [];
+    }
   }
 
   /**
@@ -45,7 +56,18 @@ class PlatformAPI {
     if (isElectron) {
       return window.electronAPI.getSchemaStructure(documentType);
     }
-    return this._webRequest(`/api/schemas/${documentType}/structure`);
+    // Web: API returns array directly
+    try {
+      const response = await fetch(`/api/schemas/${documentType}/structure`);
+      if (!response.ok) {
+        console.error('[PlatformAPI] Error fetching schema structure:', response.statusText);
+        return [];
+      }
+      return await response.json();
+    } catch (err) {
+      console.error('[PlatformAPI] Error fetching schema structure:', err);
+      return [];
+    }
   }
 
   /**

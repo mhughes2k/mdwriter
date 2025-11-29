@@ -160,12 +160,12 @@ describe('PlatformAPI', () => {
 
     test('getDocumentTypes should call fetch', async () => {
       await api.getDocumentTypes();
-      expect(mockFetch).toHaveBeenCalledWith('/api/document-types', expect.any(Object));
+      expect(mockFetch).toHaveBeenCalledWith('/api/document-types');
     });
 
     test('getSchemaStructure should call fetch with type', async () => {
       await api.getSchemaStructure('mdf');
-      expect(mockFetch).toHaveBeenCalledWith('/api/schemas/mdf/structure', expect.any(Object));
+      expect(mockFetch).toHaveBeenCalledWith('/api/schemas/mdf/structure');
     });
 
     test('createNewDocument should POST to API', async () => {

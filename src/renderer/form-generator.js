@@ -114,9 +114,16 @@ class FormGenerator {
 
     console.log(`[FormGen] Creating custom form: ${formType} for field: ${fieldPath}`);
 
+    // Get the API (platformAPI or electronAPI)
+    const api = window.platformAPI || window.electronAPI;
+    if (!api || !api.getCustomFormData) {
+      console.error('API not available for custom forms');
+      return this.createPlaceholder(`Custom forms not available`);
+    }
+
     // Load custom form data and implementation from backend
     try {
-      const result = await window.electronAPI.getCustomFormData(this.documentType, property.customForm);
+      const result = await api.getCustomFormData(this.documentType, property.customForm);
       
       console.log(`[FormGen] Custom form data loaded:`, result);
       
