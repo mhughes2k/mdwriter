@@ -26,10 +26,15 @@ const StorageService = require('./services/storage-service');
 const app = express();
 const server = http.createServer(app);
 
+// CORS configuration - restrict origins in production
+const corsOrigin = process.env.NODE_ENV === 'production' 
+  ? process.env.CORS_ORIGIN || 'http://localhost:3000'
+  : '*';
+
 // Initialize Socket.IO for collaboration
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: corsOrigin,
     methods: ['GET', 'POST']
   }
 });
@@ -43,8 +48,10 @@ app.set('schemaService', schemaService);
 app.set('storageService', storageService);
 app.set('io', io);
 
-// Middleware
-app.use(cors());
+// Middleware - use environment-aware CORS
+app.use(cors({
+  origin: corsOrigin
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 

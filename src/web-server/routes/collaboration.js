@@ -158,10 +158,11 @@ router.get('/sessions/:sessionId/document', async (req, res) => {
 });
 
 /**
- * Generate a unique session ID
+ * Generate a unique session ID using crypto for security
  */
 function generateSessionId() {
-  return 'sess_' + Math.random().toString(36).substring(2, 15);
+  const crypto = require('crypto');
+  return 'sess_' + crypto.randomBytes(12).toString('hex');
 }
 
 module.exports = router;

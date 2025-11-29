@@ -766,14 +766,28 @@ class PlatformAPI {
     const parts = fieldPath.split('.');
     let current = document.data;
     
+    // Guard against prototype pollution
+    const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
+    
     for (let i = 0; i < parts.length - 1; i++) {
-      if (!current[parts[i]]) {
-        current[parts[i]] = {};
+      const key = parts[i];
+      // Prevent prototype pollution attacks
+      if (dangerousKeys.includes(key)) {
+        return { success: false, error: 'Invalid field path' };
       }
-      current = current[parts[i]];
+      if (!current[key]) {
+        current[key] = {};
+      }
+      current = current[key];
     }
     
-    current[parts[parts.length - 1]] = value;
+    const finalKey = parts[parts.length - 1];
+    // Prevent prototype pollution attacks on final key
+    if (dangerousKeys.includes(finalKey)) {
+      return { success: false, error: 'Invalid field path' };
+    }
+    
+    current[finalKey] = value;
     document.metadata.modified = new Date().toISOString();
     
     return { success: true, document };
@@ -787,14 +801,26 @@ class PlatformAPI {
     const parts = arrayPath.split('.');
     let current = document.data;
     
+    // Guard against prototype pollution
+    const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
+    
     for (let i = 0; i < parts.length - 1; i++) {
-      if (!current[parts[i]]) {
-        current[parts[i]] = {};
+      const key = parts[i];
+      // Prevent prototype pollution attacks
+      if (dangerousKeys.includes(key)) {
+        return { success: false, error: 'Invalid array path' };
       }
-      current = current[parts[i]];
+      if (!current[key]) {
+        current[key] = {};
+      }
+      current = current[key];
     }
     
     const arrayField = parts[parts.length - 1];
+    // Prevent prototype pollution attacks on array field
+    if (dangerousKeys.includes(arrayField)) {
+      return { success: false, error: 'Invalid array path' };
+    }
     if (!current[arrayField]) {
       current[arrayField] = [];
     }
@@ -813,11 +839,23 @@ class PlatformAPI {
     const parts = arrayPath.split('.');
     let current = document.data;
     
+    // Guard against prototype pollution
+    const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
+    
     for (let i = 0; i < parts.length - 1; i++) {
-      current = current[parts[i]];
+      const key = parts[i];
+      // Prevent prototype pollution attacks
+      if (dangerousKeys.includes(key)) {
+        return { success: false, error: 'Invalid array path' };
+      }
+      current = current[key];
     }
     
     const arrayField = parts[parts.length - 1];
+    // Prevent prototype pollution attacks on array field
+    if (dangerousKeys.includes(arrayField)) {
+      return { success: false, error: 'Invalid array path' };
+    }
     if (current[arrayField] && Array.isArray(current[arrayField])) {
       current[arrayField].splice(index, 1);
       document.metadata.modified = new Date().toISOString();

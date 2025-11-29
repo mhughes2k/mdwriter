@@ -233,15 +233,29 @@ For web mode, collaboration will work through:
 ### Web Mode
 
 1. **Authentication**: Implement user authentication for web server
-2. **CORS**: Configure appropriate CORS headers
+2. **CORS**: Configure appropriate CORS headers (restricted in production)
 3. **Input validation**: Validate all API inputs on server
 4. **File uploads**: Sanitize uploaded files, check size limits
+5. **Rate limiting**: Add rate limiting middleware for production deployments to prevent DoS attacks on API endpoints (e.g., using `express-rate-limit`)
 
 ### Both Modes
 
 1. **Schema validation**: Always validate documents against schema
 2. **Content sanitization**: Sanitize markdown/HTML output
 3. **CSP**: Maintain Content Security Policy headers
+4. **Prototype pollution**: Guard against prototype pollution in object path manipulation
+
+## Production Deployment Checklist
+
+For deploying the web server in production:
+
+- [ ] Set `NODE_ENV=production`
+- [ ] Configure `CORS_ORIGIN` environment variable to restrict origins
+- [ ] Add rate limiting middleware
+- [ ] Set up HTTPS/TLS
+- [ ] Implement user authentication
+- [ ] Configure secure session management
+- [ ] Set up proper logging and monitoring
 
 ## Testing Strategy
 
