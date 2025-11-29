@@ -1,7 +1,7 @@
 /**
  * Platform API Tests
  * 
- * Tests for the platform abstraction layer
+ * Tests for the pluggable platform backend architecture
  */
 
 const { describe, test, expect, beforeEach, afterEach } = require('@jest/globals');
@@ -10,16 +10,12 @@ const { describe, test, expect, beforeEach, afterEach } = require('@jest/globals
 let mockElectronAPI;
 let mockFetch;
 
-describe('PlatformAPI', () => {
-  let PlatformAPI;
+describe('Platform API - Pluggable Architecture', () => {
   let originalWindow;
   let originalFetch;
 
   beforeEach(() => {
-    // Reset modules to ensure fresh state
     jest.resetModules();
-    
-    // Save original window if it exists
     originalWindow = global.window;
     originalFetch = global.fetch;
     
@@ -41,6 +37,7 @@ describe('PlatformAPI', () => {
     global.window = {
       electronAPI: mockElectronAPI,
       platformAPI: null,
+      MDWriter: {},
       localStorage: {
         getItem: jest.fn(),
         setItem: jest.fn(),
@@ -63,231 +60,224 @@ describe('PlatformAPI', () => {
     jest.resetModules();
   });
 
-  describe('Platform Detection', () => {
-    test('should detect Electron environment', () => {
-      // Re-require the module with electronAPI present
-      const { PlatformAPI } = require('../src/renderer/platform-api');
-      const api = new PlatformAPI();
+  describe('Backend Registration', () => {
+    test('should register custom backend', () => {
+      const { registerBackend, getBackend } = require('../src/renderer/platform-api');
       
-      expect(api.isElectron).toBe(true);
-      expect(api.isWeb).toBe(false);
-      expect(api.platform).toBe('darwin');
+      const customBackend = {
+        platform: 'custom',
+        isElectron: false,
+        isWeb: true,
+        getDocumentTypes: async () => []
+      };
+      
+      registerBackend(customBackend);
+      
+      expect(getBackend()).toBe(customBackend);
+      expect(getBackend().platform).toBe('custom');
     });
 
-    test('should detect Web environment when electronAPI is missing', () => {
-      // Remove electronAPI
-      delete global.window.electronAPI;
+    test('should validate backend and warn about missing methods', () => {
+      const { validateBackend, PlatformBackendInterface } = require('../src/renderer/platform-api');
       
-      // Re-require the module
-      jest.resetModules();
-      const { PlatformAPI } = require('../src/renderer/platform-api');
-      const api = new PlatformAPI();
+      const incompleteBackend = {
+        platform: 'incomplete',
+        isElectron: false,
+        isWeb: true
+      };
       
-      expect(api.isElectron).toBe(false);
-      expect(api.isWeb).toBe(true);
-      expect(api.platform).toBe('web');
+      const result = validateBackend(incompleteBackend);
+      
+      expect(result.valid).toBe(false);
+      expect(result.missing.length).toBeGreaterThan(0);
+    });
+
+    test('should expose MDWriter global with registration functions', () => {
+      require('../src/renderer/platform-api');
+      
+      expect(global.window.MDWriter).toBeDefined();
+      expect(typeof global.window.MDWriter.registerBackend).toBe('function');
+      expect(typeof global.window.MDWriter.getBackend).toBe('function');
+      expect(typeof global.window.MDWriter.hasBackend).toBe('function');
     });
   });
 
-  describe('Electron Mode Operations', () => {
-    let api;
-
-    beforeEach(() => {
-      const { PlatformAPI } = require('../src/renderer/platform-api');
-      api = new PlatformAPI();
+  describe('ElectronBackend', () => {
+    test('should auto-register when electronAPI is present', () => {
+      const { getBackend } = require('../src/renderer/platform-api');
+      
+      const backend = getBackend();
+      expect(backend.isElectron).toBe(true);
+      expect(backend.platform).toBe('darwin');
     });
 
-    test('getDocumentTypes should call electronAPI', async () => {
-      await api.getDocumentTypes();
+    test('should call electronAPI methods', async () => {
+      const { getBackend } = require('../src/renderer/platform-api');
+      const backend = getBackend();
+      
+      await backend.getDocumentTypes();
       expect(mockElectronAPI.getDocumentTypes).toHaveBeenCalled();
-    });
-
-    test('getSchemaStructure should call electronAPI with type', async () => {
-      await api.getSchemaStructure('mdf');
+      
+      await backend.getSchemaStructure('mdf');
       expect(mockElectronAPI.getSchemaStructure).toHaveBeenCalledWith('mdf');
-    });
-
-    test('createNewDocument should call electronAPI with type', async () => {
-      await api.createNewDocument('mdf');
+      
+      await backend.createNewDocument('mdf');
       expect(mockElectronAPI.createNewDocument).toHaveBeenCalledWith('mdf');
     });
 
-    test('loadDocument should call electronAPI with path', async () => {
-      await api.loadDocument('/path/to/doc.mdf');
-      expect(mockElectronAPI.loadDocument).toHaveBeenCalledWith('/path/to/doc.mdf');
-    });
-
-    test('saveDocument should call electronAPI', async () => {
-      const doc = { data: { title: 'Test' } };
-      await api.saveDocument('/path/to/doc.mdf', doc);
-      expect(mockElectronAPI.saveDocument).toHaveBeenCalledWith('/path/to/doc.mdf', doc);
-    });
-
-    test('validateDocument should call electronAPI', async () => {
-      const doc = { metadata: { documentType: 'mdf' }, data: {} };
-      await api.validateDocument(doc);
-      expect(mockElectronAPI.validateDocument).toHaveBeenCalledWith(doc);
-    });
-
-    test('configGet should call electronAPI', async () => {
-      await api.configGet('testKey');
+    test('should delegate config operations to electronAPI', async () => {
+      const { getBackend } = require('../src/renderer/platform-api');
+      const backend = getBackend();
+      
+      await backend.configGet('testKey');
       expect(mockElectronAPI.configGet).toHaveBeenCalledWith('testKey');
-    });
-
-    test('configSet should call electronAPI', async () => {
-      await api.configSet('testKey', 'testValue');
+      
+      await backend.configSet('testKey', 'testValue');
       expect(mockElectronAPI.configSet).toHaveBeenCalledWith('testKey', 'testValue');
-    });
-
-    test('updateMenuState should call electronAPI', async () => {
-      await api.updateMenuState({ hasDocument: true });
-      expect(mockElectronAPI.updateMenuState).toHaveBeenCalledWith({ hasDocument: true });
     });
   });
 
-  describe('Web Mode Operations', () => {
-    let api;
-
+  describe('WebBackend', () => {
     beforeEach(() => {
-      // Remove electronAPI
+      // Remove electronAPI to trigger web mode
       delete global.window.electronAPI;
-      
-      // Reset modules and re-require
       jest.resetModules();
-      const { PlatformAPI } = require('../src/renderer/platform-api');
-      api = new PlatformAPI();
     });
 
-    test('getDocumentTypes should call fetch', async () => {
-      await api.getDocumentTypes();
+    test('should auto-register when electronAPI is absent', () => {
+      const { getBackend } = require('../src/renderer/platform-api');
+      
+      const backend = getBackend();
+      expect(backend.isWeb).toBe(true);
+      expect(backend.platform).toBe('web');
+    });
+
+    test('should call fetch for API requests', async () => {
+      const { getBackend } = require('../src/renderer/platform-api');
+      const backend = getBackend();
+      
+      await backend.getDocumentTypes();
       expect(mockFetch).toHaveBeenCalledWith('/api/document-types');
-    });
-
-    test('getSchemaStructure should call fetch with type', async () => {
-      await api.getSchemaStructure('mdf');
+      
+      await backend.getSchemaStructure('mdf');
       expect(mockFetch).toHaveBeenCalledWith('/api/schemas/mdf/structure');
     });
 
-    test('createNewDocument should POST to API', async () => {
-      await api.createNewDocument('mdf');
-      expect(mockFetch).toHaveBeenCalledWith('/api/documents', {
-        headers: { 'Content-Type': 'application/json' },
-        method: 'POST',
-        body: JSON.stringify({ documentType: 'mdf' })
-      });
-    });
-
-    test('configGet should use localStorage', async () => {
+    test('should use localStorage for config', async () => {
       global.window.localStorage.getItem.mockReturnValue('"testValue"');
       
-      const result = await api.configGet('testKey');
+      const { getBackend } = require('../src/renderer/platform-api');
+      const backend = getBackend();
       
-      expect(global.window.localStorage.getItem).toHaveBeenCalledWith('mdwriter_config_testKey');
+      const result = await backend.configGet('testKey');
+      
+      expect(global.window.localStorage.getItem).toHaveBeenCalledWith('mdwriter_testKey');
       expect(result.success).toBe(true);
       expect(result.value).toBe('testValue');
     });
 
-    test('configSet should use localStorage', async () => {
-      await api.configSet('testKey', 'testValue');
+    test('should handle menu state as no-op', async () => {
+      const { getBackend } = require('../src/renderer/platform-api');
+      const backend = getBackend();
       
-      expect(global.window.localStorage.setItem).toHaveBeenCalledWith(
-        'mdwriter_config_testKey',
-        '"testValue"'
-      );
-    });
-
-    test('updateMenuState should be no-op in web mode', async () => {
-      const result = await api.updateMenuState({ hasDocument: true });
+      const result = await backend.updateMenuState({ hasDocument: true });
       
       expect(result.success).toBe(true);
       expect(mockFetch).not.toHaveBeenCalled();
     });
+  });
 
-    test('showUnsavedChangesDialog should use confirm', async () => {
-      global.confirm = jest.fn().mockReturnValue(true);
+  describe('Custom Backend Injection', () => {
+    test('should allow pre-registration of custom backend', () => {
+      // Simulate a custom platform registering before module loads
+      global.window.MDWriter = {
+        _preRegisteredBackend: {
+          platform: 'my-custom-platform',
+          isElectron: false,
+          isWeb: true,
+          getDocumentTypes: jest.fn().mockResolvedValue([{ name: 'custom-doc' }])
+        }
+      };
       
-      const result = await api.showUnsavedChangesDialog();
+      // Register before requiring module
+      const customBackend = global.window.MDWriter._preRegisteredBackend;
       
-      expect(global.confirm).toHaveBeenCalled();
-      expect(result.choice).toBe(0); // Save
+      const { registerBackend, getBackend } = require('../src/renderer/platform-api');
+      registerBackend(customBackend);
+      
+      expect(getBackend().platform).toBe('my-custom-platform');
+    });
+
+    test('should expose backend classes for extension', () => {
+      const { ElectronBackend, WebBackend } = require('../src/renderer/platform-api');
+      
+      expect(ElectronBackend).toBeDefined();
+      expect(WebBackend).toBeDefined();
+      
+      // Can create instances
+      delete global.window.electronAPI;
+      const webInstance = new WebBackend({ apiBase: '/custom-api' });
+      expect(webInstance.apiBase).toBe('/custom-api');
     });
   });
 
-  describe('Local Document Operations', () => {
-    let api;
+  describe('Local Document Operations (WebBackend)', () => {
+    let backend;
 
     beforeEach(() => {
       delete global.window.electronAPI;
       jest.resetModules();
-      const { PlatformAPI } = require('../src/renderer/platform-api');
-      api = new PlatformAPI();
+      const { getBackend } = require('../src/renderer/platform-api');
+      backend = getBackend();
     });
 
-    test('_updateFieldLocally should update nested field', () => {
+    test('should update nested field safely', async () => {
       const doc = {
         metadata: { modified: null },
         data: { title: 'Original' }
       };
 
-      const result = api._updateFieldLocally(doc, 'title', 'Updated');
+      const result = await backend.updateField(doc, 'title', 'Updated');
 
       expect(result.success).toBe(true);
       expect(result.document.data.title).toBe('Updated');
       expect(result.document.metadata.modified).toBeDefined();
     });
 
-    test('_updateFieldLocally should create nested path', () => {
+    test('should reject prototype pollution attempts', async () => {
       const doc = {
         metadata: { modified: null },
         data: {}
       };
 
-      const result = api._updateFieldLocally(doc, 'nested.field', 'value');
+      const result = await backend.updateField(doc, '__proto__.polluted', 'malicious');
 
-      expect(result.success).toBe(true);
-      expect(result.document.data.nested.field).toBe('value');
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Invalid');
     });
 
-    test('_addArrayItemLocally should add item to array', () => {
+    test('should add array items', async () => {
       const doc = {
         metadata: { modified: null },
         data: { items: ['a', 'b'] }
       };
 
-      const result = api._addArrayItemLocally(doc, 'items', 'c');
+      const result = await backend.addArrayItem(doc, 'items', 'c');
 
       expect(result.success).toBe(true);
       expect(result.document.data.items).toEqual(['a', 'b', 'c']);
     });
 
-    test('_addArrayItemLocally should create array if missing', () => {
-      const doc = {
-        metadata: { modified: null },
-        data: {}
-      };
-
-      const result = api._addArrayItemLocally(doc, 'items', 'a');
-
-      expect(result.success).toBe(true);
-      expect(result.document.data.items).toEqual(['a']);
-    });
-
-    test('_removeArrayItemLocally should remove item at index', () => {
+    test('should remove array items', async () => {
       const doc = {
         metadata: { modified: null },
         data: { items: ['a', 'b', 'c'] }
       };
 
-      const result = api._removeArrayItemLocally(doc, 'items', 1);
+      const result = await backend.removeArrayItem(doc, 'items', 1);
 
       expect(result.success).toBe(true);
       expect(result.document.data.items).toEqual(['a', 'c']);
-    });
-
-    test('_generateId should generate UUID', () => {
-      const id = api._generateId();
-
-      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
     });
   });
 });

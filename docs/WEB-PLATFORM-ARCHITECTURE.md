@@ -1,271 +1,312 @@
 # Web Platform Architecture
 
-This document outlines the architecture for enabling MDWriter to run both as an Electron desktop application and as a web browser application.
+This document outlines the pluggable backend architecture for MDWriter, enabling it to run as an Electron desktop app, web browser application, or be embedded in any other platform.
 
 ## Overview
 
-The goal is to allow MDWriter to function:
-1. **Desktop mode**: As an Electron application (current implementation)
-2. **Web mode**: In a web browser, with a backend server for persistence
+MDWriter uses a **pluggable backend architecture** that allows any platform to provide its own implementation. The editor is completely decoupled from the backend, making it reusable across:
 
-## Architecture Strategy
+1. **Electron mode**: Desktop application with native capabilities
+2. **Web mode**: Browser-based with a REST API backend
+3. **Custom platforms**: Any platform can inject their own backend
 
-### Platform Abstraction Layer
-
-The core strategy is to create a **Platform API** abstraction that provides a consistent interface for platform-specific operations. This abstraction layer sits between the renderer code and the platform-specific implementations.
+## Architecture
 
 ```
-┌────────────────────────────────────────────────────────┐
-│                   Renderer Code                         │
-│  (renderer.js, form-generator.js, etc.)                │
-└────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌────────────────────────────────────────────────────────┐
-│               Platform API Interface                    │
-│  (src/renderer/platform-api.js)                        │
-│  - Unified API for all platform operations             │
-└────────────────────────────────────────────────────────┘
-                          │
-          ┌───────────────┴───────────────┐
-          ▼                               ▼
-┌──────────────────────┐     ┌──────────────────────┐
-│  Electron Backend     │     │   Web Backend         │
-│  (preload.js)         │     │   (web-api.js)        │
-│  - IPC to main        │     │   - HTTP/REST calls   │
-│  - Native dialogs     │     │   - IndexedDB/Server  │
-└──────────────────────┘     └──────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                    MDWriter Editor                       │
+│  (renderer.js, form-generator.js, collaboration, etc.)  │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           │ Uses window.platformAPI
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│              Platform Backend Interface                  │
+│                                                          │
+│  Defined contract that all backends must implement:      │
+│  - Document operations (create, load, save, validate)   │
+│  - Schema operations (types, structure, custom forms)   │
+│  - Configuration (get, set, preferences)                │
+│  - Templates (load, render, create)                     │
+│  - Collaboration (host, join, discovery)                │
+│  - Events and menu actions                              │
+└─────────────────────────────────────────────────────────┘
+                           │
+         ┌─────────────────┼─────────────────┐
+         ▼                 ▼                 ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│ ElectronBackend │ │   WebBackend    │ │  CustomBackend  │
+│                 │ │                 │ │                 │
+│ - IPC calls     │ │ - REST API      │ │ - Your impl     │
+│ - Native dialog │ │ - localStorage  │ │ - Your storage  │
+│ - File system   │ │ - File downloads│ │ - Your API      │
+└─────────────────┘ └─────────────────┘ └─────────────────┘
 ```
 
-### Key Components
+## Using MDWriter in Your Platform
 
-#### 1. Platform API Interface (`src/renderer/platform-api.js`)
+### Option 1: Use the built-in WebBackend
 
-A unified interface that exposes all platform operations:
+If you just need a web-based editor with our REST API:
 
 ```javascript
-// Platform operations interface
-const PlatformAPI = {
-  // Document operations
-  getDocumentTypes: () => Promise<DocumentType[]>,
-  getSchemaStructure: (type) => Promise<SchemaProperty[]>,
-  createNewDocument: (type) => Promise<Result>,
-  loadDocument: (filePath) => Promise<Result>,
-  saveDocument: (filePath, document) => Promise<Result>,
-  exportDocument: (filePath, document) => Promise<Result>,
-  validateDocument: (document) => Promise<ValidationResult>,
-  
-  // File dialogs
-  openDocumentDialog: () => Promise<DialogResult>,
-  saveDocumentDialog: (isExport, defaultPath) => Promise<DialogResult>,
-  
-  // Configuration
-  configGet: (key) => Promise<Value>,
-  configSet: (key, value) => Promise<void>,
-  
-  // Templates
-  templatesLoad: (documentType) => Promise<Template[]>,
-  templatesRender: (templateId, data, type) => Promise<string>,
-  
-  // Platform info
-  platform: string,
-  isWeb: boolean,
-  isElectron: boolean
-};
+// The editor auto-initializes with WebBackend when no electronAPI is present
+// Just include the scripts and it works
+<script src="platform-api.js"></script>
+<script src="renderer.js"></script>
 ```
 
-#### 2. Electron Implementation (existing `preload.js`)
+### Option 2: Inject your own backend
 
-The current Electron implementation via `window.electronAPI` will be wrapped by the platform API when running in Electron mode.
-
-#### 3. Web Implementation (`src/web/web-api.js`)
-
-A new implementation that communicates with a web backend server:
+To integrate MDWriter into your platform with custom storage/API:
 
 ```javascript
-const WebAPI = {
+// 1. Create your backend implementing the interface
+const myBackend = {
+  platform: 'my-platform',
+  isElectron: false,
+  isWeb: true,
+  
+  // Document Type Operations
   async getDocumentTypes() {
-    const response = await fetch('/api/document-types');
-    return response.json();
+    return await myAPI.fetchDocumentTypes();
   },
   
-  async loadDocument(documentId) {
-    const response = await fetch(`/api/documents/${documentId}`);
-    return response.json();
+  async getSchemaStructure(documentType) {
+    return await myAPI.fetchSchema(documentType);
   },
   
-  // Web-specific file handling using File API and IndexedDB
-  async openDocumentDialog() {
-    // Use <input type="file"> for file selection
-    return new Promise((resolve) => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.mdf,.json';
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          resolve({ success: true, file });
-        } else {
-          resolve({ success: false });
-        }
-      };
-      input.click();
-    });
-  }
+  async getCustomFormData(documentType, formName) {
+    return await myAPI.fetchCustomForm(documentType, formName);
+  },
+  
+  // Document Operations
+  async createNewDocument(documentType) {
+    return await myAPI.createDocument(documentType);
+  },
+  
+  async loadDocument(id) {
+    return await myAPI.loadDocument(id);
+  },
+  
+  async saveDocument(id, document) {
+    return await myAPI.saveDocument(id, document);
+  },
+  
+  async validateDocument(document) {
+    return await myAPI.validate(document);
+  },
+  
+  // ... implement all required methods
 };
+
+// 2. Register it BEFORE the editor scripts load
+window.MDWriter = window.MDWriter || {};
+window.MDWriter.registerBackend(myBackend);
+
+// 3. Include the editor scripts (they'll use your backend)
 ```
 
-#### 4. Web Backend Server (`src/web-server/`)
+### Option 3: Extend the built-in backends
 
-A Node.js Express server that provides:
+```javascript
+// Create a customized version of WebBackend
+const { WebBackend } = window.MDWriter;
 
-- REST API endpoints for document operations
-- Schema loading and validation
-- File storage (local filesystem or cloud storage)
-- User session management
-- WebSocket support for collaboration
+class MyCustomBackend extends WebBackend {
+  constructor() {
+    super({ apiBase: 'https://my-api.com/v1' });
+  }
+  
+  // Override specific methods
+  async saveDocument(filePath, document) {
+    // Add custom logic (e.g., analytics, transforms)
+    console.log('Saving document:', document.metadata.documentType);
+    return super.saveDocument(filePath, document);
+  }
+  
+  async configGet(key) {
+    // Use your own config storage
+    return { success: true, value: myConfigStore.get(key) };
+  }
+}
 
-## Directory Structure
-
-```
-src/
-├── main/                      # Electron main process (existing)
-├── preload/                   # Electron preload (existing)
-├── renderer/                  # Renderer code (existing + modifications)
-│   ├── platform-api.js        # NEW: Platform abstraction layer
-│   └── ...
-├── shared/                    # NEW: Code shared between platforms
-│   ├── document-manager.js    # Document operations (refactored)
-│   ├── schema-loader.js       # Schema loading (refactored)
-│   └── validation.js          # Validation logic
-├── web/                       # NEW: Web-specific client code
-│   └── web-api.js             # Web API implementation
-└── web-server/                # NEW: Web backend server
-    ├── server.js              # Express server entry point
-    ├── routes/
-    │   ├── documents.js       # Document CRUD routes
-    │   ├── schemas.js         # Schema routes
-    │   └── templates.js       # Template routes
-    └── services/
-        ├── storage.js         # File/data storage service
-        └── collaboration.js   # WebSocket collaboration
+window.MDWriter.registerBackend(new MyCustomBackend());
 ```
 
-## Implementation Steps
+## Backend Interface Reference
 
-### Phase 1: Create Platform Abstraction Layer
+Every backend must implement these methods:
 
-1. Create `src/renderer/platform-api.js` that detects the runtime environment
-2. Wrap `window.electronAPI` calls for Electron mode
-3. Create stub implementation for web mode
+### Platform Identification
 
-### Phase 2: Refactor Shared Code
+```typescript
+platform: string;      // e.g., 'electron', 'web', 'my-platform'
+isElectron: boolean;
+isWeb: boolean;
+```
 
-1. Move business logic from `main/` to `shared/`
-2. Make `schema-loader.js` and `document-manager.js` work without Node.js-specific APIs
-3. Create browser-compatible validation using bundled Ajv
+### Document Type Operations
 
-### Phase 3: Build Web Backend
+```typescript
+getDocumentTypes(): Promise<DocumentType[]>
+getSchemaStructure(documentType: string): Promise<SchemaProperty[]>
+getCustomFormData(documentType: string, formName: string): Promise<CustomFormData>
+```
 
-1. Create Express server with REST API
-2. Implement document storage service
-3. Add WebSocket support for collaboration
-4. Port schema loading to server
+### Document Operations
 
-### Phase 4: Web Client Implementation
+```typescript
+createNewDocument(documentType: string): Promise<{success: boolean, document?: Document}>
+openDocumentDialog(): Promise<{success: boolean, filePath?: string, content?: string}>
+loadDocument(filePathOrContent: string | {content: string}): Promise<{success: boolean, document?: Document}>
+saveDocumentDialog(isExport: boolean, defaultPath?: string): Promise<{success: boolean, filePath?: string}>
+saveDocument(filePath: string, document: Document): Promise<{success: boolean}>
+exportDocument(filePath: string, document: Document): Promise<{success: boolean}>
+validateDocument(document: Document): Promise<{valid: boolean, errors?: ValidationError[]}>
+showUnsavedChangesDialog(): Promise<{choice: number}> // 0=Save, 1=Don't Save, 2=Cancel
+```
 
-1. Implement `web-api.js` with fetch-based API calls
-2. Add file upload/download handling
-3. Add IndexedDB for local document caching (offline support)
+### Document Editing
 
-### Phase 5: Build Configuration
-
-1. Add Vite/Webpack config for web bundle
-2. Configure separate entry points for web and Electron
-3. Add environment-specific configuration
-
-## API Differences
-
-### File Operations
-
-| Operation | Electron | Web |
-|-----------|----------|-----|
-| Open File | Native dialog + fs.readFile | `<input type="file">` + FileReader |
-| Save File | Native dialog + fs.writeFile | `<a download>` or server upload |
-| List Recent | Electron config | LocalStorage/IndexedDB |
+```typescript
+updateField(document: Document, fieldPath: string, value: any): Promise<{success: boolean, document?: Document}>
+addArrayItem(document: Document, arrayPath: string, item: any): Promise<{success: boolean, document?: Document}>
+removeArrayItem(document: Document, arrayPath: string, index: number): Promise<{success: boolean, document?: Document}>
+addComment(document: Document, comment: string, sectionPath?: string): Promise<{success: boolean, document?: Document}>
+```
 
 ### Configuration
 
-| Storage | Electron | Web |
-|---------|----------|-----|
-| User Prefs | App data directory | LocalStorage |
-| Documents | Local filesystem | Server storage |
-| Templates | Local + bundled | Server + bundled |
+```typescript
+configGet(key: string): Promise<{success: boolean, value?: any}>
+configSet(key: string, value: any): Promise<{success: boolean}>
+configGetAll(): Promise<{success: boolean, config?: object}>
+configGetPreference(key: string, defaultValue?: any): Promise<{success: boolean, value?: any}>
+configSetPreference(key: string, value: any): Promise<{success: boolean}>
+configAddRecentFile(filePath: string): Promise<{success: boolean}>
+configGetRecentFiles(): Promise<{success: boolean, files?: string[]}>
+```
 
-## Web-Specific Features
+### Templates
 
-### File Handling
-
-The web version will handle files differently:
-
-1. **Opening files**: 
-   - Use HTML5 File API (`<input type="file">`)
-   - Read file content with FileReader
-   - Parse and validate JSON
-
-2. **Saving files**: 
-   - Generate download link with Blob URL
-   - Or save to server with document ID
-
-3. **Recent files**: 
-   - Store document IDs in LocalStorage
-   - Fetch document list from server
+```typescript
+templatesLoad(documentType: string): Promise<{success: boolean, templates?: Template[]}>
+templatesRender(templateId: string, documentData: object, documentType: string): Promise<{success: boolean, content?: string}>
+templatesCreate(documentType: string, name: string, content: string): Promise<{success: boolean}>
+templatesSetActive(templateId: string): Promise<{success: boolean}>
+templatesGetActive(): Promise<{success: boolean, templateId?: string}>
+```
 
 ### Collaboration
 
-For web mode, collaboration will work through:
-- WebSocket connection to the web backend
-- Same Socket.io protocol as Electron version
-- Server acts as collaboration hub
+```typescript
+collabHostSession(document: Document, metadata: object): Promise<{success: boolean, session?: Session}>
+collabStopHosting(): Promise<{success: boolean}>
+collabStartDiscovery(): Promise<{success: boolean}>
+collabStopDiscovery(): Promise<{success: boolean}>
+collabGetDiscoveredSessions(): Promise<{success: boolean, sessions?: Session[]}>
+collabGetCurrentSession(): Promise<{success: boolean, session?: Session}>
+```
+
+### Events
+
+```typescript
+onEvent(event: string, callback: Function): void
+onMenuAction(action: string, callback: Function): void
+removeMenuListener(action: string, callback: Function): void
+sendLog(level: string, args: any[]): void
+```
+
+## Validation
+
+You can validate your backend implementation:
+
+```javascript
+const validation = window.MDWriter.validateBackend(myBackend);
+if (!validation.valid) {
+  console.warn('Missing methods:', validation.missing);
+}
+```
 
 ## Security Considerations
 
-### Web Mode
+### Prototype Pollution Protection
 
-1. **Authentication**: Implement user authentication for web server
-2. **CORS**: Configure appropriate CORS headers (restricted in production)
-3. **Input validation**: Validate all API inputs on server
-4. **File uploads**: Sanitize uploaded files, check size limits
-5. **Rate limiting**: Add rate limiting middleware for production deployments to prevent DoS attacks on API endpoints (e.g., using `express-rate-limit`)
+The WebBackend includes protection against prototype pollution in document manipulation:
 
-### Both Modes
+```javascript
+// These paths are blocked:
+- __proto__
+- constructor
+- prototype
+```
 
-1. **Schema validation**: Always validate documents against schema
-2. **Content sanitization**: Sanitize markdown/HTML output
-3. **CSP**: Maintain Content Security Policy headers
-4. **Prototype pollution**: Guard against prototype pollution in object path manipulation
+### Production Deployment
 
-## Production Deployment Checklist
-
-For deploying the web server in production:
+For production web deployments:
 
 - [ ] Set `NODE_ENV=production`
-- [ ] Configure `CORS_ORIGIN` environment variable to restrict origins
+- [ ] Configure `CORS_ORIGIN` to restrict origins
 - [ ] Add rate limiting middleware
-- [ ] Set up HTTPS/TLS
 - [ ] Implement user authentication
+- [ ] Set up HTTPS/TLS
 - [ ] Configure secure session management
-- [ ] Set up proper logging and monitoring
 
-## Testing Strategy
+## File Structure
 
-1. **Unit tests**: Test shared code independently
-2. **Integration tests**: Test platform API with both implementations
-3. **E2E tests**: Playwright for web, Spectron for Electron
+```
+src/
+├── renderer/
+│   ├── platform-api.js      # Backend interface + built-in backends
+│   ├── renderer.js          # Uses window.platformAPI
+│   ├── form-generator.js    # Uses window.platformAPI
+│   └── collaboration-*.js   # Uses window.platformAPI
+└── web-server/
+    ├── server.js            # Express server for WebBackend
+    ├── routes/              # REST API routes
+    └── services/            # Schema and storage services
+```
 
-## Migration Path
+## Usage Examples
 
-1. Start with Phase 1 (abstraction layer) - minimal changes to existing code
-2. Gradually refactor to use shared modules
-3. Add web server when backend is ready
-4. Both modes can be developed and tested in parallel
+### Running in Electron
+
+```bash
+npm start
+# Auto-detects Electron and uses ElectronBackend
+```
+
+### Running as Web App
+
+```bash
+npm run start:web
+# Starts Express server, auto-uses WebBackend
+```
+
+### Embedding in Your Platform
+
+```html
+<!-- Your page -->
+<script>
+  // Register your backend before loading MDWriter
+  window.MDWriter = {
+    registerBackend: function(backend) {
+      window._mdwriterBackend = backend;
+    }
+  };
+  
+  // Your backend implementation
+  window.MDWriter.registerBackend({
+    platform: 'my-lms',
+    isElectron: false,
+    isWeb: true,
+    async getDocumentTypes() { /* ... */ },
+    // ... implement all methods
+  });
+</script>
+
+<!-- Then load MDWriter -->
+<script src="path/to/platform-api.js"></script>
+<script src="path/to/renderer.js"></script>
+```
