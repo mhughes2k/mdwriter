@@ -7,6 +7,9 @@ dist/
 build/
 out/
 
+# Runtime data
+storage/
+
 # Electron specific
 *.log
 
