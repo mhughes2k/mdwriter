@@ -171,7 +171,7 @@ describe('Platform API - Pluggable Architecture', () => {
       
       const result = await backend.configGet('testKey');
       
-      expect(global.window.localStorage.getItem).toHaveBeenCalledWith('mdwriter_testKey');
+      expect(global.window.localStorage.getItem).toHaveBeenCalledWith('mdwriter_config_testKey');
       expect(result.success).toBe(true);
       expect(result.value).toBe('testValue');
     });

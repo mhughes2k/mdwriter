@@ -371,14 +371,14 @@ class WebBackend {
   async configGet(key) {
     const storage = typeof window !== 'undefined' ? window.localStorage : null;
     if (!storage) return { success: false, error: 'localStorage not available' };
-    const val = storage.getItem(`mdwriter_${key}`);
+    const val = storage.getItem(`mdwriter_config_${key}`);
     return { success: true, value: val ? JSON.parse(val) : null };
   }
 
   async configSet(key, value) {
     const storage = typeof window !== 'undefined' ? window.localStorage : null;
     if (!storage) return { success: false, error: 'localStorage not available' };
-    storage.setItem(`mdwriter_${key}`, JSON.stringify(value));
+    storage.setItem(`mdwriter_config_${key}`, JSON.stringify(value));
     return { success: true };
   }
 
@@ -386,10 +386,11 @@ class WebBackend {
     const storage = typeof window !== 'undefined' ? window.localStorage : null;
     if (!storage) return { success: false, error: 'localStorage not available' };
     const config = {};
+    const prefix = 'mdwriter_config_';
     for (let i = 0; i < storage.length; i++) {
       const key = storage.key(i);
-      if (key.startsWith('mdwriter_')) {
-        config[key.slice(9)] = JSON.parse(storage.getItem(key));
+      if (key.startsWith(prefix)) {
+        config[key.slice(prefix.length)] = JSON.parse(storage.getItem(key));
       }
     }
     return { success: true, config };
