@@ -1,10 +1,17 @@
 // Renderer process JavaScript
 console.log('MDWriter renderer loaded');
 
-// Check if electronAPI is available
-if (window.electronAPI) {
-  console.log('Electron API is available');
-  console.log('Platform:', window.electronAPI.platform);
+// Get the appropriate API (platformAPI provides cross-platform support)
+const api = window.platformAPI || window.electronAPI;
+
+// Check if API is available
+if (api) {
+  console.log('API is available');
+  console.log('Platform:', api.platform);
+  console.log('Is Electron:', api.isElectron || false);
+  console.log('Is Web:', api.isWeb || false);
+} else {
+  console.warn('No API available - some features may not work');
 }
 
 // UI element references
@@ -89,8 +96,8 @@ document.addEventListener('custom-form-change', async (e) => {
 });
 
 async function showDocumentTypeDialog() {
-  // Get available document types
-  const documentTypes = await window.electronAPI.getDocumentTypes();
+  // Get available document types (use api variable from top of file)
+  const documentTypes = await api.getDocumentTypes();
   
   if (documentTypes.length === 0) {
     alert('No document types available');
@@ -192,7 +199,7 @@ async function showDocumentTypeDialog() {
     try {
       showLoadingIndicator('Importing data file...');
       
-      const dialogResult = await window.electronAPI.openDocumentDialog();
+      const dialogResult = await api.openDocumentDialog();
       if (!dialogResult.success) {
         hideLoadingIndicator();
         updateStatus('Create from file canceled');
@@ -202,7 +209,7 @@ async function showDocumentTypeDialog() {
       const filePath = dialogResult.filePath;
       updateStatus('Importing and validating data...');
       
-      const result = await window.electronAPI.importCleanJSON(filePath);
+      const result = await api.importCleanJSON(filePath);
 
       if (result.success) {
         currentDocument = result.document;
@@ -211,7 +218,7 @@ async function showDocumentTypeDialog() {
         setModified(true);
         
         // Load schema structure for the new document type
-        const structure = await window.electronAPI.getSchemaStructure(documentType);
+        const structure = await api.getSchemaStructure(documentType);
         schemaProperties = structure;
         
         // Close the modal first
@@ -360,7 +367,7 @@ async function createNewDocument() {
     documentType = selectedType;
     updateStatus('Creating new document...');
     
-    const result = await window.electronAPI.createNewDocument(documentType);
+    const result = await api.createNewDocument(documentType);
     
     if (result.success) {
       currentDocument = result.document;
@@ -368,7 +375,7 @@ async function createNewDocument() {
       setModified(false);
       
       // Load schema structure
-      const structure = await window.electronAPI.getSchemaStructure(documentType);
+      const structure = await api.getSchemaStructure(documentType);
       schemaProperties = structure;
       
       // Render document
@@ -389,12 +396,12 @@ async function openDocument() {
   
   try {
     console.log('[Open] Showing file dialog...');
-    const dialogResult = await window.electronAPI.openDocumentDialog();
+    const dialogResult = await api.openDocumentDialog();
     
     if (dialogResult.success) {
       console.log('[Open] Loading document:', dialogResult.filePath);
       updateStatus('Loading file...');
-      const result = await window.electronAPI.loadDocument(dialogResult.filePath);
+      const result = await api.loadDocument(dialogResult.filePath);
       
       if (result.success) {
         console.log('[Open] Document loaded, setting state...');
@@ -407,7 +414,7 @@ async function openDocument() {
         
         console.log('[Open] Loading schema structure...');
         // Load schema structure
-        const structure = await window.electronAPI.getSchemaStructure(documentType);
+        const structure = await api.getSchemaStructure(documentType);
         schemaProperties = structure;
         console.log('[Open] Schema loaded, properties count:', schemaProperties.length);
         
@@ -456,7 +463,7 @@ async function saveDocument() {
   
   try {
     // Validate before saving
-    const validation = await window.electronAPI.validateDocument(currentDocument);
+    const validation = await api.validateDocument(currentDocument);
     
     if (!validation.valid) {
       hideLoadingIndicator();
@@ -468,7 +475,7 @@ async function saveDocument() {
       showLoadingIndicator('Saving document...');
     }
     
-    const result = await window.electronAPI.saveDocument(currentFilePath, currentDocument);
+    const result = await api.saveDocument(currentFilePath, currentDocument);
     
     hideLoadingIndicator();
     
@@ -496,11 +503,11 @@ async function saveDocumentAs() {
   updateStatus('Save as...');
   
   try {
-    const dialogResult = await window.electronAPI.saveDocumentDialog(false);
+    const dialogResult = await api.saveDocumentDialog(false);
     
     if (dialogResult.success) {
       // Validate before saving
-      const validation = await window.electronAPI.validateDocument(currentDocument);
+      const validation = await api.validateDocument(currentDocument);
       
       if (!validation.valid) {
         const proceed = confirm(`Document has ${validation.errors.length} validation errors. Save anyway?`);
@@ -510,7 +517,7 @@ async function saveDocumentAs() {
         }
       }
       
-      const result = await window.electronAPI.saveDocument(dialogResult.filePath, currentDocument);
+      const result = await api.saveDocument(dialogResult.filePath, currentDocument);
       
       if (result.success) {
         currentFilePath = dialogResult.filePath;
@@ -529,7 +536,7 @@ async function closeDocument() {
   // Check for unsaved changes
   console.log('[Close] closeDocument called, isModified=' + isModified);
   if (isModified) {
-    const result = await window.electronAPI.showUnsavedChangesDialog();
+    const result = await api.showUnsavedChangesDialog();
     const choice = result.choice;
     
     if (choice === 0) {
@@ -637,10 +644,10 @@ async function exportToJson() {
       defaultPath = currentFilePath.replace(/\.[^.]+$/, '.json');
     }
     
-    const dialogResult = await window.electronAPI.saveDocumentDialog(true, defaultPath);
+    const dialogResult = await api.saveDocumentDialog(true, defaultPath);
     
     if (dialogResult.success) {
-      const result = await window.electronAPI.exportDocument(dialogResult.filePath, currentDocument);
+      const result = await api.exportDocument(dialogResult.filePath, currentDocument);
       
       if (result.success) {
         updateStatus('Exported successfully');
@@ -732,7 +739,7 @@ async function validateAndDisplayErrors() {
   if (summary) summary.style.display = 'block';
   
   try {
-    const validation = await window.electronAPI.validateDocument(currentDocument);
+    const validation = await api.validateDocument(currentDocument);
     
     const summary = document.querySelector('.validation-summary');
     const statusDiv = document.querySelector('.validation-status');
@@ -914,7 +921,7 @@ async function handleFieldChange(input, isCustomForm = false) {
   }
   
   try {
-    const result = await window.electronAPI.updateField(currentDocument, fieldPath, value);
+    const result = await api.updateField(currentDocument, fieldPath, value);
     
     if (result.success) {
       currentDocument = result.document;
@@ -957,7 +964,7 @@ async function handleAddArrayItem(arrayPath, property) {
   }
   
   try {
-    const result = await window.electronAPI.addArrayItem(currentDocument, arrayPath, newItem);
+    const result = await api.addArrayItem(currentDocument, arrayPath, newItem);
     
     if (result.success) {
       currentDocument = result.document;
@@ -989,7 +996,7 @@ async function handleRemoveArrayItem(arrayPath, index) {
   if (!currentDocument) return;
   
   try {
-    const result = await window.electronAPI.removeArrayItem(currentDocument, arrayPath, index);
+    const result = await api.removeArrayItem(currentDocument, arrayPath, index);
     
     if (result.success) {
       currentDocument = result.document;
@@ -1636,8 +1643,8 @@ initMenuListeners();
 
 // Update menu state helper
 function updateMenuState() {
-  if (window.electronAPI && window.electronAPI.updateMenuState) {
-    window.electronAPI.updateMenuState({
+  if (api && api.updateMenuState) {
+    api.updateMenuState({
       hasDocument: !!currentDocument,
       isModified: isModified,
       canUndo: false, // TODO: Implement undo/redo
@@ -1650,53 +1657,53 @@ function updateMenuState() {
 
 // Initialize menu action listeners
 function initMenuListeners() {
-  if (!window.electronAPI || !window.electronAPI.onMenuAction) {
-    console.warn('electronAPI or onMenuAction not available');
+  if (!api || !api.onMenuAction) {
+    console.warn('API or onMenuAction not available');
     return;
   }
   
   console.log('Initializing menu listeners...');
   
   // File menu actions
-  window.electronAPI.onMenuAction('menu-new-document', () => {
+  api.onMenuAction('menu-new-document', () => {
     console.log('[Menu] New document triggered');
     createNewDocument();
   });
-  window.electronAPI.onMenuAction('menu-open-document', () => {
+  api.onMenuAction('menu-open-document', () => {
     console.log('[Menu] Open document triggered');
     openDocument();
   });
-  window.electronAPI.onMenuAction('menu-close-document', () => {
+  api.onMenuAction('menu-close-document', () => {
     console.log('[Menu] Close document triggered');
     closeDocument();
   });
-  window.electronAPI.onMenuAction('menu-save-document', () => {
+  api.onMenuAction('menu-save-document', () => {
     console.log('[Menu] Save document triggered');
     saveDocument();
   });
-  window.electronAPI.onMenuAction('menu-save-document-as', () => {
+  api.onMenuAction('menu-save-document-as', () => {
     console.log('[Menu] Save As triggered');
     saveDocumentAs();
   });
-  window.electronAPI.onMenuAction('menu-export-json', () => {
+  api.onMenuAction('menu-export-json', () => {
     console.log('[Menu] Export JSON triggered');
     exportToJson();
   });
-  window.electronAPI.onMenuAction('menu-export-html', () => {
+  api.onMenuAction('menu-export-html', () => {
     console.log('[Menu] Export HTML triggered');
     exportPreviewHTML();
   });
   
   // Import actions
-  window.electronAPI.onMenuAction('menu-import-json-existing', async () => {
+  api.onMenuAction('menu-import-json-existing', async () => {
     if (!currentDocument) {
       alert('No document is currently open. Please open a document first.');
       return;
     }
-    const dialogResult = await window.electronAPI.openDocumentDialog();
+    const dialogResult = await api.openDocumentDialog();
     if (!dialogResult.success) return;
     
-    const result = await window.electronAPI.importCleanJSON(dialogResult.filePath, currentDocument);
+    const result = await api.importCleanJSON(dialogResult.filePath, currentDocument);
     if (result.success) {
       currentDocument = result.document;
       setModified(true);
@@ -1707,49 +1714,49 @@ function initMenuListeners() {
     }
   });
   
-  window.electronAPI.onMenuAction('menu-import-json-new', async () => {
+  api.onMenuAction('menu-import-json-new', async () => {
     // Trigger the create from file dialog
     createNewDocument();
   });
   
   // View menu actions
-  window.electronAPI.onMenuAction('menu-toggle-sidebar', () => {
+  api.onMenuAction('menu-toggle-sidebar', () => {
     toggleSidebarBtn?.click();
   });
   
-  window.electronAPI.onMenuAction('menu-toggle-properties', () => {
+  api.onMenuAction('menu-toggle-properties', () => {
     togglePropertiesBtn?.click();
   });
   
-  window.electronAPI.onMenuAction('menu-zoom-in', () => {
+  api.onMenuAction('menu-zoom-in', () => {
     document.body.style.zoom = (parseFloat(document.body.style.zoom || 1) + 0.1).toString();
   });
   
-  window.electronAPI.onMenuAction('menu-zoom-out', () => {
+  api.onMenuAction('menu-zoom-out', () => {
     document.body.style.zoom = (parseFloat(document.body.style.zoom || 1) - 0.1).toString();
   });
   
-  window.electronAPI.onMenuAction('menu-zoom-reset', () => {
+  api.onMenuAction('menu-zoom-reset', () => {
     document.body.style.zoom = '1';
   });
   
   // Document menu actions
-  window.electronAPI.onMenuAction('menu-add-section', () => addSection());
+  api.onMenuAction('menu-add-section', () => addSection());
   
-  window.electronAPI.onMenuAction('menu-validate', async () => {
+  api.onMenuAction('menu-validate', async () => {
     if (currentDocument) {
       await validateAndDisplayErrors();
       updateStatus('Validation complete');
     }
   });
   
-  window.electronAPI.onMenuAction('menu-document-properties', () => {
+  api.onMenuAction('menu-document-properties', () => {
     // Switch to metadata panel
     document.querySelector('[data-tab="metadata"]')?.click();
   });
   
   // Collaboration menu actions
-  window.electronAPI.onMenuAction('menu-host-session', () => {
+  api.onMenuAction('menu-host-session', () => {
     const collabDialog = document.getElementById('collab-dialog');
     const collabBtn = document.getElementById('collab-btn');
     
@@ -1765,7 +1772,7 @@ function initMenuListeners() {
     }, 100);
   });
   
-  window.electronAPI.onMenuAction('menu-join-session', () => {
+  api.onMenuAction('menu-join-session', () => {
     console.log('[Menu] Join session triggered');
     const collabDialog = document.getElementById('collab-dialog');
     const collabBtn = document.getElementById('collab-btn');
@@ -1782,13 +1789,13 @@ function initMenuListeners() {
     }, 100);
   });
   
-  window.electronAPI.onMenuAction('menu-stop-hosting', () => {
+  api.onMenuAction('menu-stop-hosting', () => {
     console.log('[Menu] Stop hosting triggered');
     // TODO: Implement stop hosting
     updateStatus('Stop hosting not yet implemented');
   });
   
-  window.electronAPI.onMenuAction('menu-session-info', () => {
+  api.onMenuAction('menu-session-info', () => {
     console.log('[Menu] Session info triggered');
     const collabDialog = document.getElementById('collab-dialog');
     const collabBtn = document.getElementById('collab-btn');
@@ -1806,16 +1813,16 @@ function initMenuListeners() {
   });
   
   // Recent files
-  window.electronAPI.onMenuAction('menu-open-recent', async (event, filePath) => {
+  api.onMenuAction('menu-open-recent', async (event, filePath) => {
     try {
-      const result = await window.electronAPI.loadDocument(filePath);
+      const result = await api.loadDocument(filePath);
       if (result.success) {
         currentDocument = result.document;
         currentFilePath = result.document.filePath;
         documentType = result.document.metadata.documentType;
         setModified(false);
         
-        const structure = await window.electronAPI.getSchemaStructure(documentType);
+        const structure = await api.getSchemaStructure(documentType);
         schemaProperties = structure;
         
         await renderDocument();
@@ -1829,17 +1836,17 @@ function initMenuListeners() {
     }
   });
   
-  window.electronAPI.onMenuAction('menu-clear-recent', async () => {
+  api.onMenuAction('menu-clear-recent', async () => {
     // TODO: Implement clear recent files
     updateStatus('Recent files cleared');
   });
   
   // Help menu
-  window.electronAPI.onMenuAction('menu-keyboard-shortcuts', () => {
+  api.onMenuAction('menu-keyboard-shortcuts', () => {
     showKeyboardShortcuts();
   });
   
-  window.electronAPI.onMenuAction('menu-about', () => {
+  api.onMenuAction('menu-about', () => {
     showAboutDialog();
   });
 }

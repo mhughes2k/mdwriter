@@ -64,9 +64,11 @@
 ## Deployment
 - [] Build installers for Windows, macOS, Linux
 - [] Create portable format builds
-- [] Web server deployment mode (similar to GitHub CodeSpaces/VS Code)
-  - [] Server-side persistence backend
-  - [] Web-based client interface
+- [x] Web server deployment mode (similar to GitHub CodeSpaces/VS Code)
+  - [x] Server-side persistence backend
+  - [x] Web-based client interface
+  - [x] Platform abstraction layer for cross-platform compatibility
+  - [] User authentication and authorization
 
 ## Configuration & User Space
 - [x] User configuration storage in cross-platform location

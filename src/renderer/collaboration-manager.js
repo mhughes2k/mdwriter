@@ -16,6 +16,9 @@ function initCollaboration() {
   const collabDialog = document.getElementById('collab-dialog');
   const closeModal = collabDialog.querySelector('.modal-close');
   
+  // Check if we have the platform API or electronAPI
+  const api = window.platformAPI || window.electronAPI;
+  
   // Open collaboration dialog
   collabBtn.addEventListener('click', () => {
     collabDialog.style.display = 'flex';
@@ -52,16 +55,18 @@ function initCollaboration() {
   // Leave session
   document.getElementById('leave-session-btn').addEventListener('click', leaveSession);
   
-  // Listen for discovered sessions from main process
-  window.electronAPI.onCollabSessionFound((event, session) => {
-    console.log('[CollabManager] Session found:', session);
-    addDiscoveredSession(session);
-  });
-  
-  window.electronAPI.onCollabSessionLost((event, session) => {
-    console.log('[CollabManager] Session lost:', session);
-    removeDiscoveredSession(session);
-  });
+  // Listen for discovered sessions from main process (Electron only)
+  if (window.electronAPI && window.electronAPI.onCollabSessionFound) {
+    window.electronAPI.onCollabSessionFound((event, session) => {
+      console.log('[CollabManager] Session found:', session);
+      addDiscoveredSession(session);
+    });
+    
+    window.electronAPI.onCollabSessionLost((event, session) => {
+      console.log('[CollabManager] Session lost:', session);
+      removeDiscoveredSession(session);
+    });
+  }
   
   // Start discovery when opening join tab
   refreshSessions();
@@ -104,10 +109,17 @@ async function startHosting() {
     return;
   }
   
+  // Get API (prefer platformAPI for cross-platform, fall back to electronAPI)
+  const api = window.platformAPI || window.electronAPI;
+  if (!api) {
+    alert('Collaboration API not available');
+    return;
+  }
+  
   try {
     updateStatus('Starting collaboration session...');
     
-    const result = await window.electronAPI.collabHostSession(currentDocument, {
+    const result = await api.collabHostSession(currentDocument, {
       title: sessionName,
       documentType: documentType,
       hostName: userName
@@ -191,12 +203,19 @@ async function refreshSessions() {
   const sessionsList = document.getElementById('sessions-list');
   sessionsList.innerHTML = '<p class="placeholder">Searching for sessions...</p>';
   
+  // Get API (prefer platformAPI for cross-platform, fall back to electronAPI)
+  const api = window.platformAPI || window.electronAPI;
+  if (!api) {
+    sessionsList.innerHTML = '<p class="placeholder">API not available</p>';
+    return;
+  }
+  
   try {
     // Start discovery
-    await window.electronAPI.collabStartDiscovery();
+    await api.collabStartDiscovery();
     
     // Get existing sessions
-    const result = await window.electronAPI.collabGetDiscoveredSessions();
+    const result = await api.collabGetDiscoveredSessions();
     
     if (result.success) {
       discoveredSessions = result.sessions || [];
@@ -277,8 +296,10 @@ async function joinSession(session) {
         
         // Load schema structure before rendering
         try {
+          // Get API (prefer platformAPI for cross-platform, fall back to electronAPI)
+          const api = window.platformAPI || window.electronAPI;
           console.log('[CollabManager] Loading schema for documentType:', documentType);
-          const structure = await window.electronAPI.getSchemaStructure(documentType);
+          const structure = await api.getSchemaStructure(documentType);
           window.schemaProperties = schemaProperties = structure;
           console.log('[CollabManager] Schema loaded, properties count:', schemaProperties.length);
           console.log('[CollabManager] Rendering document...');
@@ -354,8 +375,11 @@ async function leaveSession() {
     collaborationClient = null;
   }
   
-  if (isHosting) {
-    await window.electronAPI.collabStopHosting();
+  // Get API (prefer platformAPI for cross-platform, fall back to electronAPI)
+  const api = window.platformAPI || window.electronAPI;
+  
+  if (isHosting && api) {
+    await api.collabStopHosting();
     isHosting = false;
     hostedSessionId = null;
   }
@@ -382,10 +406,13 @@ async function updateActiveSessionUI() {
     return;
   }
   
+  // Get API (prefer platformAPI for cross-platform, fall back to electronAPI)
+  const api = window.platformAPI || window.electronAPI;
+  
   // Get current session info
   let session;
-  if (isHosting) {
-    const result = await window.electronAPI.collabGetCurrentSession();
+  if (isHosting && api) {
+    const result = await api.collabGetCurrentSession();
     session = result.session;
   } else {
     session = currentCollabSession;
