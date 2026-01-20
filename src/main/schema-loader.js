@@ -4,6 +4,23 @@ const Ajv = require('ajv');
 const addFormats = require('ajv-formats');
 const ajvErrors = require('ajv-errors');
 
+// Control Ajv logging via env; defaults to only errors
+const AJV_LOG_LEVEL = (process.env.AJV_LOG_LEVEL || 'error').toLowerCase();
+const AJV_LOG_PRIORITY = { error: 0, warn: 1, info: 2 };
+const ajvLogger = {
+  log: (...args) => {
+    if (AJV_LOG_PRIORITY[AJV_LOG_LEVEL] >= AJV_LOG_PRIORITY.info) {
+      console.log('[AJV]', ...args);
+    }
+  },
+  warn: (...args) => {
+    if (AJV_LOG_PRIORITY[AJV_LOG_LEVEL] >= AJV_LOG_PRIORITY.warn) {
+      console.warn('[AJV]', ...args);
+    }
+  },
+  error: (...args) => console.error('[AJV]', ...args)
+};
+
 class SchemaLoader {
   constructor() {
     this.ajv = new Ajv({ 
@@ -11,6 +28,7 @@ class SchemaLoader {
       validateSchema: false, // Disable $schema validation to avoid missing schema errors
       validateFormats: true,  // Enable format validation
       allErrors: true,        // Report all errors, not just the first
+      logger: ajvLogger,
       // Disable async schema loading - we pre-load all schemas instead
       // loadSchema: this.loadExternalSchema.bind(this)
     });

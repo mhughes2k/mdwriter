@@ -904,9 +904,12 @@ function renderOutline() {
   titleItem.textContent = currentDocument.data.title || 'Untitled';
   tree.appendChild(titleItem);
   
-  // Add sections - show all properties from schema, not just populated ones
+  // Add sections that are actually rendered (skip placeholders for hidden sections)
   schemaProperties.forEach(prop => {
-    if (currentDocument.data[prop.name]) {
+    const fieldContainer = document.querySelector(`[data-field-path="${prop.name}"]`);
+    const isPlaceholder = fieldContainer?.dataset?.isPlaceholder === 'true';
+
+    if (fieldContainer && !isPlaceholder) {
       const item = document.createElement('div');
       item.className = 'outline-item outline-section';
       // Use displayAs if available, otherwise fall back to title or name
@@ -915,11 +918,16 @@ function renderOutline() {
       item.onclick = () => scrollToField(prop.name);
       tree.appendChild(item);
     }
-    
-    tree.appendChild(item);
   });
   
   elements.outline.appendChild(tree);
+}
+
+function updateMainDocumentTitle(titleValue) {
+  const titleHeader = document.querySelector('.document-title');
+  if (titleHeader) {
+    titleHeader.textContent = titleValue || 'Untitled Document';
+  }
 }
 
 function scrollToField(fieldName) {
@@ -973,6 +981,16 @@ async function handleFieldChange(input, isCustomForm = false) {
       currentDocument = result.document;
       isModified = true;
       renderOutline();
+
+      if (fieldPath === 'title') {
+        updateMainDocumentTitle(value);
+      }
+
+      // Refresh conditional visibility/requirements based on the latest data
+      if (formGenerator) {
+        formGenerator.setDocumentData(currentDocument.data);
+        formGenerator.updateConditionalFields();
+      }
       
       // Send to collaboration session if connected
       if (window.collaborationClient && window.collaborationClient.isConnected()) {
