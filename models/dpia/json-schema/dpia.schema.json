@@ -1,0 +1,1020 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Data Protection Impact Assessment (DPIA)",
+  "description": "Complete DPIA schema including screening questionnaire and full assessment steps",
+  "type": "object",
+  "required": ["screening"],
+  "anyOf": [
+    {
+      "if": {
+        "properties": {
+          "screening": {
+            "type": "object",
+            "properties": {
+              "question1": {"const": "Yes"}
+            },
+            "required": ["question1"]
+          }
+        }
+      },
+      "then": {
+        "required": ["screening", "fullDpia"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "screening": {
+            "type": "object",
+            "properties": {
+              "question2": {"const": "Yes"}
+            },
+            "required": ["question2"]
+          }
+        }
+      },
+      "then": {
+        "required": ["screening", "fullDpia"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "screening": {
+            "type": "object",
+            "properties": {
+              "question3": {"const": "Yes"}
+            },
+            "required": ["question3"]
+          }
+        }
+      },
+      "then": {
+        "required": ["screening", "fullDpia"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "screening": {
+            "type": "object",
+            "properties": {
+              "question4": {"const": "Yes"}
+            },
+            "required": ["question4"]
+          }
+        }
+      },
+      "then": {
+        "required": ["screening", "fullDpia"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "screening": {
+            "type": "object",
+            "properties": {
+              "question5": {"const": "Yes"}
+            },
+            "required": ["question5"]
+          }
+        }
+      },
+      "then": {
+        "required": ["screening", "fullDpia"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "screening": {
+            "type": "object",
+            "properties": {
+              "question6": {"const": "Yes"}
+            },
+            "required": ["question6"]
+          }
+        }
+      },
+      "then": {
+        "required": ["screening", "fullDpia"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "screening": {
+            "type": "object",
+            "properties": {
+              "question7": {"const": "Yes"}
+            },
+            "required": ["question7"]
+          }
+        }
+      },
+      "then": {
+        "required": ["screening", "fullDpia"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "screening": {
+            "type": "object",
+            "properties": {
+              "question8": {"const": "Yes"}
+            },
+            "required": ["question8"]
+          }
+        }
+      },
+      "then": {
+        "required": ["screening", "fullDpia"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "screening": {
+            "type": "object",
+            "properties": {
+              "question9": {"const": "Yes"}
+            },
+            "required": ["question9"]
+          }
+        }
+      },
+      "then": {
+        "required": ["screening", "fullDpia"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "screening": {
+            "type": "object",
+            "properties": {
+              "question10": {"const": "Yes"}
+            },
+            "required": ["question10"]
+          }
+        }
+      },
+      "then": {
+        "required": ["screening", "fullDpia"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "screening": {
+            "type": "object",
+            "properties": {
+              "question11": {"const": "Yes"}
+            },
+            "required": ["question11"]
+          }
+        }
+      },
+      "then": {
+        "required": ["screening", "fullDpia"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "screening": {
+            "type": "object",
+            "properties": {
+              "question12": {"const": "Yes"}
+            },
+            "required": ["question12"]
+          }
+        }
+      },
+      "then": {
+        "required": ["screening", "fullDpia"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "screening": {
+            "type": "object",
+            "properties": {
+              "question13": {"const": "Yes"}
+            },
+            "required": ["question13"]
+          }
+        }
+      },
+      "then": {
+        "required": ["screening", "fullDpia"]
+      }
+    },
+    {
+      "properties": {
+        "screening": {
+          "type": "object"
+        }
+      }
+    }
+  ],
+  "properties": {
+    "title": {
+        "type": "string",
+        "title": "Project/activity title or brief description"
+    },
+    "responsibleperson": {
+        "type": "object",
+        "title": "Responsible Person",
+        "properties": {
+            "name": {
+                "type": "string",
+                "title": "Name"
+            },
+            "jobtitle": {
+                "type": "string",
+                "title": "Job Title"
+            }
+        }
+    },
+    "servicearea": {
+        "type": "string",
+        "title": "Service Area/Department"
+    },
+    "datecompleted": {
+        "type": "string",
+        "format": "date",
+        "title": "Date Completed"
+    },
+    "screening": {
+      "type": "object",
+      "title": "DPIA Screening Questionnaire",
+      "description": "Initial screening to determine if a full DPIA is required",
+      "required": [],
+      "properties": {
+        "question1": {
+          "type": "string",
+          "title": "Personal Data Involvement",
+          "description": "Will the project/policy/procurement involve processing personal data?",
+          "enum": ["Yes", "No"]
+        },
+        "question2": {
+          "type": "string",
+          "title": "Compelled Information Provision",
+          "description": "Will the project compel/require individuals to provide information about themselves?",
+          "enum": ["Yes", "No"]
+        },
+        "question3": {
+          "type": "string",
+          "title": "External Disclosure",
+          "description": "Will information about individuals be disclosed to organisations or people external to the University?",
+          "enum": ["Yes", "No"]
+        },
+        "question4": {
+          "type": "string",
+          "title": "Large-Scale Processing",
+          "description": "Will the project involve large-scale processing?",
+          "enum": ["Yes", "No"]
+        },
+        "question5": {
+          "type": "string",
+          "title": "New Purpose for Data",
+          "description": "Are you using information about individuals for a purpose it is not currently used for?",
+          "enum": ["Yes", "No"]
+        },
+        "question6": {
+          "type": "string",
+          "title": "New Technology",
+          "description": "Does the project involve you using new technology?",
+          "enum": ["Yes", "No"]
+        },
+        "question7": {
+          "type": "string",
+          "title": "Behaviour Tracking",
+          "description": "Does the project involve you tracking individuals' online or offline behaviour?",
+          "enum": ["Yes", "No"]
+        },
+        "question8": {
+          "type": "string",
+          "title": "Significant Impact Decisions",
+          "description": "Will the project result in you making decisions or taking action against individuals in ways which can have a significant impact on them?",
+          "enum": ["Yes", "No"]
+        },
+        "question9": {
+          "type": "string",
+          "title": "Special Category Data",
+          "description": "Will the project require processing of information of a kind particularly likely to raise privacy concerns (racial origin, political opinions, religious beliefs, etc.)?",
+          "enum": ["Yes", "No"]
+        },
+        "question10": {
+          "type": "string",
+          "title": "Intrusive Contact",
+          "description": "Will the project require you to contact individuals in a way which they may find intrusive?",
+          "enum": ["Yes", "No"]
+        },
+        "question11": {
+          "type": "string",
+          "title": "Profiling and Automated Decision-Making",
+          "description": "Will the project use systematic and extensive profiling or automated decision-making to make significant decisions about people?",
+          "enum": ["Yes", "No"]
+        },
+        "question12": {
+          "type": "string",
+          "title": "Monitoring Public Places",
+          "description": "Will the project systematically monitor a publicly accessible place?",
+          "enum": ["Yes", "No"]
+        },
+        "question13": {
+          "type": "string",
+          "title": "Children's Data Processing",
+          "description": "Will the project involve the processing of children's personal data?",
+          "enum": ["Yes", "No"]
+        }
+      }
+    },
+    "fullDpia": {
+      "type": "object",
+      "title": "Full DPIA Assessment",
+      "description": "Detailed DPIA assessment (required if any screening question answered 'Yes')",
+      "properties": {
+        "step1": {
+          "type": "object",
+          "title": "Step 1: Identify the Need for a DPIA",
+          "properties": {
+            "projectAim": {
+              "type": "string",
+              "title": "Project Aim",
+              "description": "Explain broadly what the project aims to achieve and what type of processing it involves",
+              "format": "textarea"
+            },
+            "processingType": {
+              "type": "string",
+              "title": "Processing Type",
+              "description": "How you will use personal data",
+              "format": "textarea"
+            },
+            "dpiaRationale": {
+              "type": "string",
+              "title": "DPIA Rationale",
+              "description": "Summarise why you identified the need for a DPIA",
+              "format": "textarea"
+            },
+            "relatedDocuments": {
+              "type": "array",
+              "title": "Related Documents",
+              "description": "References or links to other documents (e.g. project proposal/business case)",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "step2": {
+          "type": "object",
+          "title": "Step 2: Describe the Processing",
+          "properties": {
+            "dataHandling": {
+              "type": "object",
+              "title": "Data Handling",
+              "properties": {
+                "collection": {
+                  "type": "string",
+                  "title": "Collection Method",
+                  "description": "How will you collect data?",
+                  "format": "textarea"
+                },
+                "storage": {
+                  "type": "string",
+                  "title": "Storage Method",
+                  "description": "How will you store data?",
+                  "format": "textarea"
+                },
+                "use": {
+                  "type": "string",
+                  "title": "Use",
+                  "description": "How will you use data?",
+                  "format": "textarea"
+                },
+                "deletion": {
+                  "type": "string",
+                  "title": "Deletion Method",
+                  "description": "How will you delete data?",
+                  "format": "textarea"
+                },
+                "dataSource": {
+                  "type": "string",
+                  "title": "Data Source",
+                  "description": "What is the source of the data?",
+                  "format": "textarea"
+                },
+                "accessMethod": {
+                  "type": "string",
+                  "title": "Access Method",
+                  "description": "How will you collect/access the data?",
+                  "format": "textarea"
+                },
+                "flowDiagram": {
+                  "type": "string",
+                  "title": "Flow Diagram",
+                  "description": "Reference to flow diagram or data flow description",
+                  "format": "textarea"
+                }
+              }
+            },
+            "processingPurposes": {
+              "type": "object",
+              "title": "Purposes of Processing",
+              "properties": {
+                "objectives": {
+                  "type": "string",
+                  "title": "Objectives",
+                  "description": "What do you want to achieve?",
+                  "format": "textarea"
+                },
+                "intendedEffect": {
+                  "type": "string",
+                  "title": "Intended Effect",
+                  "description": "What is the intended effect on individuals?",
+                  "format": "textarea"
+                },
+                "benefits": {
+                  "type": "string",
+                  "title": "Benefits",
+                  "description": "What are the benefits of the processing – for you, and more broadly?",
+                  "format": "textarea"
+                },
+                "purposeAlignment": {
+                  "type": "string",
+                  "title": "Purpose Alignment",
+                  "description": "Will the processing meet your intended purpose?",
+                  "format": "textarea"
+                },
+                "alternativeApproaches": {
+                  "type": "string",
+                  "title": "Alternative Approaches",
+                  "description": "Is there another way to achieve the same outcome?",
+                  "format": "textarea"
+                }
+              }
+            },
+            "processingScope": {
+              "type": "object",
+              "title": "Scope of Processing",
+              "properties": {
+                "dataDescription": {
+                  "type": "string",
+                  "title": "Data Description",
+                  "description": "Explicitly describe the data/type of data you will be collecting using",
+                  "format": "textarea"
+                },
+                "individualCategory": {
+                  "type": "string",
+                  "title": "Individual Category",
+                  "description": "Category of individual it relates to (e.g. staff/students/research subjects)",
+                  "format": "textarea"
+                },
+                "specialCategoryData": {
+                  "type": "string",
+                  "title": "Special Category Data",
+                  "description": "Does it include special category or criminal conviction/offence data?",
+                  "format": "textarea"
+                },
+                "dataVolume": {
+                  "type": "string",
+                  "title": "Data Volume",
+                  "description": "How much data will you be collecting and using? How often?",
+                  "format": "textarea"
+                },
+                "individualsAffected": {
+                  "type": "string",
+                  "title": "Number of Individuals Affected",
+                  "description": "How many individuals are affected?",
+                  "format": "textarea"
+                },
+                "geographicalCoverage": {
+                  "type": "string",
+                  "title": "Geographical Coverage",
+                  "description": "What geographical area does it cover?",
+                  "format": "textarea"
+                }
+              }
+            },
+            "processingContext": {
+              "type": "object",
+              "title": "Context of Processing",
+              "properties": {
+                "individualControl": {
+                  "type": "string",
+                  "title": "Individual Control",
+                  "description": "How much control will individuals have over their data?",
+                  "format": "textarea"
+                },
+                "expectations": {
+                  "type": "string",
+                  "title": "Individual Expectations",
+                  "description": "Would they expect you to use their data in this way?",
+                  "format": "textarea"
+                },
+                "vulnerableGroups": {
+                  "type": "string",
+                  "title": "Vulnerable Groups",
+                  "description": "Do they include children or other vulnerable groups?",
+                  "format": "textarea"
+                },
+                "priorConcerns": {
+                  "type": "string",
+                  "title": "Prior Concerns",
+                  "description": "Are there prior concerns over this type of processing or security flaws?",
+                  "format": "textarea"
+                },
+                "novelty": {
+                  "type": "string",
+                  "title": "Novelty",
+                  "description": "Is it novel in any way?",
+                  "format": "textarea"
+                },
+                "technologyState": {
+                  "type": "string",
+                  "title": "Technology State",
+                  "description": "What is the current state of technology in this area?",
+                  "format": "textarea"
+                },
+                "publicConcerns": {
+                  "type": "string",
+                  "title": "Public Concerns",
+                  "description": "Are there any current issues of public concern that you should factor in?",
+                  "format": "textarea"
+                },
+                "codeOfConduct": {
+                  "type": "string",
+                  "title": "Code of Conduct/Certification",
+                  "description": "Are you signed up to any approved code of conduct or certification scheme?",
+                  "format": "textarea"
+                }
+              }
+            }
+          }
+        },
+        "step3": {
+          "type": "object",
+          "title": "Step 3: Consultation Process",
+          "properties": {
+            "individualConsultation": {
+              "type": "object",
+              "title": "Individual Consultation",
+              "properties": {
+                "consultationMethod": {
+                  "type": "string",
+                  "title": "Consultation Method",
+                  "description": "Describe when and how you will seek individuals' views",
+                  "format": "textarea"
+                },
+                "consultationJustification": {
+                  "type": "string",
+                  "title": "Consultation Justification",
+                  "description": "Justify why it's not appropriate to consult if applicable",
+                  "format": "textarea"
+                }
+              }
+            },
+            "internalStakeholders": {
+              "type": "string",
+              "title": "Internal Stakeholders",
+              "description": "Who else do you need to involve within your organisation?",
+              "format": "textarea"
+            },
+            "processorAssistance": {
+              "type": "string",
+              "title": "Processor Assistance",
+              "description": "Do you need to ask your processors to assist?",
+              "format": "textarea"
+            },
+            "expertConsultation": {
+              "type": "string",
+              "title": "Expert Consultation",
+              "description": "Do you plan to consult information security experts, or any other experts?",
+              "format": "textarea"
+            }
+          }
+        },
+        "step4": {
+          "type": "object",
+          "title": "Step 4: Assess Compliance Against Data Protection Principles",
+          "properties": {
+            "lawfulness": {
+              "type": "object",
+              "title": "Lawfulness, Fairness and Transparency",
+              "properties": {
+                "lawfulBasis": {
+                  "type": "string",
+                  "title": "Lawful Basis",
+                  "description": "What is your lawful basis for processing?",
+                  "format": "textarea"
+                },
+                "privacyInformation": {
+                  "type": "string",
+                  "title": "Privacy Information",
+                  "description": "How will you provide relevant privacy information (e.g. privacy notice)?",
+                  "format": "textarea"
+                },
+                "fairnessTransparency": {
+                  "type": "string",
+                  "title": "Fairness and Transparency",
+                  "description": "Describe how your processing is fair and transparent",
+                  "format": "textarea"
+                }
+              }
+            },
+            "purposeLimitation": {
+              "type": "object",
+              "title": "Purpose Limitation",
+              "properties": {
+                "newPurpose": {
+                  "type": "string",
+                  "title": "Using Existing Data for New Purpose",
+                  "description": "Are you using existing data for a new purpose?",
+                  "format": "textarea"
+                },
+                "differentUse": {
+                  "type": "string",
+                  "title": "Different Use of Collected Data",
+                  "description": "Will you use the data you collect in a way which is different to that initially described?",
+                  "format": "textarea"
+                },
+                "purposeCompatibility": {
+                  "type": "string",
+                  "title": "Purpose Compatibility",
+                  "description": "If using data for a new purpose, is it compatible with the original purpose?",
+                  "format": "textarea"
+                }
+              }
+            },
+            "dataMinimisation": {
+              "type": "object",
+              "title": "Data Minimisation",
+              "properties": {
+                "adequacy": {
+                  "type": "string",
+                  "title": "Data Adequacy",
+                  "description": "Are you collecting only the data that is adequate, relevant and limited to what is necessary?",
+                  "format": "textarea"
+                },
+                "reviewProcess": {
+                  "type": "string",
+                  "title": "Review Process",
+                  "description": "How will you review the collection/use/processing of personal data to determine whether it is still required?",
+                  "format": "textarea"
+                }
+              }
+            },
+            "accuracy": {
+              "type": "object",
+              "title": "Accuracy",
+              "properties": {
+                "accuracyMonitoring": {
+                  "type": "string",
+                  "title": "Accuracy Monitoring",
+                  "description": "Describe how the accuracy of personal data will be monitored and maintained",
+                  "format": "textarea"
+                }
+              }
+            },
+            "storageLimit": {
+              "type": "object",
+              "title": "Storage Limitation",
+              "properties": {
+                "retentionPeriod": {
+                  "type": "string",
+                  "title": "Retention Period",
+                  "description": "How long will data be retained for?",
+                  "format": "textarea"
+                },
+                "retentionSchedules": {
+                  "type": "string",
+                  "title": "Retention Schedules",
+                  "description": "Indicate the retention schedules/rule(s) which will govern how long this data is retained for",
+                  "format": "textarea"
+                },
+                "implementationProcess": {
+                  "type": "string",
+                  "title": "Implementation Process",
+                  "description": "How will the retention rules be implemented for records in any format (hard copy or electronic)?",
+                  "format": "textarea"
+                }
+              }
+            },
+            "security": {
+              "type": "object",
+              "title": "Security, Integrity and Confidentiality",
+              "properties": {
+                "dataAccess": {
+                  "type": "string",
+                  "title": "Data Access",
+                  "description": "Who will have access to the personal data?",
+                  "format": "textarea"
+                },
+                "controls": {
+                  "type": "string",
+                  "title": "Technical and Organisational Controls",
+                  "description": "What technical and organisational controls will be in place to support the process and protect the personal data?",
+                  "format": "textarea"
+                }
+              }
+            }
+          }
+        },
+        "step5": {
+          "type": "object",
+          "title": "Step 5: Other Compliance Requirements",
+          "properties": {
+            "individualRights": {
+              "type": "object",
+              "title": "Compliance with Individual Rights",
+              "description": "Indicate whether you could comply with each right",
+              "properties": {
+                "rightToBeInformed": {
+                  "type": "object",
+                  "properties": {
+                    "applicable": {
+                      "type": "string",
+                      "enum": ["Yes", "No"]
+                    },
+                    "comment": {
+                      "type": "string",
+                      "format": "textarea"
+                    }
+                  }
+                },
+                "rightToAccess": {
+                  "type": "object",
+                  "properties": {
+                    "applicable": {
+                      "type": "string",
+                      "enum": ["Yes", "No"]
+                    },
+                    "comment": {
+                      "type": "string",
+                      "format": "textarea"
+                    }
+                  }
+                },
+                "rightToRectify": {
+                  "type": "object",
+                  "properties": {
+                    "applicable": {
+                      "type": "string",
+                      "enum": ["Yes", "No"]
+                    },
+                    "comment": {
+                      "type": "string",
+                      "format": "textarea"
+                    }
+                  }
+                },
+                "rightToErase": {
+                  "type": "object",
+                  "properties": {
+                    "applicable": {
+                      "type": "string",
+                      "enum": ["Yes", "No"]
+                    },
+                    "comment": {
+                      "type": "string",
+                      "format": "textarea"
+                    }
+                  }
+                },
+                "rightToRestrict": {
+                  "type": "object",
+                  "properties": {
+                    "applicable": {
+                      "type": "string",
+                      "enum": ["Yes", "No"]
+                    },
+                    "comment": {
+                      "type": "string",
+                      "format": "textarea"
+                    }
+                  }
+                },
+                "rightToDataPortability": {
+                  "type": "object",
+                  "properties": {
+                    "applicable": {
+                      "type": "string",
+                      "enum": ["Yes", "No"]
+                    },
+                    "comment": {
+                      "type": "string",
+                      "format": "textarea"
+                    }
+                  }
+                },
+                "rightToObject": {
+                  "type": "object",
+                  "properties": {
+                    "applicable": {
+                      "type": "string",
+                      "enum": ["Yes", "No"]
+                    },
+                    "comment": {
+                      "type": "string",
+                      "format": "textarea"
+                    }
+                  }
+                },
+                "rightsRelatedToAutomatedDecision": {
+                  "type": "object",
+                  "properties": {
+                    "applicable": {
+                      "type": "string",
+                      "enum": ["Yes", "No"]
+                    },
+                    "comment": {
+                      "type": "string",
+                      "format": "textarea"
+                    }
+                  }
+                }
+              }
+            },
+            "thirdPartySharing": {
+              "type": "object",
+              "title": "Third Party Data Sharing",
+              "properties": {
+                "sharingOccurs": {
+                  "type": "string",
+                  "title": "Data Sharing with Third Party",
+                  "description": "Will you share the data with any other organisation?",
+                  "enum": ["Yes", "No"]
+                },
+                "sharingComment": {
+                  "type": "string",
+                  "title": "Sharing Comment",
+                  "format": "textarea"
+                },
+                "dataSharingAgreement": {
+                  "type": "string",
+                  "title": "Data Sharing/Processing Agreement",
+                  "description": "Do you have a data sharing/processing agreement in place?",
+                  "enum": ["Yes", "No"]
+                },
+                "agreementComment": {
+                  "type": "string",
+                  "title": "Agreement Comment",
+                  "format": "textarea"
+                }
+              }
+            },
+            "internationalTransfers": {
+              "type": "object",
+              "title": "International Transfers",
+              "properties": {
+                "transfersOccur": {
+                  "type": "string",
+                  "title": "International Data Transfer",
+                  "description": "Will personal data be transferred from or to the UK?",
+                  "enum": ["Yes", "No"]
+                },
+                "transferComment": {
+                  "type": "string",
+                  "title": "Transfer Comment",
+                  "format": "textarea"
+                },
+                "transferDestination": {
+                  "type": "string",
+                  "title": "Transfer Destination/Origin",
+                  "description": "Where data is transferred to/from",
+                  "format": "textarea"
+                }
+              }
+            }
+          }
+        },
+        "step6": {
+          "type": "object",
+          "title": "Step 6: Identify and Assess Risks",
+          "properties": {
+            "risks": {
+              "type": "array",
+              "title": "Risk Assessment",
+              "description": "Describe source of risk and nature of potential impact on individuals",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "riskDescription": {
+                    "type": "string",
+                    "title": "Risk Description",
+                    "format": "textarea"
+                  },
+                  "likelihoodOfHarm": {
+                    "type": "string",
+                    "title": "Likelihood of Harm",
+                    "enum": ["Remote", "Possible", "Probable"]
+                  },
+                  "severityOfHarm": {
+                    "type": "string",
+                    "title": "Severity of Harm",
+                    "enum": ["Minimal", "Significant", "Severe"]
+                  },
+                  "overallRisk": {
+                    "type": "string",
+                    "title": "Overall Risk",
+                    "enum": ["Low", "Medium", "High"]
+                  }
+                },
+                "required": ["riskDescription", "likelihoodOfHarm", "severityOfHarm", "overallRisk"]
+              }
+            }
+          }
+        },
+        "step7": {
+          "type": "object",
+          "title": "Step 7: Identify Measures to Reduce Risk",
+          "properties": {
+            "riskMitigation": {
+              "type": "array",
+              "title": "Risk Mitigation Measures",
+              "description": "Identify additional measures to reduce or eliminate medium or high risks",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "risk": {
+                    "type": "string",
+                    "title": "Risk",
+                    "format": "textarea"
+                  },
+                  "mitigationOptions": {
+                    "type": "string",
+                    "title": "Options to Reduce or Eliminate Risk",
+                    "format": "textarea"
+                  },
+                  "effectOnRisk": {
+                    "type": "string",
+                    "title": "Effect on Risk",
+                    "enum": ["Eliminated", "Reduced", "Accepted"]
+                  },
+                  "residualRisk": {
+                    "type": "string",
+                    "title": "Residual Risk",
+                    "enum": ["Low", "Medium", "High"]
+                  },
+                  "measureApproved": {
+                    "type": "string",
+                    "title": "Measure Approved",
+                    "enum": ["Yes", "No"]
+                  },
+                  "status": {
+                    "type": "string",
+                    "title": "Status",
+                    "enum": ["Implemented", "Pending", "Planned", "Other"]
+                  },
+                  "statusOther": {
+                    "type": "string",
+                    "title": "Status - Other",
+                    "description": "If status is 'Other', please specify",
+                    "format": "textarea"
+                  }
+                },
+                "required": ["risk", "mitigationOptions", "effectOnRisk", "residualRisk", "measureApproved", "status"]
+              }
+            }
+          }
+        },
+        "finalStep": {
+          "type": "object",
+          "title": "Final Step: Submission",
+          "properties": {
+            "submissionStatus": {
+              "type": "string",
+              "title": "Submission Status",
+              "enum": ["Draft", "Ready for Submission", "Submitted", "Approved", "Rejected"]
+            },
+            "submissionDate": {
+              "type": "string",
+              "title": "Submission Date",
+              "format": "date"
+            },
+            "igu_comments": {
+              "type": "string",
+              "title": "IGU Comments",
+              "description": "Comments/actions from IGU",
+              "format": "textarea"
+            },
+            "supportingDocumentation": {
+              "type": "array",
+              "title": "Supporting Documentation",
+              "description": "References to supporting documents submitted with DPIA",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

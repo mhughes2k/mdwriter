@@ -1,0 +1,36 @@
+{
+    "description": "Data Protection Impact Assessment",
+    "category": "Compliance",
+    "icon": "🔒",
+    "extensions": [
+        "dpia"
+    ],
+    "entrypoint": "dpia.schema.json",
+    "fieldOrder": [
+        "title",
+        "responsibleperson",
+        "servicearea",
+        "datecompleted",
+        "screening",
+        "fullDpia"
+    ],
+    "uiHints": {
+        "screening": {
+            "displayAs": "DPIA Screening Questionnaire",
+            "displayType": "fieldset"
+        },
+        "fullDpia": {
+            "displayAs": "Full DPIA Assessment",
+            "displayType": "fieldset"
+        }
+    },
+    "conditionalDisplay": {
+        "fullDpia": {
+            "showWhen": "required",
+            "placeholder": {
+                "message": "The full DPIA assessment will be displayed if you meet the requirements for a full DPIA after completing the screening questionnaire.",
+                "style": "info-box"
+            }
+        }
+    }
+}

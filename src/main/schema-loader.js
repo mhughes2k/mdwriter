@@ -66,6 +66,19 @@ class SchemaLoader {
   setUserspaceModelsDirectory(dirPath) {
     this.userModelsPath = dirPath;
     console.log('[SchemaLoader] Userspace models directory set to:', dirPath);
+    this.isDevelopmentMode = false;
+  }
+
+  /**
+   * Set development mode - controls whether models are cached
+   */
+  setDevelopmentMode(isDev) {
+    this.isDevelopmentMode = isDev;
+    if (isDev) {
+      console.log('[SchemaLoader] Development mode: Models will be reloaded on each request');
+    } else {
+      console.log('[SchemaLoader] Production mode: Models will be cached');
+    }
   }
 
   /**
@@ -130,11 +143,14 @@ class SchemaLoader {
               source: source,
               category: metadata.category || 'Other',
               icon: metadata.icon || '📄',
+              category: metadata.category || 'Other',
+              icon: metadata.icon || '📄',
               extensions: metadata.extensions || [typeName],
               entrypoint: metadata.entrypoint,
               fieldOrder: metadata.fieldOrder || [],
               uiHints: metadata.uiHints || {},
               customForms: metadata.customForms || {},
+              conditionalDisplay: metadata.conditionalDisplay || {},
               path: path.join(dirPath, typeName, 'json-schema'),
               modelPath: path.join(dirPath, typeName)
             });
@@ -158,12 +174,90 @@ class SchemaLoader {
   }
 
   /**
+   * Reload a document type's metadata from disk (dev mode)
+   */
+  async reloadDocumentType(typeName) {
+    if (!this.isDevelopmentMode) {
+      return this.documentTypes.get(typeName);
+    }
+
+    const metadataPath = path.join(this.modelsPath, typeName, `${typeName}.json`);
+    try {
+      const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+      const typeData = {
+        name: typeName,
+        description: metadata.description,
+        category: metadata.category || 'Other',
+        icon: metadata.icon || '📄',
+        extensions: metadata.extensions || [typeName],
+        entrypoint: metadata.entrypoint,
+        fieldOrder: metadata.fieldOrder || [],
+        uiHints: metadata.uiHints || {},
+        customForms: metadata.customForms || {},
+        conditionalDisplay: metadata.conditionalDisplay || {},
+        path: path.join(this.modelsPath, typeName, 'json-schema'),
+        modelPath: path.join(this.modelsPath, typeName)
+      };
+      // Update cache with fresh data
+      this.documentTypes.set(typeName, typeData);
+      console.log(`[SchemaLoader] Reloaded metadata for: ${typeName}`);
+      return typeData;
+    } catch (err) {
+      console.warn(`Could not reload metadata for ${typeName}:`, err.message);
+      // Fall back to cached version if reload fails
+      return this.documentTypes.get(typeName);
+    }
+  }
+
+  /**
+   * Reload a document type's metadata from disk (dev mode)
+   */
+  async reloadDocumentType(typeName) {
+    if (!this.isDevelopmentMode) {
+      return this.documentTypes.get(typeName);
+    }
+
+    const metadataPath = path.join(this.modelsPath, typeName, `${typeName}.json`);
+    try {
+      const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+      const typeData = {
+        name: typeName,
+        description: metadata.description,
+        category: metadata.category || 'Other',
+        icon: metadata.icon || '📄',
+        extensions: metadata.extensions || [typeName],
+        entrypoint: metadata.entrypoint,
+        fieldOrder: metadata.fieldOrder || [],
+        uiHints: metadata.uiHints || {},
+        customForms: metadata.customForms || {},
+        conditionalDisplay: metadata.conditionalDisplay || {},
+        path: path.join(this.modelsPath, typeName, 'json-schema'),
+        modelPath: path.join(this.modelsPath, typeName)
+      };
+      // Update cache with fresh data
+      this.documentTypes.set(typeName, typeData);
+      console.log(`[SchemaLoader] Reloaded metadata for: ${typeName}`);
+      return typeData;
+    } catch (err) {
+      console.warn(`Could not reload metadata for ${typeName}:`, err.message);
+      // Fall back to cached version if reload fails
+      return this.documentTypes.get(typeName);
+    }
+  }
+
+  /**
    * Load a JSON schema file
    */
   async loadSchema(typeName, schemaFile) {
     const cacheKey = `${typeName}:${schemaFile}`;
     
     console.log('[SchemaLoader] loadSchema called:', cacheKey);
+    
+    // In dev mode, reload metadata and clear schema cache to pick up changes
+    if (this.isDevelopmentMode) {
+      await this.reloadDocumentType(typeName);
+      this.schemaCache.delete(cacheKey);
+    }
     
     if (this.schemaCache.has(cacheKey)) {
       console.log('[SchemaLoader] Returning cached schema:', cacheKey);
@@ -404,11 +498,49 @@ class SchemaLoader {
     }
 
     const schema = await this.loadSchema(typeName, docType.entrypoint);
-    return this.parseSchemaProperties(schema, docType.uiHints, docType.customForms, docType.fieldOrder);
+    const properties = this.parseSchemaProperties(schema, docType.uiHints, docType.customForms, docType.fieldOrder);
+    
+    // Include conditional requirements and display rules if present
+    const result = {
+      properties,
+      conditionalRequirements: this.extractConditionalRequirements(schema),
+      conditionalDisplay: docType.conditionalDisplay || {}
+    };
+    
+    return result;
+  }
+
+  /**
+   * Extract conditional requirements from schema (if-then-else or anyOf with conditionals)
+   */
+  extractConditionalRequirements(schema) {
+    // Handle top-level if-then-else
+    if (schema.if && schema.then) {
+      return {
+        type: 'if-then',
+        if: schema.if,
+        then: schema.then,
+        else: schema.else
+      };
+    }
+
+    // Handle anyOf with multiple if-then blocks
+    if (schema.anyOf && Array.isArray(schema.anyOf)) {
+      const conditionals = schema.anyOf.filter(item => item.if && item.then);
+      if (conditionals.length > 0) {
+        return {
+          type: 'anyOf',
+          conditions: conditionals
+        };
+      }
+    }
+
+    return null;
   }
 
   /**
    * Parse schema properties for UI generation
+   * Supports nested objects by recursively creating fieldsets
    */
   parseSchemaProperties(schema, uiHints = {}, customForms = {}, fieldOrder = []) {
     const properties = schema.properties || {};
@@ -417,7 +549,8 @@ class SchemaLoader {
     const propertyList = Object.entries(properties).map(([key, prop]) => {
       const fieldHints = uiHints[key] || {};
       
-      return {
+      // Build base property structure
+      const baseProperty = {
         name: key,
         title: prop.title || key,
         description: prop.description || '',
@@ -438,6 +571,19 @@ class SchemaLoader {
         customForm: fieldHints.customForm,
         customFormConfig: fieldHints.customForm ? customForms[fieldHints.customForm] : null
       };
+
+      // Handle nested objects - recursively parse their properties
+      if (prop.type === 'object' && prop.properties) {
+        baseProperty.properties = this.parseSchemaProperties(
+          prop,
+          fieldHints || {},
+          customForms,
+          fieldHints.fieldOrder || []
+        );
+        baseProperty.isNested = true;
+      }
+
+      return baseProperty;
     });
     
     // Apply field ordering if specified

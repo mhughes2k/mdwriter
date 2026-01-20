@@ -63,7 +63,7 @@ elements.previewFullscreenBtn?.addEventListener('click', () => {
 });
 elements.addSection?.addEventListener('click', addSection);
 
-// Listen for form changes
+// Listen for form changes (input, change for dropdowns)
 document.addEventListener('input', (e) => {
   if (e.target.dataset.fieldPath) {
     if (!isLoading) {
@@ -71,6 +71,18 @@ document.addEventListener('input', (e) => {
     } else {
       console.log('[Renderer] Input event ignored during load for field: ' + e.target.dataset.fieldPath);
     }
+  }
+});
+
+document.addEventListener('change', (e) => {
+  if (e.target.dataset.fieldPath && e.target.tagName === 'SELECT') {
+    handleFieldChange(e.target);
+  }
+});
+
+document.addEventListener('change', (e) => {
+  if (e.target.dataset.fieldPath && e.target.tagName === 'SELECT') {
+    handleFieldChange(e.target);
   }
 });
 
@@ -86,6 +98,14 @@ document.addEventListener('remove-array-item', async (e) => {
 // Listen for custom form changes
 document.addEventListener('custom-form-change', async (e) => {
   await handleFieldChange({ dataset: { fieldPath: e.detail.fieldPath }, value: e.detail.value }, true);
+});
+
+// Listen for conditional display changes (when fields need to be shown/hidden)
+let isRendering = false;
+document.addEventListener('conditional-display-changed', async () => {
+  if (!isRendering) {
+    await renderDocument();
+  }
 });
 
 async function showDocumentTypeDialog() {
@@ -369,7 +389,16 @@ async function createNewDocument() {
       
       // Load schema structure
       const structure = await window.electronAPI.getSchemaStructure(documentType);
-      schemaProperties = structure;
+      // Handle both old format (array) and new format (object with properties)
+      if (Array.isArray(structure)) {
+        schemaProperties = structure;
+        window.schemaConditionals = null;
+        window.conditionalDisplay = {};
+      } else {
+        schemaProperties = structure.properties;
+        window.schemaConditionals = structure.conditionalRequirements;
+        window.conditionalDisplay = structure.conditionalDisplay || {};
+      }
       
       // Render document
       await renderDocument();
@@ -408,7 +437,16 @@ async function openDocument() {
         console.log('[Open] Loading schema structure...');
         // Load schema structure
         const structure = await window.electronAPI.getSchemaStructure(documentType);
-        schemaProperties = structure;
+        // Handle both old format (array) and new format (object with properties)
+        if (Array.isArray(structure)) {
+          schemaProperties = structure;
+          window.schemaConditionals = null;
+          window.conditionalDisplay = {};
+        } else {
+          schemaProperties = structure.properties;
+          window.schemaConditionals = structure.conditionalRequirements;
+          window.conditionalDisplay = structure.conditionalDisplay || {};
+        }
         console.log('[Open] Schema loaded, properties count:', schemaProperties.length);
         
         // Render document (now awaited since it's async)
@@ -667,38 +705,52 @@ async function renderDocument() {
     return;
   }
 
-  console.log('[Renderer] Document type:', currentDocument.metadata.documentType);
-  console.log('[Renderer] Schema properties count:', schemaProperties.length);
-
-  // Update document type display
-  if (elements.documentType) {
-    elements.documentType.textContent = `Document Type: ${currentDocument.metadata.documentType}`;
+  if (isRendering) {
+    console.log('[Renderer] Already rendering, skipping...');
+    return;
   }
 
-  // Set document type in form generator
-  if (formGenerator) {
-    formGenerator.setDocumentType(currentDocument.metadata.documentType);
-    
-    console.log('[Renderer] Generating form...');
-    // Generate form (async to handle custom forms)
-    const form = await formGenerator.generateForm(schemaProperties, currentDocument.data);
-    console.log('[Renderer] Form generated successfully');
-    
-    elements.editor.innerHTML = '';
-    
-    // Add title
-    const titleHeader = document.createElement('h1');
-    titleHeader.className = 'document-title';
-    titleHeader.textContent = currentDocument.data.title || 'Untitled Document';
-    elements.editor.appendChild(titleHeader);
-    
-    elements.editor.appendChild(form);
-  }
+  isRendering = true;
 
-  // Update outline and metadata
-  console.log('[Renderer] Updating outline and metadata...');
-  renderOutline();
-  updateDocumentMetadata();
+  try {
+    console.log('[Renderer] Document type:', currentDocument.metadata.documentType);
+    console.log('[Renderer] Schema properties count:', schemaProperties.length);
+
+    // Update document type display
+    if (elements.documentType) {
+      elements.documentType.textContent = `Document Type: ${currentDocument.metadata.documentType}`;
+    }
+
+    // Set document type in form generator
+    if (formGenerator) {
+      formGenerator.setDocumentType(currentDocument.metadata.documentType);
+      formGenerator.setConditionalRequirements(window.schemaConditionals);
+      formGenerator.setConditionalDisplay(window.conditionalDisplay || {});
+      formGenerator.setDocumentData(currentDocument.data);
+      
+      console.log('[Renderer] Generating form...');
+      // Generate form (async to handle custom forms)
+      const form = await formGenerator.generateForm(schemaProperties, currentDocument.data);
+      console.log('[Renderer] Form generated successfully');
+      
+      elements.editor.innerHTML = '';
+      
+      // Add title
+      const titleHeader = document.createElement('h1');
+      titleHeader.className = 'document-title';
+      titleHeader.textContent = currentDocument.data.title || 'Untitled Document';
+      elements.editor.appendChild(titleHeader);
+      
+      elements.editor.appendChild(form);
+      
+      // Apply conditional field updates after form is rendered
+      formGenerator.updateConditionalFields();
+    }
+
+    // Update outline and metadata
+    console.log('[Renderer] Updating outline and metadata...');
+    renderOutline();
+    updateDocumentMetadata();
   
   // Initialize template UI and load templates
   if (!window.templateUI) {
@@ -708,13 +760,16 @@ async function renderDocument() {
   
   // Update preview
   await renderDocumentPreview();
-  
-  // Run initial validation
-  console.log('[Renderer] Running validation...');
-  await validateAndDisplayErrors();
+    
+    // Run initial validation
+    console.log('[Renderer] Running validation...');
+    await validateAndDisplayErrors();
   console.log('[Renderer] Setting isLoading=false after rendering');
   isLoading = false; // Re-enable input event handling after rendering
-  console.log('[Renderer] renderDocument complete, isModified=' + isModified);
+    console.log('[Renderer] renderDocument complete, isModified=' + isModified);
+  } finally {
+    isRendering = false;
+  }
 }
 
 async function validateAndDisplayErrors() {
@@ -851,16 +906,14 @@ function renderOutline() {
   
   // Add sections - show all properties from schema, not just populated ones
   schemaProperties.forEach(prop => {
-    const item = document.createElement('div');
-    item.className = 'outline-item outline-section';
-    // Use displayAs if available, otherwise fall back to title or name
-    item.textContent = prop.displayAs || prop.title || prop.name;
-    item.dataset.field = prop.name;
-    item.onclick = () => scrollToField(prop.name);
-    
-    // Add visual indicator if field is empty
-    if (!currentDocument.data[prop.name]) {
-      item.classList.add('outline-empty');
+    if (currentDocument.data[prop.name]) {
+      const item = document.createElement('div');
+      item.className = 'outline-item outline-section';
+      // Use displayAs if available, otherwise fall back to title or name
+      item.textContent = prop.displayAs || prop.title || prop.name;
+      item.dataset.field = prop.name;
+      item.onclick = () => scrollToField(prop.name);
+      tree.appendChild(item);
     }
     
     tree.appendChild(item);
@@ -918,7 +971,7 @@ async function handleFieldChange(input, isCustomForm = false) {
     
     if (result.success) {
       currentDocument = result.document;
-      setModified(true);
+      isModified = true;
       renderOutline();
       
       // Send to collaboration session if connected
@@ -962,19 +1015,6 @@ async function handleAddArrayItem(arrayPath, property) {
     if (result.success) {
       currentDocument = result.document;
       isModified = true;
-      
-      // Send to collaboration session if connected
-      if (window.collaborationClient && window.collaborationClient.isConnected()) {
-        const arr = getValueAtPath(currentDocument, arrayPath);
-        const index = arr.length - 1;
-        window.collaborationClient.sendUpdate({
-          type: 'array-insert',
-          path: arrayPath,
-          value: newItem,
-          index: index
-        });
-      }
-      
       await renderDocument();
       
       // Update preview immediately for array changes
@@ -994,16 +1034,6 @@ async function handleRemoveArrayItem(arrayPath, index) {
     if (result.success) {
       currentDocument = result.document;
       isModified = true;
-      
-      // Send to collaboration session if connected
-      if (window.collaborationClient && window.collaborationClient.isConnected()) {
-        window.collaborationClient.sendUpdate({
-          type: 'array-remove',
-          path: arrayPath,
-          index: index
-        });
-      }
-      
       await renderDocument();
       
       // Update preview immediately for array changes
@@ -1075,6 +1105,7 @@ document.querySelectorAll('.panel-tab').forEach(tab => {
 
 // Output panel controls
 document.getElementById('reset-render-order')?.addEventListener('click', resetRenderOrder);
+document.getElementById('refresh-preview')?.addEventListener('click', renderDocumentPreview);
 document.getElementById('export-preview')?.addEventListener('click', exportPreviewHTML);
 document.getElementById('preview-fullscreen')?.addEventListener('click', togglePreviewFullscreen);
 

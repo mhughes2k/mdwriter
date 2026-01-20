@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {"terminal.integrated.profiles.windows": {
+			"Node.js Command Prompt": {
+				"path": "C:\\Windows\\System32\\cmd.exe",
+				"args": [
+					"/k",
+					"C:\\Users\\igs03102\\OneDrive - University of Strathclyde\\bin\\node-v24.13.0-win-x64\\nodevars.bat"
+				]
+			}
+		}}
+}

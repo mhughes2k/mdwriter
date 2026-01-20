@@ -26,6 +26,8 @@ ipcMain.on('renderer-log', (event, payload) => {
   }
 });
 
+const isDev = !app.isPackaged;
+
 let mainWindow;
 let documentManager;
 let currentDocument = null;
@@ -45,6 +47,8 @@ async function initialize() {
   templateManager = new TemplateManager(configManager);
   
   // Load all document types from models directory
+  // In dev mode, models are loaded on-demand to pick up changes
+  schemaLoader.setDevelopmentMode(isDev);
   await schemaLoader.loadDocumentTypes();
   
   // Set userspace models directory in schema loader
@@ -61,6 +65,7 @@ async function initialize() {
   discoveryService = new DiscoveryService();
   
   logger.info('Application initialized');
+  console.log(`Application initialized (${isDev ? 'development' : 'production'} mode)`);
 }
 
 function createWindow() {

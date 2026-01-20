@@ -25,6 +25,7 @@ class DocumentManager {
     // Get schema to determine required fields
     const schema = await this.schemaLoader.loadSchema(typeName, docType.entrypoint);
     const required = schema.required || [];
+    const properties = schema.properties || {};
     
     // Initialize document with required fields
     const documentData = {};
@@ -32,7 +33,19 @@ class DocumentManager {
       if (field === 'id') {
         documentData.id = generateUUID();
       } else {
-        documentData[field] = '';
+        // Initialize based on property type
+        const propDef = properties[field];
+        if (propDef) {
+          if (propDef.type === 'object') {
+            documentData[field] = {};
+          } else if (propDef.type === 'array') {
+            documentData[field] = [];
+          } else {
+            documentData[field] = '';
+          }
+        } else {
+          documentData[field] = '';
+        }
       }
     });
 

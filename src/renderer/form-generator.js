@@ -5,6 +5,9 @@ class FormGenerator {
     this.fieldHandlers = new Map();
     this.customFormHandlers = new Map();
     this.documentType = null;
+    this.conditionalRequirements = null;
+    this.conditionalDisplay = {};
+    this.currentDocumentData = null;
   }
 
   /**
@@ -22,41 +25,247 @@ class FormGenerator {
   }
 
   /**
+   * Set conditional requirements from schema
+   */
+  setConditionalRequirements(conditionals) {
+    this.conditionalRequirements = conditionals;
+  }
+
+  /**
+   * Set conditional display rules from document type metadata
+   */
+  setConditionalDisplay(rules) {
+    this.conditionalDisplay = rules || {};
+  }
+
+  /**
+   * Set current document data for conditional evaluation
+   */
+  setDocumentData(data) {
+    this.currentDocumentData = data;
+  }
+
+  /**
+   * Evaluate if a condition is met based on current document data
+   */
+  evaluateCondition(condition, data) {
+    if (!condition || !data) return false;
+
+    // Handle anyOf (any condition matches)
+    if (condition.anyOf) {
+      return condition.anyOf.some(subCondition => this.evaluateCondition(subCondition, data));
+    }
+
+    // Handle allOf (all conditions match)
+    if (condition.allOf) {
+      return condition.allOf.every(subCondition => this.evaluateCondition(subCondition, data));
+    }
+
+    // Handle oneOf (exactly one condition matches)
+    if (condition.oneOf) {
+      const matches = condition.oneOf.filter(subCondition => this.evaluateCondition(subCondition, data));
+      return matches.length === 1;
+    }
+
+    // Handle properties condition
+    if (condition.properties) {
+      return Object.entries(condition.properties).every(([propPath, propCondition]) => {
+        const value = this.getNestedValue(data, propPath);
+        
+        // Handle const (exact value match)
+        if (propCondition.const !== undefined) {
+          return value === propCondition.const;
+        }
+
+        // Handle enum (value in list)
+        if (propCondition.enum) {
+          return propCondition.enum.includes(value);
+        }
+
+        // Handle nested properties recursively
+        if (propCondition.properties) {
+          return this.evaluateCondition(propCondition, value);
+        }
+
+        return false;
+      });
+    }
+
+    return false;
+  }
+
+  /**
+   * Get nested value from object using dot notation or direct property
+   */
+  getNestedValue(obj, path) {
+    if (!obj) return undefined;
+    
+    // If path contains dot, split it
+    if (typeof path === 'string' && path.includes('.')) {
+      const parts = path.split('.');
+      let current = obj;
+      for (const part of parts) {
+        if (current == null) return undefined;
+        current = current[part];
+      }
+      return current;
+    }
+    
+    // Direct property access
+    return obj[path];
+  }
+
+  /**
+   * Update conditional field visibility and requirements
+   */
+  updateConditionalFields() {
+    if (!this.conditionalRequirements || !this.currentDocumentData) {
+      return;
+    }
+
+    let conditionMet = false;
+    let requiredFields = [];
+
+    // Handle if-then-else structure
+    if (this.conditionalRequirements.type === 'if-then') {
+      conditionMet = this.evaluateCondition(
+        this.conditionalRequirements.if, 
+        this.currentDocumentData
+      );
+      const requirements = conditionMet ? this.conditionalRequirements.then : this.conditionalRequirements.else;
+      if (requirements && requirements.required) {
+        requiredFields = requirements.required;
+      }
+    } 
+    // Handle anyOf structure with multiple conditions
+    else if (this.conditionalRequirements.type === 'anyOf') {
+      for (const condition of this.conditionalRequirements.conditions) {
+        if (this.evaluateCondition(condition.if, this.currentDocumentData)) {
+          conditionMet = true;
+          if (condition.then && condition.then.required) {
+            // Merge all required fields from matching conditions
+            condition.then.required.forEach(field => {
+              if (!requiredFields.includes(field)) {
+                requiredFields.push(field);
+              }
+            });
+          }
+        }
+      }
+    }
+
+    // Check for conditional display rules that need updating
+    for (const [fieldPath, displayRule] of Object.entries(this.conditionalDisplay)) {
+      if (displayRule.showWhen === 'required') {
+        const isRequired = requiredFields.includes(fieldPath);
+        const fieldContainer = document.querySelector(`[data-field-path="${fieldPath}"]`);
+        
+        if (fieldContainer) {
+          const isPlaceholder = fieldContainer.dataset.isPlaceholder === 'true';
+          
+          // If field should be shown but placeholder is displayed, trigger re-render
+          if (isRequired && isPlaceholder) {
+            // Dispatch event to trigger re-render
+            document.dispatchEvent(new CustomEvent('conditional-display-changed'));
+            return; // Re-render will handle the rest
+          }
+          
+          // If field should be hidden but actual field is displayed, trigger re-render
+          if (!isRequired && !isPlaceholder) {
+            // Dispatch event to trigger re-render
+            document.dispatchEvent(new CustomEvent('conditional-display-changed'));
+            return; // Re-render will handle the rest
+          }
+        }
+      }
+    }
+
+    // Apply visual indicators to conditionally required fields
+    requiredFields.forEach(fieldName => {
+      const fieldContainer = document.querySelector(`[data-field-path="${fieldName}"]`);
+      if (fieldContainer) {
+        if (conditionMet) {
+          fieldContainer.classList.add('conditionally-required');
+          const label = fieldContainer.querySelector('.field-label, .fieldset-title');
+          if (label && !label.querySelector('.conditional-required-mark')) {
+            const mark = document.createElement('span');
+            mark.className = 'conditional-required-mark';
+            mark.textContent = ' *';
+            mark.title = 'Required based on previous answers';
+            label.appendChild(mark);
+          }
+        } else {
+          fieldContainer.classList.remove('conditionally-required');
+          const mark = fieldContainer.querySelector('.conditional-required-mark');
+          if (mark) mark.remove();
+        }
+      }
+    });
+
+    // Remove indicators from fields that are no longer conditionally required
+    document.querySelectorAll('.conditionally-required').forEach(container => {
+      const fieldPath = container.dataset.fieldPath;
+      if (!requiredFields.includes(fieldPath)) {
+        container.classList.remove('conditionally-required');
+        const mark = container.querySelector('.conditional-required-mark');
+        if (mark) mark.remove();
+      }
+    });
+  }
+
+  /**
    * Generate a form field based on schema property
    */
   async generateField(property, value, fieldPath) {
+    // Check if this field has conditional display rules
+    const displayRule = this.conditionalDisplay[fieldPath];
+    if (displayRule && displayRule.showWhen === 'required') {
+      // Check if field is currently required
+      const isRequired = this.isFieldRequired(fieldPath);
+      
+      if (!isRequired) {
+        // Show placeholder instead of actual field
+        return this.createPlaceholder(fieldPath, displayRule.placeholder);
+      }
+    }
+    
     const container = document.createElement('div');
     container.className = 'form-field';
     container.dataset.fieldPath = fieldPath;
 
-    const label = document.createElement('label');
-    label.className = 'field-label';
+    // Skip label and description for nested objects - they have their own header
+    const isNestedObject = property.type === 'object' && property.properties && property.isNested;
     
-    // Use displayAs from property if available, otherwise use title or name
-    const displayLabel = property.displayAs || property.title || property.name;
-    const schemaLabel = property.title || property.name;
-    
-    // Show displayAs with schema name in parentheses if different
-    if (property.displayAs && property.displayAs !== schemaLabel) {
-      label.innerHTML = `${displayLabel} <span class="schema-label">(${schemaLabel})</span>`;
-    } else {
-      label.textContent = displayLabel;
-    }
-    
-    if (property.required) {
-      label.classList.add('required');
-      const requiredMark = document.createElement('span');
-      requiredMark.className = 'required-mark';
-      requiredMark.textContent = ' *';
-      label.appendChild(requiredMark);
-    }
-    container.appendChild(label);
+    if (!isNestedObject) {
+      const label = document.createElement('label');
+      label.className = 'field-label';
+      
+      // Use displayAs from property if available, otherwise use title or name
+      const displayLabel = property.displayAs || property.title || property.name;
+      const schemaLabel = property.title || property.name;
+      
+      // Show displayAs with schema name in parentheses if different
+      if (property.displayAs && property.displayAs !== schemaLabel) {
+        label.innerHTML = `${displayLabel} <span class="schema-label">(${schemaLabel})</span>`;
+      } else {
+        label.textContent = displayLabel;
+      }
+      
+      if (property.required) {
+        label.classList.add('required');
+        const requiredMark = document.createElement('span');
+        requiredMark.className = 'required-mark';
+        requiredMark.textContent = ' *';
+        label.appendChild(requiredMark);
+      }
+      container.appendChild(label);
 
-    if (property.description) {
-      const desc = document.createElement('div');
-      desc.className = 'field-description';
-      desc.textContent = property.description;
-      container.appendChild(desc);
+      if (property.description) {
+        const desc = document.createElement('div');
+        desc.className = 'field-description';
+        desc.textContent = property.description;
+        container.appendChild(desc);
+      }
     }
 
     const input = await this.createInput(property, value, fieldPath);
@@ -74,6 +283,11 @@ class FormGenerator {
       return await this.createCustomForm(property, value, fieldPath);
     }
 
+    // Handle nested objects (fieldsets)
+    if (property.type === 'object' && property.properties && property.isNested) {
+      return this.createNestedObjectInput(property, value, fieldPath);
+    }
+
     // Handle array types
     if (property.type === 'array') {
       return this.createArrayInput(property, value, fieldPath);
@@ -87,6 +301,10 @@ class FormGenerator {
     // Handle different primitive types
     switch (property.type) {
       case 'string':
+        // Handle enum values as dropdown
+        if (property.enum && property.enum.length > 0) {
+          return this.createSelectInput(property, value, fieldPath);
+        }
         // Check displayType from metadata first, then format from schema
         if (property.displayType === 'textarea' || property.format === 'textarea') {
           return this.createTextarea(property, value, fieldPath);
@@ -180,6 +398,33 @@ class FormGenerator {
     placeholder.className = 'custom-form-placeholder';
     placeholder.textContent = text;
     return placeholder;
+  }
+
+  createSelectInput(property, value, fieldPath) {
+    const select = document.createElement('select');
+    select.className = 'field-input field-select';
+    select.dataset.fieldPath = fieldPath;
+
+    // Add empty option if not required
+    if (!property.required) {
+      const emptyOption = document.createElement('option');
+      emptyOption.value = '';
+      emptyOption.textContent = '-- Select --';
+      select.appendChild(emptyOption);
+    }
+
+    // Add enum values as options
+    property.enum.forEach(enumValue => {
+      const option = document.createElement('option');
+      option.value = enumValue;
+      option.textContent = enumValue;
+      if (value === enumValue) {
+        option.selected = true;
+      }
+      select.appendChild(option);
+    });
+
+    return select;
   }
 
   createTextInput(property, value, fieldPath) {
@@ -326,7 +571,7 @@ class FormGenerator {
     itemsList.className = 'array-items';
 
     items.forEach((item, index) => {
-      const itemElement = this.createArrayItem(property, item, `${fieldPath}[${index}]`, index);
+      const itemElement = this.createArrayItem(property, item, `${fieldPath}[${index}]`, index, fieldPath);
       itemsList.appendChild(itemElement);
     });
 
@@ -347,7 +592,7 @@ class FormGenerator {
     return container;
   }
 
-  createArrayItem(property, item, itemPath, index) {
+  createArrayItem(property, item, itemPath, index, fieldPath) {
     const itemElement = document.createElement('div');
     itemElement.className = 'array-item';
     itemElement.dataset.index = index;
@@ -387,13 +632,66 @@ class FormGenerator {
     removeButton.type = 'button';
     removeButton.onclick = () => {
       const event = new CustomEvent('remove-array-item', {
-        detail: { arrayPath: property.name, index }
+        detail: { arrayPath: fieldPath, index }
       });
       document.dispatchEvent(event);
     };
     itemElement.appendChild(removeButton);
 
     return itemElement;
+  }
+
+  /**
+   * Create nested object input (fieldset with collapsible sections)
+   */
+  async createNestedObjectInput(property, value, fieldPath) {
+    const container = document.createElement('div');
+    container.className = 'nested-object-field';
+    container.dataset.fieldPath = fieldPath;
+
+    // Create fieldset header (collapsible)
+    const header = document.createElement('div');
+    header.className = 'fieldset-header';
+    header.dataset.collapsed = 'false';
+
+    const toggle = document.createElement('span');
+    toggle.className = 'fieldset-toggle';
+    toggle.textContent = '▼'; // Down arrow
+
+    const title = document.createElement('span');
+    title.className = 'fieldset-title';
+    title.textContent = property.displayAs || property.title || property.name;
+
+    header.appendChild(toggle);
+    header.appendChild(title);
+
+    // Create collapsible content
+    const content = document.createElement('div');
+    content.className = 'fieldset-content';
+    content.style.display = 'block';
+
+    // Generate fields for nested properties
+    if (property.properties && property.properties.length > 0) {
+      for (const nestedProp of property.properties) {
+        const nestedValue = value && value[nestedProp.name];
+        const nestedFieldPath = `${fieldPath}.${nestedProp.name}`;
+        const nestedField = await this.generateField(nestedProp, nestedValue, nestedFieldPath);
+        content.appendChild(nestedField);
+      }
+    }
+
+    // Toggle collapse/expand on header click
+    header.addEventListener('click', () => {
+      const isCollapsed = header.dataset.collapsed === 'true';
+      header.dataset.collapsed = isCollapsed ? 'false' : 'true';
+      content.style.display = isCollapsed ? 'block' : 'none';
+      toggle.textContent = isCollapsed ? '▼' : '▶'; // Toggle arrow direction
+    });
+
+    container.appendChild(header);
+    container.appendChild(content);
+
+    return container;
   }
 
   createReferenceInput(property, value, fieldPath) {
@@ -591,6 +889,90 @@ class FormGenerator {
     }
 
     return form;
+  }
+
+  /**
+   * Check if a field is currently required based on conditional requirements
+   */
+  isFieldRequired(fieldPath) {
+    if (!this.conditionalRequirements || !this.currentDocumentData) {
+      return false;
+    }
+
+    let requiredFields = [];
+
+    if (this.conditionalRequirements.type === 'if-then') {
+      const conditionMet = this.evaluateCondition(
+        this.conditionalRequirements.if,
+        this.currentDocumentData
+      );
+      const requirements = conditionMet
+        ? this.conditionalRequirements.then
+        : this.conditionalRequirements.else;
+      if (requirements && requirements.required) {
+        requiredFields = requirements.required;
+      }
+    } else if (this.conditionalRequirements.type === 'anyOf') {
+      for (const condition of this.conditionalRequirements.conditions) {
+        if (this.evaluateCondition(condition.if, this.currentDocumentData)) {
+          if (condition.then && condition.then.required) {
+            requiredFields.push(...condition.then.required);
+          }
+        }
+      }
+    }
+
+    return requiredFields.includes(fieldPath);
+  }
+
+  /**
+   * Create a placeholder element for conditionally hidden fields
+   */
+  createPlaceholder(fieldPath, placeholderConfig) {
+    const container = document.createElement('div');
+    container.className = 'conditional-placeholder';
+    container.dataset.fieldPath = fieldPath;
+    container.dataset.isPlaceholder = 'true';
+
+    if (placeholderConfig) {
+      const style = placeholderConfig.style || 'info-box';
+      container.classList.add(style);
+
+      // Add icon based on style
+      const icon = document.createElement('span');
+      icon.className = 'placeholder-icon';
+      switch (style) {
+        case 'info-box':
+          icon.textContent = 'ℹ️';
+          break;
+        case 'warning-box':
+          icon.textContent = '⚠️';
+          break;
+        case 'subtle':
+          icon.textContent = '';
+          break;
+        default:
+          icon.textContent = '📝';
+      }
+      if (icon.textContent) {
+        container.appendChild(icon);
+      }
+
+      // Add message
+      const message = document.createElement('span');
+      message.className = 'placeholder-message';
+      message.textContent = placeholderConfig.message || 'This section is currently hidden.';
+      container.appendChild(message);
+    } else {
+      // Default placeholder with no config
+      container.classList.add('subtle');
+      const message = document.createElement('span');
+      message.className = 'placeholder-message';
+      message.textContent = 'This section is currently hidden.';
+      container.appendChild(message);
+    }
+
+    return container;
   }
 }
 
