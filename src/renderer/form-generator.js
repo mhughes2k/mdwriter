@@ -263,7 +263,7 @@ class FormGenerator {
       if (property.description) {
         const desc = document.createElement('div');
         desc.className = 'field-description';
-        desc.textContent = property.description;
+        desc.innerHTML = property.description;
         container.appendChild(desc);
       }
     }

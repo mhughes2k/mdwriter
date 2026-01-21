@@ -12,9 +12,10 @@ const path = require('path');
 const logger = require('./logger');
 
 class TemplateManager {
-  constructor(configManager) {
+  constructor(configManager, options = {}) {
     this.configManager = configManager;
     this.templates = new Map(); // templateId -> template data
+    this.isDev = !!options.isDev;
   }
   
   /**
@@ -95,6 +96,7 @@ class TemplateManager {
           description: metadata.description || '',
           source: source,
           documentType,
+          filePath,
           normalizedFilePath,
           content,
           placeholders: this.extractPlaceholders(content)
@@ -181,10 +183,15 @@ class TemplateManager {
    * @param {string} documentType - The document type (for custom form lookup)
    */
   async renderDocument(templateId, documentData, documentType = null) {
-    const template = this.templates.get(templateId);
+    let template = this.templates.get(templateId);
     
     if (!template) {
       throw new Error(`Template not found: ${templateId}`);
+    }
+
+    // In development, always reload the template content from disk so preview refreshes pick up edits
+    if (this.isDev) {
+      template = await this.reloadTemplateFromDisk(template);
     }
     
     // Load document type metadata if provided
@@ -228,6 +235,34 @@ class TemplateManager {
     });
     
     return output;
+  }
+
+  /**
+   * Reload template content from disk (dev only) to pick up edits without restarting.
+   */
+  async reloadTemplateFromDisk(template) {
+    const filePath = template.filePath || template.normalizedFilePath;
+    if (!template || !filePath) {
+      return template;
+    }
+
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      const metadata = this.parseTemplateMetadata(content);
+      const refreshed = {
+        ...template,
+        name: metadata.name || template.name,
+        description: metadata.description || template.description || '',
+        content,
+        placeholders: this.extractPlaceholders(content)
+      };
+
+      this.templates.set(template.id, refreshed);
+      return refreshed;
+    } catch (err) {
+      logger.warn(`[TemplateManager] Warning: Could not reload template ${template.id}:`, err.message);
+      return template;
+    }
   }
   
   /**
@@ -458,4 +493,4 @@ class TemplateManager {
 // so tests can import either the default or destructured form.
 module.exports = TemplateManager;
 module.exports.TemplateManager = TemplateManager;
-module.exports.getInstance = (configManager) => new TemplateManager(configManager);
+module.exports.getInstance = (configManager, options = {}) => new TemplateManager(configManager, options);

@@ -224,7 +224,11 @@
   "properties": {
     "title": {
         "type": "string",
-        "title": "Project/activity title or brief description"
+        "title": "Project/activity title"
+    },
+    "description": {
+        "type": "string",
+        "title": "Brief description of the activity / project"
     },
     "responsibleperson": {
         "type": "object",
@@ -257,80 +261,80 @@
       "properties": {
         "question1": {
           "type": "string",
-          "title": "Personal Data Involvement",
-          "description": "Will the project/policy/procurement involve processing personal data?",
+          "title": "Will the project/policy/procurement involve processing personal data, i.e. data which relates to an identified or identifiable individual?",
+          "description": "",
           "enum": ["Yes", "No"]
         },
         "question2": {
           "type": "string",
-          "title": "Compelled Information Provision",
-          "description": "Will the project compel/require individuals to provide information about themselves?",
+          "title": "Will the project compel/require individuals to provide information about themselves, i.e. they have no real option other than to provide information?",
+          "description": "",
           "enum": ["Yes", "No"]
         },
         "question3": {
           "type": "string",
-          "title": "External Disclosure",
+          "title": "Will information about individuals be disclosed to organisations or people external to the University? ",
           "description": "Will information about individuals be disclosed to organisations or people external to the University?",
           "enum": ["Yes", "No"]
         },
         "question4": {
           "type": "string",
-          "title": "Large-Scale Processing",
-          "description": "Will the project involve large-scale processing?",
+          "title": "Will the project involve large-scale processing",
+          "description": "There is no definition of large-scale but you should consider: <ul><li>the number of  individuals involved;</li><li>the volume of data</li><li>the duration of the processing; and</li><li>the geographical extent of the processing.</ul>More information can be found on the ICO’s website.",
           "enum": ["Yes", "No"]
         },
         "question5": {
           "type": "string",
-          "title": "New Purpose for Data",
-          "description": "Are you using information about individuals for a purpose it is not currently used for?",
+          "title": "Are you using information about individuals for a purpose it is not currently used for, or in a way it is not currently used for?",
+          "description": "",
           "enum": ["Yes", "No"]
         },
         "question6": {
           "type": "string",
-          "title": "New Technology",
-          "description": "Does the project involve you using new technology?",
+          "title": "Does the project involve you using new technology?",
+          "description": "",
           "enum": ["Yes", "No"]
         },
         "question7": {
           "type": "string",
-          "title": "Behaviour Tracking",
-          "description": "Does the project involve you tracking individuals' online or offline behaviour?",
+          "title": "Does the project involve you tracking individuals’ online or offline behaviour?",
+          "description": "",
           "enum": ["Yes", "No"]
         },
         "question8": {
           "type": "string",
-          "title": "Significant Impact Decisions",
-          "description": "Will the project result in you making decisions or taking action against individuals in ways which can have a significant impact on them?",
+          "title": "Will the project result in you making decisions or taking action against individuals in ways which can have a significant impact on them?",
+          "description": "",
           "enum": ["Yes", "No"]
         },
         "question9": {
           "type": "string",
-          "title": "Special Category Data",
-          "description": "Will the project require processing of information of a kind particularly likely to raise privacy concerns (racial origin, political opinions, religious beliefs, etc.)?",
+          "title": "Will the project require processing of information of a kind particularly likely to raise privacy concerns?",
+          "description": "i.e. relating to:<ul><li>racial or ethnic origin; </li><li>political opinions;</li><li>religious beliefs or philosophical beliefs;</li><li>trade union membership;</li><li>genetic data;</li><li>biometric data (to uniquely identify an individual);</li><li>health data;</li><li>sexual life or orientation; or</li><li>criminal convictions or proceedings?</li></ul>",
           "enum": ["Yes", "No"]
         },
         "question10": {
           "type": "string",
-          "title": "Intrusive Contact",
-          "description": "Will the project require you to contact individuals in a way which they may find intrusive?",
+          "title": "Will the project require you to contact individuals in a way which they may find intrusive?",
+          "description": "",
           "enum": ["Yes", "No"]
         },
         "question11": {
           "type": "string",
-          "title": "Profiling and Automated Decision-Making",
-          "description": "Will the project use systematic and extensive profiling or automated decision-making to make significant decisions about people?",
+          "title": "Will the project use systematic and extensive profiling or automated decision-making to make significant decisions about people?",
+          "description": "",
           "enum": ["Yes", "No"]
         },
         "question12": {
           "type": "string",
-          "title": "Monitoring Public Places",
-          "description": "Will the project systematically monitor a publicly accessible place?",
+          "title": "Will the project systematically monitor a publicly accessible place?",
+          "description": "",
           "enum": ["Yes", "No"]
         },
         "question13": {
           "type": "string",
-          "title": "Children's Data Processing",
-          "description": "Will the project involve the processing of children's personal data?",
+          "title": "Will the project involve the processing of children's personal data?",
+          "description": "",
           "enum": ["Yes", "No"]
         }
       }

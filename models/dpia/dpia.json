@@ -8,6 +8,7 @@
     "entrypoint": "dpia.schema.json",
     "fieldOrder": [
         "title",
+        "description",
         "responsibleperson",
         "servicearea",
         "datecompleted",

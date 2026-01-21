@@ -44,7 +44,7 @@ async function initialize() {
   await configManager.initialize();
   
   // Initialize template manager
-  templateManager = new TemplateManager(configManager);
+  templateManager = new TemplateManager(configManager, { isDev });
   
   // Load all document types from models directory
   // In dev mode, models are loaded on-demand to pick up changes

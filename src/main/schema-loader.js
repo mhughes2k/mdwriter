@@ -360,6 +360,14 @@ class SchemaLoader {
   async getValidator(typeName) {
     console.log('[SchemaLoader] getValidator called for:', typeName);
     
+    // In dev mode, clear validator cache and reload to pick up schema changes
+    if (this.isDevelopmentMode) {
+      await this.reloadDocumentType(typeName);
+      this.validatorCache.delete(typeName);
+      // Clear all AJV compiled schemas to force recompilation
+      this.ajv.removeSchema();
+    }
+    
     // Check cache first
     if (this.validatorCache.has(typeName)) {
       console.log('[SchemaLoader] Returning cached validator');
@@ -510,6 +518,11 @@ class SchemaLoader {
    * Get schema structure for UI generation
    */
   async getSchemaStructure(typeName) {
+    // In dev mode, reload document type metadata to pick up changes
+    if (this.isDevelopmentMode) {
+      await this.reloadDocumentType(typeName);
+    }
+    
     const docType = this.documentTypes.get(typeName);
     if (!docType) {
       throw new Error(`Unknown document type: ${typeName}`);

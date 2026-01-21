@@ -1,0 +1,38 @@
+{
+  "appId": "com.mdwriter.app",
+  "productName": "MDWriter",
+  "copyright": "Copyright © 2025 Phoenix Productions. All rights reserved.",
+  "directories": {
+    "output": "dist"
+  },
+  "files": [
+    "src/**/*",
+    "models/**/*",
+    "LICENSE.md",
+    "docs/LICENSES.md"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "certificateFile": null,
+    "certificatePassword": null,
+    "signingHashAlgorithms": ["sha256"]
+  },
+  "mac": {
+    "target": "dmg"
+  },
+  "linux": {
+    "target": [
+      "AppImage",
+      "deb"
+    ]
+  }
+}
